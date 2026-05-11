@@ -148,6 +148,11 @@
 
       if (amount >= 100) spawnConfetti();
 
+      if (data.ttsAudio) {
+        const audio = new Audio(`data:audio/mp3;base64,${data.ttsAudio}`);
+        audio.play().catch(() => {});
+      }
+
       const duration = 7000 + (data.message ? Math.min(data.message.length * 50, 3000) : 0);
       setTimeout(() => {
         card.classList.remove('show');

@@ -14,6 +14,7 @@ const OVERLAY_ID    = process.env.OVERLAY_ID         || "default-overlay";
 const YT_KEY        = process.env.YOUTUBE_API_KEY    || "";
 const EASYSLIP_KEY  = process.env.EASYSLIP_API_KEY   || "";
 const TT_SESSION    = process.env.TIKTOK_SESSION_ID  || null;
+const GOOGLE_TTS_KEY = process.env.GOOGLE_TTS_KEY   || "";
 
 // ── Express + Socket.IO ───────────────────────────────────────────────────────
 const app    = express();
@@ -170,14 +171,53 @@ app.post("/api/donate", auth, async (req, res) => {
     if (donations.length > 1000) donations.length = 1000;
     saveDonations();
 
+    const ttsText = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
+    const ttsAudio = await generateTTS(ttsText);
+
     io.to("dashboard").emit("donation", donation);
-    io.to(`overlay:${OVERLAY_ID}`).emit("alert", donation);
+    io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
 
     res.json({ ok: true, slipId: transRef, amount: donation.amount });
   } catch (e) {
     console.error("donate:", e);
     res.status(500).json({ error: e.message });
   }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Google TTS
+// ═══════════════════════════════════════════════════════════════════════════════
+async function generateTTS(text) {
+  if (!GOOGLE_TTS_KEY) return null;
+  try {
+    const r = await fetch(
+      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          input: { text },
+          voice: { languageCode: "th-TH", name: "th-TH-Neural2-C" },
+          audioConfig: { audioEncoding: "MP3" },
+        }),
+      }
+    );
+    const d = await r.json();
+    if (d.error) { console.error("TTS error:", d.error.message); return null; }
+    return d.audioContent || null;
+  } catch (e) {
+    console.error("TTS error:", e.message);
+    return null;
+  }
+}
+
+app.post("/api/test-tts", auth, async (req, res) => {
+  const { text } = req.body || {};
+  if (!text) return res.status(400).json({ error: "text required" });
+  if (!GOOGLE_TTS_KEY) return res.status(503).json({ error: "GOOGLE_TTS_KEY not set" });
+  const audio = await generateTTS(text);
+  if (!audio) return res.status(500).json({ error: "TTS generation failed" });
+  res.json({ ok: true, audio });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
