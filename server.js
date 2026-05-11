@@ -61,7 +61,13 @@ function auth(req, res, next) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 app.get("/api/health", (_, res) => res.json({
-  status: "ok", youtube: !!ytPoller, tiktok: tiktokConns.size,
+  status: "ok",
+  youtube: !!ytPoller,
+  tiktok: tiktokConns.size,
+  youtubeKey:    !!YT_KEY,
+  easyslipKey:   !!EASYSLIP_KEY,
+  googleTtsKey:  !!GOOGLE_TTS_KEY,
+  tiktokSession: !!TT_SESSION,
 }));
 
 // Login

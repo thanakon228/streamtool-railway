@@ -8,12 +8,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #0f1117; --surface: #1a1d27; --surface2: #252836; --border: #2d3044;
-      --accent: #7c5cfc; --accent-dim: #4f3ca8; --green: #22c55e; --red: #ef4444;
+      --accent: #7c5cfc; --accent-dim: rgba(124,92,252,0.15); --green: #22c55e; --red: #ef4444;
       --yellow: #f59e0b; --text: #e2e8f0; --muted: #64748b; --radius: 12px;
+      --sidebar-w: 220px;
     }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* Login */
+    /* ── Login ── */
     #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #0f1117, #1a1233); }
     .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 48px 40px; text-align: center; max-width: 380px; width: 90%; }
     .login-logo { width: 64px; height: 64px; background: var(--accent); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; }
@@ -25,102 +26,153 @@
     .login-btn:hover { opacity: 0.9; }
     .login-error { color: var(--red); font-size: 13px; margin-top: 8px; }
 
-    /* App */
-    #app { display: none; }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
-    .header-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
-    .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-    .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
-    .btn-primary   { background: var(--accent); color: white; }
-    .btn-primary:hover { background: #6d4ee6; }
-    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--border); }
-    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-    .btn-ghost:hover { color: var(--red); border-color: var(--red); }
-    main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    /* ── App shell ── */
+    #app { display: none; height: 100vh; flex-direction: column; }
+    #app.visible { display: flex; }
 
-    /* Stats */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-    .stat-value { font-size: 28px; font-weight: 700; line-height: 1; }
+    /* ── Header ── */
+    header { background: var(--surface); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; z-index: 20; }
+    .header-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+    .logo-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .live-badge { display: flex; align-items: center; gap: 6px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); border-radius: 99px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--green); }
+    .live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── Body (sidebar + content) ── */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    nav { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 16px 10px; gap: 2px; flex-shrink: 0; overflow-y: auto; }
+    .nav-section { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 12px 10px 6px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+    .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-badge { margin-left: auto; background: var(--accent); color: white; border-radius: 99px; font-size: 10px; font-weight: 700; padding: 1px 7px; }
+    .nav-badge.green { background: var(--green); }
+    nav .spacer { flex: 1; }
+    .nav-logout { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 9px; cursor: pointer; font-size: 13px; color: var(--muted); transition: all 0.15s; border: none; background: none; width: 100%; margin-top: 4px; }
+    .nav-logout:hover { color: var(--red); background: rgba(239,68,68,0.08); }
+
+    /* ── Content ── */
+    .content-area { flex: 1; overflow-y: auto; padding: 24px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .page-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+    /* ── Cards ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+    .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-title  { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .card-body   { padding: 18px; }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .stat-value { font-size: 26px; font-weight: 700; line-height: 1; }
     .stat-sub   { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-    /* Grid */
-    .content-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
-    @media (max-width: 900px) { .content-grid { grid-template-columns: 1fr; } }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .card-title  { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-    .card-body   { padding: 20px; }
-
-    /* Overlay URL */
-    .url-box { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
+    /* ── Overlay URL ── */
+    .url-box { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
     .url-text { flex: 1; font-family: 'Courier New', monospace; font-size: 13px; color: var(--accent); word-break: break-all; }
     .copy-btn { flex-shrink: 0; padding: 6px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
     .copy-btn:hover  { background: var(--accent); border-color: var(--accent); }
     .copy-btn.copied { background: var(--green); border-color: var(--green); color: white; }
 
-    /* Donations */
+    /* ── Platform ── */
+    .platform-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .platform-row:last-child { border-bottom: none; }
+    .platform-info { display: flex; align-items: center; gap: 12px; }
+    .platform-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .platform-name { font-size: 14px; font-weight: 600; }
+    .platform-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .badge { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--muted); }
+    .badge-live { background: rgba(34,197,94,0.15); color: var(--green); }
+    .platform-connect { padding: 12px 0 4px; display: none; flex-direction: column; gap: 8px; }
+    .platform-connect.open { display: flex; }
+    .connect-label { font-size: 12px; color: var(--muted); }
+    .connect-row { display: flex; gap: 8px; }
+    .connect-row .input-field { flex: 1; }
+
+    /* ── Inputs / Buttons ── */
+    .input-field { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 13px; outline: none; transition: border-color 0.15s; }
+    .input-field:focus { border-color: var(--accent); }
+    .btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-primary   { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #6d4ee6; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-danger { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+    .btn-danger:hover { background: rgba(239,68,68,0.2); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Chat ── */
+    .chat-feed { max-height: 520px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .chat-feed::-webkit-scrollbar { width: 4px; }
+    .chat-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .chat-feed-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.2s ease; }
+    .chat-feed-item:last-child { border-bottom: none; }
+    .chat-feed-item.hidden { display: none; }
+    .chat-platform-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
+    .chat-platform-icon.youtube { background: rgba(255,0,0,0.15); color: #ff6666; }
+    .chat-platform-icon.tiktok  { background: rgba(105,201,208,0.15); color: #69c9d0; }
+    .chat-content { flex: 1; min-width: 0; }
+    .chat-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .chat-name.youtube { color: #ff4444; }
+    .chat-name.tiktok  { color: #69c9d0; }
+    .chat-text { font-size: 13px; color: var(--text); line-height: 1.4; word-break: break-word; }
+    .chat-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .filter-bar { display: flex; gap: 6px; }
+    .filter-btn { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Donations ── */
     .donation-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.3s ease; }
     .donation-item:last-child { border-bottom: none; }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-    .donation-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-    .donation-info   { flex: 1; min-width: 0; }
-    .donation-name   { font-size: 14px; font-weight: 600; }
-    .donation-msg    { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .donation-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-dim); border: 1px solid rgba(124,92,252,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+    .donation-info { flex: 1; min-width: 0; }
+    .donation-name { font-size: 14px; font-weight: 600; }
+    .donation-msg  { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .donation-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .donation-amount { font-size: 16px; font-weight: 700; color: var(--green); flex-shrink: 0; }
+
+    /* ── TTS ── */
+    .tts-voice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .tts-info-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .tts-info-row:last-child { border-bottom: none; }
+    .tts-info-label { color: var(--muted); }
+    .tts-status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .tts-status-dot.ok  { background: var(--green); }
+    .tts-status-dot.err { background: var(--red); }
+
+    /* ── Settings ── */
+    .setting-row { padding: 14px 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-size: 13px; font-weight: 600; }
+    .setting-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .setting-value { font-family: 'Courier New', monospace; font-size: 12px; color: var(--accent); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; word-break: break-all; max-width: 260px; text-align: right; }
+
+    /* ── Empty ── */
     .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
     .empty-icon  { font-size: 32px; margin-bottom: 8px; }
 
-    /* Platform */
-    .platform-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
-    .platform-item:last-child { border-bottom: none; }
-    .platform-info { display: flex; align-items: center; gap: 10px; }
-    .platform-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-    .platform-name { font-size: 14px; font-weight: 500; }
-    .platform-sub  { font-size: 12px; color: var(--muted); }
-    .badge         { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
-    .badge-live    { background: rgba(34,197,94,0.15);  color: var(--green); }
-    .platform-connect { padding: 12px 0 4px; display: none; flex-direction: column; gap: 8px; }
-    .platform-connect.open { display: flex; }
-    .connect-row { display: flex; gap: 8px; }
-    .connect-row .input-field { flex: 1; }
-    .input-field { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 13px; outline: none; transition: border-color 0.15s; }
-    .input-field:focus { border-color: var(--accent); }
-
-    /* Chat feed */
-    .chat-feed { max-height: 380px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-    .chat-feed::-webkit-scrollbar { width: 4px; }
-    .chat-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    .chat-feed-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.25s ease; }
-    .chat-feed-item:last-child { border-bottom: none; }
-    .chat-feed-item.hidden { display: none; }
-    .chat-feed-platform { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
-    .chat-feed-platform.youtube { background: rgba(255,0,0,0.15); color: #ff6666; }
-    .chat-feed-platform.tiktok  { background: rgba(105,201,208,0.15); color: #69c9d0; }
-    .chat-feed-content { flex: 1; min-width: 0; }
-    .chat-feed-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-    .chat-feed-name.youtube { color: #ff4444; }
-    .chat-feed-name.tiktok  { color: #69c9d0; }
-    .chat-feed-text { font-size: 13px; color: var(--text); line-height: 1.4; word-break: break-word; }
-    .chat-feed-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
-    .chat-filter-bar { display: flex; gap: 6px; }
-    .chat-filter-btn { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
-    .chat-filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-
-    /* Config */
-    .config-row   { margin-bottom: 16px; }
-    .config-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .config-value { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; }
-    .live-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-    /* Toast */
-    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; transform: translateY(80px); opacity: 0; transition: all 0.3s; z-index: 999; }
+    /* ── Toast ── */
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; transform: translateY(80px); opacity: 0; transition: all 0.3s; z-index: 999; pointer-events: none; }
     #toast.show    { transform: translateY(0); opacity: 1; }
     #toast.success { border-color: var(--green); color: var(--green); }
     #toast.error   { border-color: var(--red);   color: var(--red); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      nav { width: 60px; }
+      .nav-item span, .nav-section, .nav-badge, .nav-logout span { display: none; }
+      .nav-item { justify-content: center; padding: 10px; }
+      .nav-logout { justify-content: center; }
+    }
   </style>
 </head>
 <body>
@@ -140,166 +192,336 @@
 <!-- App -->
 <div id="app">
   <header>
-    <div class="header-logo"><div class="logo-icon">🎮</div>StreamTool</div>
-    <button class="btn btn-ghost" id="logout-btn">ออกจากระบบ</button>
-  </header>
-  <main>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">💰 ยอด Donate วันนี้</div>
-        <div class="stat-value" id="stat-total">฿0</div>
-        <div class="stat-sub" id="stat-count">0 รายการ</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">💬 Chat วันนี้</div>
-        <div class="stat-value" id="stat-chat">0</div>
-        <div class="stat-sub">ข้อความ</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">📡 เชื่อมต่อ</div>
-        <div class="stat-value" id="stat-platforms">—</div>
-        <div class="stat-sub">platform</div>
+    <div class="header-logo">
+      <div class="logo-icon">🎮</div>
+      StreamTool
+    </div>
+    <div class="header-right">
+      <div class="live-badge" id="header-live" style="display:none;">
+        <div class="live-dot"></div> Live
       </div>
     </div>
+  </header>
 
-    <div class="content-grid">
-      <div style="display:flex;flex-direction:column;gap:20px;">
+  <div class="app-body">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="nav-section">หลัก</div>
+      <button class="nav-item active" data-tab="overview">
+        <span class="nav-icon">📊</span>
+        <span>ภาพรวม</span>
+      </button>
+      <button class="nav-item" data-tab="chat">
+        <span class="nav-icon">💬</span>
+        <span>Live Chat</span>
+        <span class="nav-badge" id="chat-badge" style="display:none;">0</span>
+      </button>
+      <button class="nav-item" data-tab="donations">
+        <span class="nav-icon">💰</span>
+        <span>Donations</span>
+        <span class="nav-badge green" id="donation-badge" style="display:none;">0</span>
+      </button>
 
-        <!-- Overlay URL -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">🔗 Overlay URL สำหรับ OBS</div></div>
-          <div class="card-body">
-            <div class="url-box">
-              <span class="url-text" id="overlay-url">กำลังโหลด...</span>
-              <button class="copy-btn" id="copy-url-btn">คัดลอก</button>
-            </div>
-            <p style="font-size:12px;color:var(--muted);">วาง URL นี้ใน OBS → Browser Source</p>
+      <div class="nav-section">จัดการ</div>
+      <button class="nav-item" data-tab="platform">
+        <span class="nav-icon">📡</span>
+        <span>Platform</span>
+      </button>
+      <button class="nav-item" data-tab="tts">
+        <span class="nav-icon">🔊</span>
+        <span>TTS</span>
+      </button>
+
+      <div class="nav-section">ระบบ</div>
+      <button class="nav-item" data-tab="settings">
+        <span class="nav-icon">⚙️</span>
+        <span>ตั้งค่า</span>
+      </button>
+
+      <div class="spacer"></div>
+      <button class="nav-logout" id="logout-btn">
+        <span class="nav-icon">🚪</span>
+        <span>ออกจากระบบ</span>
+      </button>
+    </nav>
+
+    <!-- Content -->
+    <div class="content-area">
+
+      <!-- ── Tab: Overview ── -->
+      <div class="tab-panel active" id="tab-overview">
+        <div class="page-title">ภาพรวม</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">💰 ยอด Donate วันนี้</div>
+            <div class="stat-value" id="stat-total">฿0</div>
+            <div class="stat-sub" id="stat-count">0 รายการ</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">💬 Chat วันนี้</div>
+            <div class="stat-value" id="stat-chat">0</div>
+            <div class="stat-sub">ข้อความ</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">📡 Platform ที่เชื่อมต่อ</div>
+            <div class="stat-value" id="stat-platforms">—</div>
+            <div class="stat-sub" id="stat-platforms-sub">ไม่มีการเชื่อมต่อ</div>
           </div>
         </div>
 
-        <!-- Donations -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔗 Overlay URL สำหรับ OBS</div></div>
+          <div class="card-body">
+            <div class="url-box" style="margin-bottom:10px;">
+              <span class="url-text" id="overlay-url">กำลังโหลด...</span>
+              <button class="copy-btn" id="copy-url-btn">คัดลอก</button>
+            </div>
+            <p style="font-size:12px;color:var(--muted);">วาง URL นี้ใน OBS → Sources → Browser Source</p>
+          </div>
+        </div>
+
+        <!-- Recent donations preview -->
         <div class="card">
           <div class="card-header">
             <div class="card-title"><div class="live-dot"></div>Donations ล่าสุด</div>
+            <button class="btn btn-sm btn-secondary" onclick="switchTab('donations')">ดูทั้งหมด →</button>
           </div>
-          <div class="card-body" style="padding:0 20px;">
-            <div id="donations-list">
+          <div class="card-body" style="padding:0 18px;">
+            <div id="overview-donations">
               <div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Chat Feed -->
+      <!-- ── Tab: Chat ── -->
+      <div class="tab-panel" id="tab-chat">
+        <div class="page-title">Live Chat Feed</div>
         <div class="card">
           <div class="card-header">
-            <div class="card-title"><div class="live-dot"></div>Live Chat Feed</div>
-            <div class="chat-filter-bar">
-              <button class="chat-filter-btn active" data-filter="all">ทั้งหมด</button>
-              <button class="chat-filter-btn" data-filter="youtube">▶ YouTube</button>
-              <button class="chat-filter-btn" data-filter="tiktok">♪ TikTok</button>
+            <div class="card-title"><div class="live-dot"></div>ข้อความสด</div>
+            <div class="filter-bar">
+              <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+              <button class="filter-btn" data-filter="youtube">▶ YouTube</button>
+              <button class="filter-btn" data-filter="tiktok">♪ TikTok</button>
             </div>
           </div>
-          <div class="card-body" style="padding:0 20px;">
+          <div class="card-body" style="padding:0 18px;">
             <div id="chat-feed" class="chat-feed">
-              <div class="empty-state" id="chat-feed-empty"><div class="empty-icon">💬</div>รอข้อความ</div>
+              <div class="empty-state" id="chat-feed-empty"><div class="empty-icon">💬</div>รอข้อความจาก platform</div>
             </div>
           </div>
         </div>
-
       </div>
 
-      <div style="display:flex;flex-direction:column;gap:20px;">
-
-        <!-- Platform connections -->
+      <!-- ── Tab: Donations ── -->
+      <div class="tab-panel" id="tab-donations">
+        <div class="page-title">Donations</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">💰 ยอดรวมวันนี้</div>
+            <div class="stat-value" id="don-stat-total">฿0</div>
+            <div class="stat-sub" id="don-stat-count">0 รายการ</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">🏆 Donation สูงสุด</div>
+            <div class="stat-value" id="don-stat-max">฿0</div>
+            <div class="stat-sub" id="don-stat-max-name">—</div>
+          </div>
+        </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">📡 Platform</div></div>
-          <div class="card-body" style="padding:0 20px;">
-
-            <!-- YouTube -->
-            <div class="platform-item" style="flex-direction:column;align-items:stretch;">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px;">
-                <div class="platform-info">
-                  <div class="platform-icon" style="background:rgba(255,0,0,0.1);">▶️</div>
-                  <div>
-                    <div class="platform-name">YouTube Live</div>
-                    <div class="platform-sub" id="yt-sub">Chat polling</div>
-                  </div>
-                </div>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <span class="badge" id="yt-badge">ปิดอยู่</span>
-                  <button class="btn btn-secondary" id="yt-toggle" style="font-size:12px;padding:5px 12px;">เชื่อมต่อ</button>
-                </div>
-              </div>
-              <div class="platform-connect" id="yt-form">
-                <div style="font-size:12px;color:var(--muted);">YouTube Video ID</div>
-                <div class="connect-row">
-                  <input id="yt-video-id" class="input-field" type="text" placeholder="เช่น dQw4w9WgXcQ" />
-                  <button class="btn btn-primary" id="yt-connect" style="white-space:nowrap;">เริ่ม</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- TikTok -->
-            <div class="platform-item" style="flex-direction:column;align-items:stretch;border-bottom:none;">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px;">
-                <div class="platform-info">
-                  <div class="platform-icon" style="background:rgba(255,255,255,0.05);">🎵</div>
-                  <div>
-                    <div class="platform-name">TikTok Live</div>
-                    <div class="platform-sub" id="tt-sub">Gift & chat</div>
-                  </div>
-                </div>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <span class="badge" id="tt-badge">ปิดอยู่</span>
-                  <button class="btn btn-secondary" id="tt-toggle" style="font-size:12px;padding:5px 12px;">เชื่อมต่อ</button>
-                </div>
-              </div>
-              <div class="platform-connect" id="tt-form">
-                <div style="font-size:12px;color:var(--muted);">TikTok Username (ไม่ต้องมี @)</div>
-                <div class="connect-row">
-                  <input id="tt-username" class="input-field" type="text" placeholder="เช่น username123" />
-                  <button class="btn btn-primary" id="tt-connect" style="white-space:nowrap;">เริ่ม</button>
-                </div>
-              </div>
+          <div class="card-header"><div class="card-title">📋 รายการทั้งหมด</div></div>
+          <div class="card-body" style="padding:0 18px;">
+            <div id="donations-full-list">
+              <div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- TTS Test -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">🔊 ทดสอบ TTS</div></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
-            <textarea id="tts-text" class="input-field" rows="3" placeholder="พิมพ์ข้อความที่ต้องการให้อ่าน..." style="resize:vertical;"></textarea>
-            <button class="btn btn-primary" id="tts-test-btn">▶ ทดสอบเสียง</button>
-            <div id="tts-status" style="font-size:12px;color:var(--muted);"></div>
-          </div>
-        </div>
+      <!-- ── Tab: Platform ── -->
+      <div class="tab-panel" id="tab-platform">
+        <div class="page-title">เชื่อมต่อ Platform</div>
 
-        <!-- Config -->
         <div class="card">
-          <div class="card-header"><div class="card-title">⚙️ Config</div></div>
+          <div class="card-header"><div class="card-title">▶️ YouTube Live</div></div>
           <div class="card-body">
-            <div class="config-row">
-              <div class="config-label">Overlay ID</div>
-              <div class="config-value" id="config-overlay-id">—</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="yt-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="yt-sub">ดึง chat ผ่าน YouTube Data API v3</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="yt-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="yt-toggle">เชื่อมต่อ</button>
+              </div>
             </div>
-            <div class="config-row" style="margin-bottom:0;">
-              <div class="config-label">Server</div>
-              <div class="config-value" id="config-server">—</div>
+            <div class="platform-connect" id="yt-form">
+              <div class="connect-label">YouTube Video ID (จาก URL: youtube.com/watch?v=<b>VIDEO_ID</b>)</div>
+              <div class="connect-row">
+                <input id="yt-video-id" class="input-field" type="text" placeholder="เช่น dQw4w9WgXcQ" />
+                <button class="btn btn-primary btn-sm" id="yt-connect">เริ่ม</button>
+              </div>
             </div>
           </div>
         </div>
 
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎵 TikTok Live</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="tt-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="tt-sub">รับ chat ผ่าน WebSocket</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="tt-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="tt-toggle">เชื่อมต่อ</button>
+              </div>
+            </div>
+            <div class="platform-connect" id="tt-form">
+              <div class="connect-label">TikTok Username (ไม่ต้องมี @)</div>
+              <div class="connect-row">
+                <input id="tt-username" class="input-field" type="text" placeholder="เช่น username123" />
+                <button class="btn btn-primary btn-sm" id="tt-connect">เริ่ม</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </main>
-</div>
+
+      <!-- ── Tab: TTS ── -->
+      <div class="tab-panel" id="tab-tts">
+        <div class="page-title">Text-to-Speech</div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔊 ทดสอบเสียง</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ข้อความที่ต้องการให้อ่าน</div>
+              <textarea id="tts-text" class="input-field" rows="3" placeholder="พิมพ์ข้อความภาษาไทย..." style="resize:vertical;"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" id="tts-test-btn" style="flex:1;">▶ เล่นเสียง</button>
+            </div>
+            <div id="tts-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">ℹ️ รายละเอียดการตั้งค่า</div></div>
+          <div class="card-body" style="padding:0 18px;">
+            <div class="tts-info-row">
+              <span class="tts-info-label">Provider</span>
+              <span>Google Cloud Text-to-Speech</span>
+            </div>
+            <div class="tts-info-row">
+              <span class="tts-info-label">Voice</span>
+              <span>th-TH-Neural2-C (ภาษาไทย)</span>
+            </div>
+            <div class="tts-info-row">
+              <span class="tts-info-label">Format</span>
+              <span>MP3</span>
+            </div>
+            <div class="tts-info-row">
+              <span class="tts-info-label">API Key (Railway Env)</span>
+              <span id="tts-key-status">กำลังตรวจสอบ...</span>
+            </div>
+            <div class="tts-info-row" style="border-bottom:none;">
+              <span class="tts-info-label">ตัวแปร Environment</span>
+              <code style="font-size:12px;color:var(--accent);">GOOGLE_TTS_KEY</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Settings ── -->
+      <div class="tab-panel" id="tab-settings">
+        <div class="page-title">ตั้งค่า</div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔗 Overlay</div></div>
+          <div class="card-body" style="padding:0 18px;">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Overlay ID</div>
+                <div class="setting-desc">ใช้ใน URL ของ OBS Browser Source</div>
+              </div>
+              <div class="setting-value" id="cfg-overlay-id">—</div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Overlay URL</div>
+                <div class="setting-desc">วางใน OBS → Sources → Browser Source</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <div class="setting-value" id="cfg-overlay-url" style="max-width:220px;">—</div>
+                <button class="btn btn-sm btn-secondary" id="cfg-copy-btn">คัดลอก</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🌐 Server</div></div>
+          <div class="card-body" style="padding:0 18px;">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Server URL</div>
+                <div class="setting-desc">Railway deployment endpoint</div>
+              </div>
+              <div class="setting-value" id="cfg-server">—</div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">API Health</div>
+                <div class="setting-desc">สถานะ server ปัจจุบัน</div>
+              </div>
+              <span id="cfg-health" style="font-size:13px;color:var(--muted);">กำลังตรวจสอบ...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔑 Environment Variables</div></div>
+          <div class="card-body" style="padding:0 18px;">
+            <div class="setting-row">
+              <div><div class="setting-label">DASHBOARD_PASSWORD</div><div class="setting-desc">รหัสผ่านสำหรับ login</div></div>
+              <span style="font-size:12px;color:var(--green);">✓ ตั้งค่าแล้ว</span>
+            </div>
+            <div class="setting-row">
+              <div><div class="setting-label">JWT_SECRET</div><div class="setting-desc">Secret สำหรับ sign JWT token</div></div>
+              <span style="font-size:12px;color:var(--green);">✓ ตั้งค่าแล้ว</span>
+            </div>
+            <div class="setting-row">
+              <div><div class="setting-label">YOUTUBE_API_KEY</div><div class="setting-desc">YouTube Data API v3</div></div>
+              <span id="env-yt" style="font-size:12px;color:var(--muted);">—</span>
+            </div>
+            <div class="setting-row">
+              <div><div class="setting-label">GOOGLE_TTS_KEY</div><div class="setting-desc">Google Cloud Text-to-Speech</div></div>
+              <span id="env-tts" style="font-size:12px;color:var(--muted);">—</span>
+            </div>
+            <div class="setting-row">
+              <div><div class="setting-label">EASYSLIP_API_KEY</div><div class="setting-desc">Verify slip donation</div></div>
+              <span id="env-slip" style="font-size:12px;color:var(--muted);">—</span>
+            </div>
+            <div class="setting-row" style="border-bottom:none;">
+              <div><div class="setting-label">TIKTOK_SESSION_ID</div><div class="setting-desc">TikTok auth (optional)</div></div>
+              <span id="env-tt" style="font-size:12px;color:var(--muted);">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
 
 <div id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  // ── State ──────────────────────────────────────────────────────────────────
+  // ── State ────────────────────────────────────────────────────────────────────
   let token      = localStorage.getItem('st_token') || '';
   let overlayId  = localStorage.getItem('st_overlay') || '';
   let socket     = null;
@@ -307,11 +529,9 @@
   let chatCount  = 0;
   let ytActive   = false;
   let ttActive   = false;
+  const donationList = [];
 
-  const loginScreen = document.getElementById('login-screen');
-  const appEl       = document.getElementById('app');
-
-  // ── Toast ──────────────────────────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────────────────────────
   function toast(msg, type = 'success') {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -323,7 +543,6 @@
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── API helper ─────────────────────────────────────────────────────────────
   async function api(path, body) {
     const res = await fetch(path, {
       method: body !== undefined ? 'POST' : 'GET',
@@ -333,7 +552,20 @@
     return res.json();
   }
 
-  // ── Login ──────────────────────────────────────────────────────────────────
+  // ── Tab navigation ───────────────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(el => el.classList.toggle('active', el.id === `tab-${name}`));
+    if (name === 'chat') {
+      document.getElementById('chat-badge').style.display = 'none';
+    }
+  }
+
+  document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
+    btn.onclick = () => switchTab(btn.dataset.tab);
+  });
+
+  // ── Login ────────────────────────────────────────────────────────────────────
   async function login(pw) {
     const res = await fetch('/api/login', {
       method: 'POST',
@@ -352,55 +584,77 @@
     showApp();
   }
 
-  document.getElementById('login-btn').onclick = () => login(document.getElementById('pw-input').value);
+  document.getElementById('login-btn').onclick  = () => login(document.getElementById('pw-input').value);
   document.getElementById('pw-input').onkeydown = e => { if (e.key === 'Enter') login(e.target.value); };
 
   document.getElementById('logout-btn').onclick = () => {
     localStorage.removeItem('st_token');
     localStorage.removeItem('st_overlay');
     if (socket) socket.disconnect();
-    appEl.style.display = 'none';
-    loginScreen.style.display = 'flex';
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('login-screen').style.display = 'flex';
   };
 
-  // ── Show app ───────────────────────────────────────────────────────────────
+  // ── Show app ─────────────────────────────────────────────────────────────────
   async function showApp() {
-    loginScreen.style.display = 'none';
-    appEl.style.display = 'block';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
 
     const origin = location.origin;
-    document.getElementById('overlay-url').textContent  = `${origin}/overlay/${overlayId}`;
-    document.getElementById('config-overlay-id').textContent = overlayId;
-    document.getElementById('config-server').textContent     = origin;
+    const overlayUrl = `${origin}/overlay/${overlayId}`;
 
-    // Copy URL
-    document.getElementById('copy-url-btn').onclick = () => {
-      navigator.clipboard.writeText(`${origin}/overlay/${overlayId}`).then(() => {
-        const btn = document.getElementById('copy-url-btn');
-        btn.textContent = 'คัดลอกแล้ว ✓';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = 'คัดลอก'; btn.classList.remove('copied'); }, 2500);
-      });
-    };
+    // Overview
+    document.getElementById('overlay-url').textContent = overlayUrl;
+    document.getElementById('copy-url-btn').onclick = () => copyText(overlayUrl, 'copy-url-btn');
 
-    // Load existing donations
+    // Settings
+    document.getElementById('cfg-overlay-id').textContent  = overlayId;
+    document.getElementById('cfg-overlay-url').textContent = overlayUrl;
+    document.getElementById('cfg-server').textContent      = origin;
+    document.getElementById('cfg-copy-btn').onclick = () => copyText(overlayUrl, 'cfg-copy-btn');
+
+    // Health check
+    fetch('/api/health').then(r => r.json()).then(d => {
+      document.getElementById('cfg-health').textContent = d.status === 'ok' ? '✓ ออนไลน์' : '✗ ออฟไลน์';
+      document.getElementById('cfg-health').style.color = d.status === 'ok' ? 'var(--green)' : 'var(--red)';
+    }).catch(() => {
+      document.getElementById('cfg-health').textContent = '✗ ไม่สามารถเชื่อมต่อ';
+      document.getElementById('cfg-health').style.color = 'var(--red)';
+    });
+
+    // Load donations
     const donations = await api('/api/donations');
     if (Array.isArray(donations)) {
-      donations.forEach(d => prependDonation(d, false));
+      donations.forEach(d => addDonation(d));
+      renderDonations();
       updateDonationStats();
     }
 
-    // Load session state
+    // Load session
     const session = await api('/api/session');
     if (session?.youtube) applyPlatformState('yt', session.youtube.active, session.youtube.videoId);
     if (session?.tiktok)  applyPlatformState('tt', session.tiktok.active, session.tiktok.username);
 
+    // TTS key status — try a dummy call to see if key is configured
+    checkTtsKey();
+
     connectSocket();
     setupPlatformUI();
     setupChatFilters();
+    setupTtsUI();
   }
 
-  // ── Socket.IO ──────────────────────────────────────────────────────────────
+  function copyText(text, btnId) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById(btnId);
+      const orig = btn.textContent;
+      btn.textContent = 'คัดลอกแล้ว ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2500);
+    });
+  }
+
+  // ── Socket.IO ────────────────────────────────────────────────────────────────
   function connectSocket() {
     socket = io({ auth: { token } });
 
@@ -408,11 +662,23 @@
       appendChatItem(msg);
       chatCount++;
       document.getElementById('stat-chat').textContent = chatCount;
+
+      // badge ถ้าไม่ได้อยู่ใน tab chat
+      const chatPanel = document.getElementById('tab-chat');
+      if (!chatPanel.classList.contains('active')) {
+        const badge = document.getElementById('chat-badge');
+        badge.style.display = '';
+        badge.textContent = parseInt(badge.textContent || '0') + 1;
+      }
     });
 
     socket.on('donation', (d) => {
-      prependDonation(d, true);
+      addDonation(d);
+      renderDonations();
       updateDonationStats();
+      const badge = document.getElementById('donation-badge');
+      badge.style.display = '';
+      badge.textContent = parseInt(badge.textContent || '0') + 1;
     });
 
     socket.on('session', (s) => {
@@ -420,48 +686,58 @@
       if (s.tiktok  !== undefined) applyPlatformState('tt', s.tiktok.active, s.tiktok.username);
     });
 
-    socket.on('disconnect', () => console.log('Socket disconnected'));
     socket.on('connect_error', () => {
       localStorage.removeItem('st_token');
       location.reload();
     });
   }
 
-  // ── Platform state ─────────────────────────────────────────────────────────
+  // ── Platform state ────────────────────────────────────────────────────────────
   function applyPlatformState(p, active, detail) {
-    const badge  = document.getElementById(`${p}-badge`);
-    const toggle = document.getElementById(`${p}-toggle`);
-    const sub    = document.getElementById(`${p}-sub`);
-    const form   = document.getElementById(`${p}-form`);
+    const badge      = document.getElementById(`${p}-badge`);
+    const toggle     = document.getElementById(`${p}-toggle`);
+    const sub        = document.getElementById(`${p}-sub`);
+    const statusText = document.getElementById(`${p}-status-text`);
+    const form       = document.getElementById(`${p}-form`);
 
     if (active) {
       badge.textContent  = 'Live';
       badge.className    = 'badge badge-live';
       toggle.textContent = 'หยุด';
-      toggle.className   = 'btn btn-ghost';
-      sub.textContent    = detail ? (p === 'yt' ? `Video: ${detail}` : `@${detail}`) : (p === 'yt' ? 'Chat polling' : 'Gift & chat');
+      toggle.className   = 'btn btn-danger btn-sm';
+      if (statusText) statusText.textContent = 'กำลังเชื่อมต่ออยู่';
+      sub.textContent = detail
+        ? (p === 'yt' ? `Video ID: ${detail}` : `@${detail}`)
+        : (p === 'yt' ? 'ดึง chat ผ่าน YouTube Data API v3' : 'รับ chat ผ่าน WebSocket');
       form.classList.remove('open');
     } else {
       badge.textContent  = 'ปิดอยู่';
       badge.className    = 'badge';
       toggle.textContent = 'เชื่อมต่อ';
-      toggle.className   = 'btn btn-secondary';
-      sub.textContent    = p === 'yt' ? 'Chat polling' : 'Gift & chat';
+      toggle.className   = 'btn btn-secondary btn-sm';
+      if (statusText) statusText.textContent = 'ไม่ได้เชื่อมต่อ';
+      sub.textContent = p === 'yt' ? 'ดึง chat ผ่าน YouTube Data API v3' : 'รับ chat ผ่าน WebSocket';
     }
 
     if (p === 'yt') ytActive = active;
     if (p === 'tt') ttActive = active;
+
     const count = (ytActive ? 1 : 0) + (ttActive ? 1 : 0);
     document.getElementById('stat-platforms').textContent = count > 0 ? count : '—';
+    const names = [ytActive && 'YouTube', ttActive && 'TikTok'].filter(Boolean);
+    document.getElementById('stat-platforms-sub').textContent = names.length ? names.join(' + ') : 'ไม่มีการเชื่อมต่อ';
+
+    // Header live badge
+    document.getElementById('header-live').style.display = count > 0 ? 'flex' : 'none';
   }
 
-  // ── Platform UI ────────────────────────────────────────────────────────────
+  // ── Platform UI ───────────────────────────────────────────────────────────────
   function setupPlatformUI() {
-    // YouTube toggle
     document.getElementById('yt-toggle').onclick = async () => {
       if (ytActive) {
         const r = await api('/api/stopYouTubeChat', {});
         if (r?.ok) toast('หยุด YouTube แล้ว');
+        else toast(r?.error || 'เกิดข้อผิดพลาด', 'error');
       } else {
         document.getElementById('yt-form').classList.toggle('open');
       }
@@ -478,11 +754,11 @@
       else toast(r?.error || 'เชื่อมต่อไม่สำเร็จ', 'error');
     };
 
-    // TikTok toggle
     document.getElementById('tt-toggle').onclick = async () => {
       if (ttActive) {
         const r = await api('/api/stopTikTokChat', {});
         if (r?.ok) toast('หยุด TikTok แล้ว');
+        else toast(r?.error || 'เกิดข้อผิดพลาด', 'error');
       } else {
         document.getElementById('tt-form').classList.toggle('open');
       }
@@ -500,7 +776,7 @@
     };
   }
 
-  // ── Chat feed ──────────────────────────────────────────────────────────────
+  // ── Chat ──────────────────────────────────────────────────────────────────────
   function appendChatItem(msg) {
     const feed  = document.getElementById('chat-feed');
     const empty = document.getElementById('chat-feed-empty');
@@ -517,11 +793,11 @@
     el.dataset.platform = platform;
     if (chatFilter !== 'all' && chatFilter !== platform) el.classList.add('hidden');
     el.innerHTML = `
-      <div class="chat-feed-platform ${platform}">${icon}</div>
-      <div class="chat-feed-content">
-        <div class="chat-feed-name ${platform}">${esc(displayName)}</div>
-        <div class="chat-feed-text">${esc(message)}</div>
-        ${timeStr ? `<div class="chat-feed-time">${timeStr}</div>` : ''}
+      <div class="chat-platform-icon ${platform}">${icon}</div>
+      <div class="chat-content">
+        <div class="chat-name ${platform}">${esc(displayName)}</div>
+        <div class="chat-text">${esc(message)}</div>
+        ${timeStr ? `<div class="chat-time">${timeStr}</div>` : ''}
       </div>`;
     feed.appendChild(el);
     while (feed.children.length > 100) feed.children[0].remove();
@@ -530,10 +806,10 @@
   }
 
   function setupChatFilters() {
-    document.querySelectorAll('.chat-filter-btn').forEach(btn => {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.onclick = () => {
         chatFilter = btn.dataset.filter;
-        document.querySelectorAll('.chat-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
         document.querySelectorAll('.chat-feed-item').forEach(el =>
           el.classList.toggle('hidden', chatFilter !== 'all' && el.dataset.platform !== chatFilter)
         );
@@ -541,73 +817,126 @@
     });
   }
 
-  // ── Donations ──────────────────────────────────────────────────────────────
-  const donationList = [];
-
-  function prependDonation(d, animate) {
+  // ── Donations ────────────────────────────────────────────────────────────────
+  function addDonation(d) {
     donationList.unshift(d);
-    if (donationList.length > 50) donationList.length = 50;
-    renderDonations();
+    if (donationList.length > 100) donationList.length = 100;
   }
 
   function renderDonations() {
-    const list = document.getElementById('donations-list');
+    const overviewEl = document.getElementById('overview-donations');
+    const fullEl     = document.getElementById('donations-full-list');
+
     if (donationList.length === 0) {
-      list.innerHTML = '<div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>';
+      const empty = '<div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>';
+      overviewEl.innerHTML = empty;
+      fullEl.innerHTML     = empty;
       return;
     }
-    list.innerHTML = donationList.slice(0, 20).map(d => `
-      <div class="donation-item">
-        <div class="donation-avatar">${esc((d.displayName || '?').charAt(0).toUpperCase())}</div>
+
+    const html = (list) => list.map(d => {
+      const timeStr = d.createdAt
+        ? new Date(d.createdAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
+        : '';
+      return `<div class="donation-item">
+        <div class="donation-avatar">${esc((d.displayName||'?').charAt(0).toUpperCase())}</div>
         <div class="donation-info">
           <div class="donation-name">${esc(d.displayName || 'ไม่ระบุ')}</div>
           ${d.message ? `<div class="donation-msg">${esc(d.message)}</div>` : ''}
+          ${timeStr ? `<div class="donation-meta">${timeStr}</div>` : ''}
         </div>
-        <div class="donation-amount">฿${Number(d.amount || 0).toLocaleString('th-TH')}</div>
-      </div>`).join('');
+        <div class="donation-amount">฿${Number(d.amount||0).toLocaleString('th-TH')}</div>
+      </div>`;
+    }).join('');
+
+    overviewEl.innerHTML = html(donationList.slice(0, 5));
+    fullEl.innerHTML     = html(donationList);
   }
 
   function updateDonationStats() {
     const today = new Date(); today.setHours(0,0,0,0);
     const todayDocs = donationList.filter(d => d.createdAt && new Date(d.createdAt) >= today);
     const total = todayDocs.reduce((s, d) => s + (d.amount || 0), 0);
-    document.getElementById('stat-total').textContent = `฿${total.toLocaleString('th-TH')}`;
-    document.getElementById('stat-count').textContent = `${todayDocs.length} รายการ`;
+    const max   = donationList.reduce((m, d) => d.amount > m.amount ? d : m, { amount: 0 });
+
+    document.getElementById('stat-total').textContent    = `฿${total.toLocaleString('th-TH')}`;
+    document.getElementById('stat-count').textContent    = `${todayDocs.length} รายการ`;
+    document.getElementById('don-stat-total').textContent = `฿${total.toLocaleString('th-TH')}`;
+    document.getElementById('don-stat-count').textContent = `${todayDocs.length} รายการ`;
+    document.getElementById('don-stat-max').textContent  = `฿${Number(max.amount||0).toLocaleString('th-TH')}`;
+    document.getElementById('don-stat-max-name').textContent = max.displayName || '—';
   }
 
-  // ── TTS Test ───────────────────────────────────────────────────────────────
-  document.getElementById('tts-test-btn').onclick = async () => {
-    const text = document.getElementById('tts-text').value.trim();
-    if (!text) return toast('ใส่ข้อความก่อน', 'error');
-    const btn = document.getElementById('tts-test-btn');
-    const status = document.getElementById('tts-status');
-    btn.textContent = 'กำลังโหลด...'; btn.disabled = true;
-    status.textContent = '';
-    const r = await api('/api/test-tts', { text });
-    btn.textContent = '▶ ทดสอบเสียง'; btn.disabled = false;
-    if (r?.ok && r?.audio) {
-      status.textContent = 'เล่นเสียงแล้ว ✓';
-      const audio = new Audio(`data:audio/mp3;base64,${r.audio}`);
-      audio.play().catch(() => toast('เบราว์เซอร์บล็อกการเล่นเสียง — คลิกหน้าเพจก่อน', 'error'));
-    } else {
-      status.style.color = 'var(--red)';
-      status.textContent = r?.error || 'เกิดข้อผิดพลาด';
-      toast(r?.error || 'TTS ล้มเหลว', 'error');
-    }
-  };
+  // ── TTS ───────────────────────────────────────────────────────────────────────
+  function checkTtsKey() {
+    // ลอง call test-tts ด้วย text ว่างเพื่อเช็ค key
+    fetch('/api/test-tts', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: '' }),
+    }).then(r => r.json()).then(d => {
+      const el = document.getElementById('tts-key-status');
+      const envEl = document.getElementById('env-tts');
+      if (d.error === 'GOOGLE_TTS_KEY not set') {
+        el.innerHTML = '<span class="tts-status-dot err"></span>ยังไม่ได้ตั้งค่า';
+        if (envEl) { envEl.textContent = '✗ ยังไม่ได้ตั้งค่า'; envEl.style.color = 'var(--red)'; }
+      } else {
+        el.innerHTML = '<span class="tts-status-dot ok"></span>ตั้งค่าแล้ว';
+        if (envEl) { envEl.textContent = '✓ ตั้งค่าแล้ว'; envEl.style.color = 'var(--green)'; }
+      }
+    }).catch(() => {});
+  }
 
-  // ── Init ───────────────────────────────────────────────────────────────────
+  function setupTtsUI() {
+    document.getElementById('tts-test-btn').onclick = async () => {
+      const text = document.getElementById('tts-text').value.trim();
+      if (!text) return toast('ใส่ข้อความก่อน', 'error');
+      const btn    = document.getElementById('tts-test-btn');
+      const status = document.getElementById('tts-status');
+      btn.textContent = 'กำลังโหลด...'; btn.disabled = true;
+      status.textContent = '';
+      status.style.color = 'var(--muted)';
+
+      const r = await api('/api/test-tts', { text });
+      btn.textContent = '▶ เล่นเสียง'; btn.disabled = false;
+
+      if (r?.ok && r?.audio) {
+        status.textContent = 'เล่นเสียงแล้ว ✓';
+        status.style.color = 'var(--green)';
+        const audio = new Audio(`data:audio/mp3;base64,${r.audio}`);
+        audio.play().catch(() => toast('เบราว์เซอร์บล็อกเสียง — ลองคลิกที่หน้าเพจก่อน', 'error'));
+      } else {
+        status.textContent = r?.error || 'เกิดข้อผิดพลาด';
+        status.style.color = 'var(--red)';
+        toast(r?.error || 'TTS ล้มเหลว', 'error');
+      }
+    };
+
+    // ตรวจสอบ env vars อื่นๆ
+    fetch('/api/health').then(r => r.json()).then(d => {
+      const setEnvStatus = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = val ? '✓ ตั้งค่าแล้ว' : '✗ ยังไม่ได้ตั้งค่า';
+        el.style.color = val ? 'var(--green)' : 'var(--red)';
+      };
+      // health endpoint บอกสถานะ youtube และ tiktok
+      setEnvStatus('env-yt',   d.youtubeKey);
+      setEnvStatus('env-slip', d.easyslipKey);
+      setEnvStatus('env-tt',   d.tiktokSession);
+      setEnvStatus('env-tts',  d.googleTtsKey);
+    }).catch(() => {});
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
   (async () => {
     if (token) {
-      // Try to verify token is still valid
-      const res = await fetch('/api/session', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch('/api/session', { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { showApp(); return; }
       localStorage.removeItem('st_token');
       token = '';
     }
-    loginScreen.style.display = 'flex';
+    document.getElementById('login-screen').style.display = 'flex';
   })();
 </script>
 </body>
