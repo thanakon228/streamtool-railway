@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamTool — Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #252836; --border: #2d3044;
+      --accent: #7c5cfc; --accent-dim: #4f3ca8; --green: #22c55e; --red: #ef4444;
+      --yellow: #f59e0b; --text: #e2e8f0; --muted: #64748b; --radius: 12px;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Login */
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #0f1117, #1a1233); }
+    .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 48px 40px; text-align: center; max-width: 380px; width: 90%; }
+    .login-logo { width: 64px; height: 64px; background: var(--accent); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; }
+    .login-card h1 { font-size: 24px; margin-bottom: 8px; }
+    .login-card p  { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+    .login-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; color: var(--text); font-size: 15px; outline: none; margin-bottom: 12px; transition: border-color 0.15s; }
+    .login-input:focus { border-color: var(--accent); }
+    .login-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .login-btn:hover { opacity: 0.9; }
+    .login-error { color: var(--red); font-size: 13px; margin-top: 8px; }
+
+    /* App */
+    #app { display: none; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .header-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+    .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+    .btn-primary   { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #6d4ee6; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--red); border-color: var(--red); }
+    main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; line-height: 1; }
+    .stat-sub   { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* Grid */
+    .content-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+    @media (max-width: 900px) { .content-grid { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-title  { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .card-body   { padding: 20px; }
+
+    /* Overlay URL */
+    .url-box { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
+    .url-text { flex: 1; font-family: 'Courier New', monospace; font-size: 13px; color: var(--accent); word-break: break-all; }
+    .copy-btn { flex-shrink: 0; padding: 6px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .copy-btn:hover  { background: var(--accent); border-color: var(--accent); }
+    .copy-btn.copied { background: var(--green); border-color: var(--green); color: white; }
+
+    /* Donations */
+    .donation-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.3s ease; }
+    .donation-item:last-child { border-bottom: none; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .donation-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .donation-info   { flex: 1; min-width: 0; }
+    .donation-name   { font-size: 14px; font-weight: 600; }
+    .donation-msg    { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .donation-amount { font-size: 16px; font-weight: 700; color: var(--green); flex-shrink: 0; }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
+    .empty-icon  { font-size: 32px; margin-bottom: 8px; }
+
+    /* Platform */
+    .platform-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .platform-item:last-child { border-bottom: none; }
+    .platform-info { display: flex; align-items: center; gap: 10px; }
+    .platform-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .platform-name { font-size: 14px; font-weight: 500; }
+    .platform-sub  { font-size: 12px; color: var(--muted); }
+    .badge         { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .badge-live    { background: rgba(34,197,94,0.15);  color: var(--green); }
+    .platform-connect { padding: 12px 0 4px; display: none; flex-direction: column; gap: 8px; }
+    .platform-connect.open { display: flex; }
+    .connect-row { display: flex; gap: 8px; }
+    .connect-row .input-field { flex: 1; }
+    .input-field { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 13px; outline: none; transition: border-color 0.15s; }
+    .input-field:focus { border-color: var(--accent); }
+
+    /* Chat feed */
+    .chat-feed { max-height: 380px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .chat-feed::-webkit-scrollbar { width: 4px; }
+    .chat-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .chat-feed-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.25s ease; }
+    .chat-feed-item:last-child { border-bottom: none; }
+    .chat-feed-item.hidden { display: none; }
+    .chat-feed-platform { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
+    .chat-feed-platform.youtube { background: rgba(255,0,0,0.15); color: #ff6666; }
+    .chat-feed-platform.tiktok  { background: rgba(105,201,208,0.15); color: #69c9d0; }
+    .chat-feed-content { flex: 1; min-width: 0; }
+    .chat-feed-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .chat-feed-name.youtube { color: #ff4444; }
+    .chat-feed-name.tiktok  { color: #69c9d0; }
+    .chat-feed-text { font-size: 13px; color: var(--text); line-height: 1.4; word-break: break-word; }
+    .chat-feed-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .chat-filter-bar { display: flex; gap: 6px; }
+    .chat-filter-btn { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .chat-filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Config */
+    .config-row   { margin-bottom: 16px; }
+    .config-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .config-value { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; }
+    .live-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; transform: translateY(80px); opacity: 0; transition: all 0.3s; z-index: 999; }
+    #toast.show    { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: var(--green); color: var(--green); }
+    #toast.error   { border-color: var(--red);   color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🎮</div>
+    <h1>StreamTool</h1>
+    <p>ระบบจัดการ stream ครบวงจร</p>
+    <input id="pw-input" class="login-input" type="password" placeholder="รหัสผ่าน" />
+    <button class="login-btn" id="login-btn">เข้าสู่ระบบ</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <div class="header-logo"><div class="logo-icon">🎮</div>StreamTool</div>
+    <button class="btn btn-ghost" id="logout-btn">ออกจากระบบ</button>
+  </header>
+  <main>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">💰 ยอด Donate วันนี้</div>
+        <div class="stat-value" id="stat-total">฿0</div>
+        <div class="stat-sub" id="stat-count">0 รายการ</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">💬 Chat วันนี้</div>
+        <div class="stat-value" id="stat-chat">0</div>
+        <div class="stat-sub">ข้อความ</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">📡 เชื่อมต่อ</div>
+        <div class="stat-value" id="stat-platforms">—</div>
+        <div class="stat-sub">platform</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- Overlay URL -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔗 Overlay URL สำหรับ OBS</div></div>
+          <div class="card-body">
+            <div class="url-box">
+              <span class="url-text" id="overlay-url">กำลังโหลด...</span>
+              <button class="copy-btn" id="copy-url-btn">คัดลอก</button>
+            </div>
+            <p style="font-size:12px;color:var(--muted);">วาง URL นี้ใน OBS → Browser Source</p>
+          </div>
+        </div>
+
+        <!-- Donations -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><div class="live-dot"></div>Donations ล่าสุด</div>
+          </div>
+          <div class="card-body" style="padding:0 20px;">
+            <div id="donations-list">
+              <div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Feed -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><div class="live-dot"></div>Live Chat Feed</div>
+            <div class="chat-filter-bar">
+              <button class="chat-filter-btn active" data-filter="all">ทั้งหมด</button>
+              <button class="chat-filter-btn" data-filter="youtube">▶ YouTube</button>
+              <button class="chat-filter-btn" data-filter="tiktok">♪ TikTok</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0 20px;">
+            <div id="chat-feed" class="chat-feed">
+              <div class="empty-state" id="chat-feed-empty"><div class="empty-icon">💬</div>รอข้อความ</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- Platform connections -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📡 Platform</div></div>
+          <div class="card-body" style="padding:0 20px;">
+
+            <!-- YouTube -->
+            <div class="platform-item" style="flex-direction:column;align-items:stretch;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px;">
+                <div class="platform-info">
+                  <div class="platform-icon" style="background:rgba(255,0,0,0.1);">▶️</div>
+                  <div>
+                    <div class="platform-name">YouTube Live</div>
+                    <div class="platform-sub" id="yt-sub">Chat polling</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <span class="badge" id="yt-badge">ปิดอยู่</span>
+                  <button class="btn btn-secondary" id="yt-toggle" style="font-size:12px;padding:5px 12px;">เชื่อมต่อ</button>
+                </div>
+              </div>
+              <div class="platform-connect" id="yt-form">
+                <div style="font-size:12px;color:var(--muted);">YouTube Video ID</div>
+                <div class="connect-row">
+                  <input id="yt-video-id" class="input-field" type="text" placeholder="เช่น dQw4w9WgXcQ" />
+                  <button class="btn btn-primary" id="yt-connect" style="white-space:nowrap;">เริ่ม</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- TikTok -->
+            <div class="platform-item" style="flex-direction:column;align-items:stretch;border-bottom:none;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px;">
+                <div class="platform-info">
+                  <div class="platform-icon" style="background:rgba(255,255,255,0.05);">🎵</div>
+                  <div>
+                    <div class="platform-name">TikTok Live</div>
+                    <div class="platform-sub" id="tt-sub">Gift & chat</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <span class="badge" id="tt-badge">ปิดอยู่</span>
+                  <button class="btn btn-secondary" id="tt-toggle" style="font-size:12px;padding:5px 12px;">เชื่อมต่อ</button>
+                </div>
+              </div>
+              <div class="platform-connect" id="tt-form">
+                <div style="font-size:12px;color:var(--muted);">TikTok Username (ไม่ต้องมี @)</div>
+                <div class="connect-row">
+                  <input id="tt-username" class="input-field" type="text" placeholder="เช่น username123" />
+                  <button class="btn btn-primary" id="tt-connect" style="white-space:nowrap;">เริ่ม</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Config -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚙️ Config</div></div>
+          <div class="card-body">
+            <div class="config-row">
+              <div class="config-label">Overlay ID</div>
+              <div class="config-value" id="config-overlay-id">—</div>
+            </div>
+            <div class="config-row" style="margin-bottom:0;">
+              <div class="config-label">Server</div>
+              <div class="config-value" id="config-server">—</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let token      = localStorage.getItem('st_token') || '';
+  let overlayId  = localStorage.getItem('st_overlay') || '';
+  let socket     = null;
+  let chatFilter = 'all';
+  let chatCount  = 0;
+  let ytActive   = false;
+  let ttActive   = false;
+
+  const loginScreen = document.getElementById('login-screen');
+  const appEl       = document.getElementById('app');
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    setTimeout(() => t.className = '', 3000);
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── API helper ─────────────────────────────────────────────────────────────
+  async function api(path, body) {
+    const res = await fetch(path, {
+      method: body !== undefined ? 'POST' : 'GET',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+    return res.json();
+  }
+
+  // ── Login ──────────────────────────────────────────────────────────────────
+  async function login(pw) {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    }).then(r => r.json());
+
+    if (!res.ok) {
+      document.getElementById('login-error').textContent = res.error || 'ล้มเหลว';
+      return;
+    }
+    token     = res.token;
+    overlayId = res.overlayId;
+    localStorage.setItem('st_token', token);
+    localStorage.setItem('st_overlay', overlayId);
+    showApp();
+  }
+
+  document.getElementById('login-btn').onclick = () => login(document.getElementById('pw-input').value);
+  document.getElementById('pw-input').onkeydown = e => { if (e.key === 'Enter') login(e.target.value); };
+
+  document.getElementById('logout-btn').onclick = () => {
+    localStorage.removeItem('st_token');
+    localStorage.removeItem('st_overlay');
+    if (socket) socket.disconnect();
+    appEl.style.display = 'none';
+    loginScreen.style.display = 'flex';
+  };
+
+  // ── Show app ───────────────────────────────────────────────────────────────
+  async function showApp() {
+    loginScreen.style.display = 'none';
+    appEl.style.display = 'block';
+
+    const origin = location.origin;
+    document.getElementById('overlay-url').textContent  = `${origin}/overlay/${overlayId}`;
+    document.getElementById('config-overlay-id').textContent = overlayId;
+    document.getElementById('config-server').textContent     = origin;
+
+    // Copy URL
+    document.getElementById('copy-url-btn').onclick = () => {
+      navigator.clipboard.writeText(`${origin}/overlay/${overlayId}`).then(() => {
+        const btn = document.getElementById('copy-url-btn');
+        btn.textContent = 'คัดลอกแล้ว ✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'คัดลอก'; btn.classList.remove('copied'); }, 2500);
+      });
+    };
+
+    // Load existing donations
+    const donations = await api('/api/donations');
+    if (Array.isArray(donations)) {
+      donations.forEach(d => prependDonation(d, false));
+      updateDonationStats();
+    }
+
+    // Load session state
+    const session = await api('/api/session');
+    if (session?.youtube) applyPlatformState('yt', session.youtube.active, session.youtube.videoId);
+    if (session?.tiktok)  applyPlatformState('tt', session.tiktok.active, session.tiktok.username);
+
+    connectSocket();
+    setupPlatformUI();
+    setupChatFilters();
+  }
+
+  // ── Socket.IO ──────────────────────────────────────────────────────────────
+  function connectSocket() {
+    socket = io({ auth: { token } });
+
+    socket.on('chat', (msg) => {
+      appendChatItem(msg);
+      chatCount++;
+      document.getElementById('stat-chat').textContent = chatCount;
+    });
+
+    socket.on('donation', (d) => {
+      prependDonation(d, true);
+      updateDonationStats();
+    });
+
+    socket.on('session', (s) => {
+      if (s.youtube !== undefined) applyPlatformState('yt', s.youtube.active, s.youtube.videoId);
+      if (s.tiktok  !== undefined) applyPlatformState('tt', s.tiktok.active, s.tiktok.username);
+    });
+
+    socket.on('disconnect', () => console.log('Socket disconnected'));
+    socket.on('connect_error', () => {
+      localStorage.removeItem('st_token');
+      location.reload();
+    });
+  }
+
+  // ── Platform state ─────────────────────────────────────────────────────────
+  function applyPlatformState(p, active, detail) {
+    const badge  = document.getElementById(`${p}-badge`);
+    const toggle = document.getElementById(`${p}-toggle`);
+    const sub    = document.getElementById(`${p}-sub`);
+    const form   = document.getElementById(`${p}-form`);
+
+    if (active) {
+      badge.textContent  = 'Live';
+      badge.className    = 'badge badge-live';
+      toggle.textContent = 'หยุด';
+      toggle.className   = 'btn btn-ghost';
+      sub.textContent    = detail ? (p === 'yt' ? `Video: ${detail}` : `@${detail}`) : (p === 'yt' ? 'Chat polling' : 'Gift & chat');
+      form.classList.remove('open');
+    } else {
+      badge.textContent  = 'ปิดอยู่';
+      badge.className    = 'badge';
+      toggle.textContent = 'เชื่อมต่อ';
+      toggle.className   = 'btn btn-secondary';
+      sub.textContent    = p === 'yt' ? 'Chat polling' : 'Gift & chat';
+    }
+
+    if (p === 'yt') ytActive = active;
+    if (p === 'tt') ttActive = active;
+    const count = (ytActive ? 1 : 0) + (ttActive ? 1 : 0);
+    document.getElementById('stat-platforms').textContent = count > 0 ? count : '—';
+  }
+
+  // ── Platform UI ────────────────────────────────────────────────────────────
+  function setupPlatformUI() {
+    // YouTube toggle
+    document.getElementById('yt-toggle').onclick = async () => {
+      if (ytActive) {
+        const r = await api('/api/stopYouTubeChat', {});
+        if (r?.ok) toast('หยุด YouTube แล้ว');
+      } else {
+        document.getElementById('yt-form').classList.toggle('open');
+      }
+    };
+
+    document.getElementById('yt-connect').onclick = async () => {
+      const videoId = document.getElementById('yt-video-id').value.trim();
+      if (!videoId) return toast('ใส่ Video ID ก่อน', 'error');
+      const btn = document.getElementById('yt-connect');
+      btn.textContent = 'กำลังเชื่อมต่อ...'; btn.disabled = true;
+      const r = await api('/api/startYouTubeChat', { videoId });
+      btn.textContent = 'เริ่ม'; btn.disabled = false;
+      if (r?.ok) { toast('เชื่อมต่อ YouTube สำเร็จ ✓'); document.getElementById('yt-form').classList.remove('open'); }
+      else toast(r?.error || 'เชื่อมต่อไม่สำเร็จ', 'error');
+    };
+
+    // TikTok toggle
+    document.getElementById('tt-toggle').onclick = async () => {
+      if (ttActive) {
+        const r = await api('/api/stopTikTokChat', {});
+        if (r?.ok) toast('หยุด TikTok แล้ว');
+      } else {
+        document.getElementById('tt-form').classList.toggle('open');
+      }
+    };
+
+    document.getElementById('tt-connect').onclick = async () => {
+      const username = document.getElementById('tt-username').value.trim();
+      if (!username) return toast('ใส่ username ก่อน', 'error');
+      const btn = document.getElementById('tt-connect');
+      btn.textContent = 'กำลังเชื่อมต่อ...'; btn.disabled = true;
+      const r = await api('/api/startTikTokChat', { username });
+      btn.textContent = 'เริ่ม'; btn.disabled = false;
+      if (r?.ok) { toast('เชื่อมต่อ TikTok สำเร็จ ✓'); document.getElementById('tt-form').classList.remove('open'); }
+      else toast(r?.error || 'เชื่อมต่อไม่สำเร็จ', 'error');
+    };
+  }
+
+  // ── Chat feed ──────────────────────────────────────────────────────────────
+  function appendChatItem(msg) {
+    const feed  = document.getElementById('chat-feed');
+    const empty = document.getElementById('chat-feed-empty');
+    if (empty) empty.remove();
+
+    const { platform = 'unknown', displayName = 'viewer', message = '', sentAt } = msg;
+    const icon = platform === 'youtube' ? '▶' : '♪';
+    const timeStr = sentAt
+      ? new Date(sentAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })
+      : '';
+
+    const el = document.createElement('div');
+    el.className = 'chat-feed-item';
+    el.dataset.platform = platform;
+    if (chatFilter !== 'all' && chatFilter !== platform) el.classList.add('hidden');
+    el.innerHTML = `
+      <div class="chat-feed-platform ${platform}">${icon}</div>
+      <div class="chat-feed-content">
+        <div class="chat-feed-name ${platform}">${esc(displayName)}</div>
+        <div class="chat-feed-text">${esc(message)}</div>
+        ${timeStr ? `<div class="chat-feed-time">${timeStr}</div>` : ''}
+      </div>`;
+    feed.appendChild(el);
+    while (feed.children.length > 100) feed.children[0].remove();
+    const near = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80;
+    if (near) feed.scrollTop = feed.scrollHeight;
+  }
+
+  function setupChatFilters() {
+    document.querySelectorAll('.chat-filter-btn').forEach(btn => {
+      btn.onclick = () => {
+        chatFilter = btn.dataset.filter;
+        document.querySelectorAll('.chat-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+        document.querySelectorAll('.chat-feed-item').forEach(el =>
+          el.classList.toggle('hidden', chatFilter !== 'all' && el.dataset.platform !== chatFilter)
+        );
+      };
+    });
+  }
+
+  // ── Donations ──────────────────────────────────────────────────────────────
+  const donationList = [];
+
+  function prependDonation(d, animate) {
+    donationList.unshift(d);
+    if (donationList.length > 50) donationList.length = 50;
+    renderDonations();
+  }
+
+  function renderDonations() {
+    const list = document.getElementById('donations-list');
+    if (donationList.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>';
+      return;
+    }
+    list.innerHTML = donationList.slice(0, 20).map(d => `
+      <div class="donation-item">
+        <div class="donation-avatar">${esc((d.displayName || '?').charAt(0).toUpperCase())}</div>
+        <div class="donation-info">
+          <div class="donation-name">${esc(d.displayName || 'ไม่ระบุ')}</div>
+          ${d.message ? `<div class="donation-msg">${esc(d.message)}</div>` : ''}
+        </div>
+        <div class="donation-amount">฿${Number(d.amount || 0).toLocaleString('th-TH')}</div>
+      </div>`).join('');
+  }
+
+  function updateDonationStats() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayDocs = donationList.filter(d => d.createdAt && new Date(d.createdAt) >= today);
+    const total = todayDocs.reduce((s, d) => s + (d.amount || 0), 0);
+    document.getElementById('stat-total').textContent = `฿${total.toLocaleString('th-TH')}`;
+    document.getElementById('stat-count').textContent = `${todayDocs.length} รายการ`;
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  (async () => {
+    if (token) {
+      // Try to verify token is still valid
+      const res = await fetch('/api/session', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) { showApp(); return; }
+      localStorage.removeItem('st_token');
+      token = '';
+    }
+    loginScreen.style.display = 'flex';
+  })();
+</script>
+</body>
+</html>

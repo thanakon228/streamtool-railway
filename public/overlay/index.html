@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>StreamTool Overlay</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; font-family: 'Segoe UI', 'Noto Sans Thai', system-ui, sans-serif; }
+
+    #alert-zone { position: fixed; top: 50%; right: 40px; transform: translateY(-50%); width: 380px; pointer-events: none; }
+
+    #chat-zone { position: fixed; bottom: 40px; left: 40px; width: 360px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+
+    /* Alert card */
+    #alert-card {
+      background: linear-gradient(135deg, rgba(20,16,40,0.95), rgba(30,22,60,0.95));
+      border: 1px solid rgba(124,92,252,0.6);
+      border-radius: 16px; padding: 0; overflow: hidden;
+      box-shadow: 0 8px 40px rgba(124,92,252,0.4), 0 0 0 1px rgba(124,92,252,0.2);
+      opacity: 0; transform: translateX(420px);
+      transition: opacity 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #alert-card.show { opacity: 1; transform: translateX(0); }
+    #alert-card.hide { opacity: 0; transform: translateX(420px); transition: opacity 0.35s ease-in, transform 0.35s ease-in; }
+    .alert-accent-bar { height: 4px; background: linear-gradient(90deg,#7c5cfc,#ec4899,#f59e0b); background-size: 200% 100%; animation: gradientShift 3s linear infinite; }
+    @keyframes gradientShift { 0%{background-position:0%} 100%{background-position:200%} }
+    .alert-body { padding: 20px 22px 22px; }
+    .alert-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .alert-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg,#7c5cfc,#ec4899); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 0 16px rgba(124,92,252,0.5); }
+    .alert-name-wrap { flex: 1; min-width: 0; }
+    .alert-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .alert-name   { font-size: 18px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .alert-amount { font-size: 28px; font-weight: 800; color: #22c55e; text-shadow: 0 0 20px rgba(34,197,94,0.5); white-space: nowrap; }
+    .alert-message { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.5; background: rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 14px; margin-top: 4px; border-left: 3px solid rgba(124,92,252,0.6); }
+
+    /* Confetti */
+    .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+    .confetti-piece { position: absolute; width: 8px; height: 8px; border-radius: 2px; animation: confettiFall linear forwards; opacity: 0; }
+    @keyframes confettiFall { 0%{opacity:1;transform:translateY(-10px) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
+
+    /* Chat */
+    .chat-msg { display: flex; align-items: flex-start; gap: 8px; background: rgba(15,17,23,0.75); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 8px 12px; backdrop-filter: blur(8px); animation: chatSlideIn 0.3s ease; }
+    @keyframes chatSlideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+    .chat-platform { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+    .chat-platform.youtube { background: rgba(255,0,0,0.2); }
+    .chat-platform.tiktok  { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
+    .chat-content { flex: 1; min-width: 0; }
+    .chat-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .chat-name.youtube { color: #ff4444; }
+    .chat-name.tiktok  { color: #69c9d0; }
+    .chat-text { font-size: 13px; color: rgba(255,255,255,0.88); line-height: 1.4; word-break: break-word; }
+    .chat-time { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="confetti-container" id="confetti-container"></div>
+<div id="alert-zone">
+  <div id="alert-card">
+    <div class="alert-accent-bar"></div>
+    <div class="alert-body">
+      <div class="alert-header">
+        <div class="alert-avatar" id="alert-avatar">?</div>
+        <div class="alert-name-wrap">
+          <div class="alert-label">Donation</div>
+          <div class="alert-name" id="alert-name">—</div>
+        </div>
+        <div class="alert-amount" id="alert-amount">฿0</div>
+      </div>
+      <div class="alert-message" id="alert-message" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+<div id="chat-zone"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const overlayId = location.pathname.replace(/^\/overlay\/?/, '').split('/')[0];
+  if (!overlayId) {
+    document.body.innerHTML = '<div style="color:red;padding:20px;">ไม่พบ Overlay ID</div>';
+  } else {
+    const socket = io({ auth: { overlayId } });
+
+    // ── Chat ────────────────────────────────────────────────────────────────
+    const MAX_CHAT = 5;
+
+    socket.on('chat', (msg) => appendChatMsg(msg));
+
+    function appendChatMsg(data) {
+      const { platform = 'unknown', displayName = 'viewer', message = '', sentAt } = data;
+      const icon = platform === 'youtube' ? '▶' : '♪';
+      const timeStr = sentAt
+        ? new Date(sentAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })
+        : new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+      const zone = document.getElementById('chat-zone');
+      const el   = document.createElement('div');
+      el.className = 'chat-msg';
+      el.innerHTML = `
+        <div class="chat-platform ${platform}">${icon}</div>
+        <div class="chat-content">
+          <div class="chat-name ${platform}">${esc(displayName)}</div>
+          <div class="chat-text">${esc(message)}</div>
+          <div class="chat-time">${timeStr}</div>
+        </div>`;
+      zone.appendChild(el);
+
+      while (zone.children.length > MAX_CHAT) {
+        const old = zone.children[0];
+        old.style.transition = 'opacity 0.3s, transform 0.3s';
+        old.style.opacity = '0';
+        old.style.transform = 'translateX(-20px)';
+        setTimeout(() => old.remove(), 300);
+        break;
+      }
+    }
+
+    // ── Alert ───────────────────────────────────────────────────────────────
+    const alertQueue = [];
+    let alertBusy = false;
+
+    socket.on('alert', (data) => {
+      alertQueue.push(data);
+      processQueue();
+    });
+
+    function processQueue() {
+      if (alertBusy || alertQueue.length === 0) return;
+      alertBusy = true;
+      showAlert(alertQueue.shift());
+    }
+
+    function showAlert(data) {
+      const name   = data.displayName || 'ไม่ระบุ';
+      const amount = data.amount ?? 0;
+
+      document.getElementById('alert-avatar').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('alert-name').textContent   = name;
+      document.getElementById('alert-amount').textContent = `฿${amount.toLocaleString('th-TH')}`;
+
+      const msgEl = document.getElementById('alert-message');
+      if (data.message) { msgEl.textContent = data.message; msgEl.style.display = 'block'; }
+      else               { msgEl.style.display = 'none'; }
+
+      const card = document.getElementById('alert-card');
+      card.classList.remove('hide');
+      card.classList.add('show');
+
+      if (amount >= 100) spawnConfetti();
+
+      const duration = 7000 + (data.message ? Math.min(data.message.length * 50, 3000) : 0);
+      setTimeout(() => {
+        card.classList.remove('show');
+        card.classList.add('hide');
+        setTimeout(() => { card.classList.remove('hide'); alertBusy = false; processQueue(); }, 400);
+      }, duration);
+    }
+
+    // ── Confetti ─────────────────────────────────────────────────────────────
+    const COLORS = ['#7c5cfc','#ec4899','#f59e0b','#22c55e','#38bdf8','#fff'];
+    function spawnConfetti() {
+      const c = document.getElementById('confetti-container');
+      for (let i = 0; i < 60; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.style.cssText = `left:${Math.random()*100}%;background:${COLORS[Math.floor(Math.random()*COLORS.length)]};width:${4+Math.random()*8}px;height:${4+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*.8}s;`;
+        c.appendChild(p);
+        p.addEventListener('animationend', () => p.remove());
+      }
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  }
+</script>
+</body>
+</html>
