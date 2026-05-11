@@ -92,8 +92,9 @@ app.post("/api/startYouTubeChat", auth, async (req, res) => {
       `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${YT_KEY}`
     );
     const d = await r.json();
+    if (d.error) return res.status(400).json({ error: `YouTube API error: ${d.error.message}` });
     const liveChatId = d.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
-    if (!liveChatId) return res.status(404).json({ error: "ไม่พบ live chat — ตรวจสอบ Video ID" });
+    if (!liveChatId) return res.status(404).json({ error: "ไม่พบ live chat — ตรวจสอบ Video ID และว่า stream กำลัง live อยู่" });
 
     ytSession = { videoId, liveChatId, nextPageToken: null, active: true };
     saveSessions();
