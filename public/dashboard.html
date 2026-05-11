@@ -265,6 +265,16 @@
           </div>
         </div>
 
+        <!-- TTS Test -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔊 ทดสอบ TTS</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+            <textarea id="tts-text" class="input-field" rows="3" placeholder="พิมพ์ข้อความที่ต้องการให้อ่าน..." style="resize:vertical;"></textarea>
+            <button class="btn btn-primary" id="tts-test-btn">▶ ทดสอบเสียง</button>
+            <div id="tts-status" style="font-size:12px;color:var(--muted);"></div>
+          </div>
+        </div>
+
         <!-- Config -->
         <div class="card">
           <div class="card-header"><div class="card-title">⚙️ Config</div></div>
@@ -564,6 +574,27 @@
     document.getElementById('stat-total').textContent = `฿${total.toLocaleString('th-TH')}`;
     document.getElementById('stat-count').textContent = `${todayDocs.length} รายการ`;
   }
+
+  // ── TTS Test ───────────────────────────────────────────────────────────────
+  document.getElementById('tts-test-btn').onclick = async () => {
+    const text = document.getElementById('tts-text').value.trim();
+    if (!text) return toast('ใส่ข้อความก่อน', 'error');
+    const btn = document.getElementById('tts-test-btn');
+    const status = document.getElementById('tts-status');
+    btn.textContent = 'กำลังโหลด...'; btn.disabled = true;
+    status.textContent = '';
+    const r = await api('/api/test-tts', { text });
+    btn.textContent = '▶ ทดสอบเสียง'; btn.disabled = false;
+    if (r?.ok && r?.audio) {
+      status.textContent = 'เล่นเสียงแล้ว ✓';
+      const audio = new Audio(`data:audio/mp3;base64,${r.audio}`);
+      audio.play().catch(() => toast('เบราว์เซอร์บล็อกการเล่นเสียง — คลิกหน้าเพจก่อน', 'error'));
+    } else {
+      status.style.color = 'var(--red)';
+      status.textContent = r?.error || 'เกิดข้อผิดพลาด';
+      toast(r?.error || 'TTS ล้มเหลว', 'error');
+    }
+  };
 
   // ── Init ───────────────────────────────────────────────────────────────────
   (async () => {
