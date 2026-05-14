@@ -1,0 +1,71 @@
+/* ── StreamTool Template: Gaming ───────────────────────────────── */
+:root {
+  --t-primary:   #00ff41;
+  --t-secondary: #00cc33;
+  --t-green:     #00ff41;
+
+  --t-alert-bg:          rgba(3,10,3,.97);
+  --t-alert-border:      #00ff41;
+  --t-alert-shadow:      0 0 18px rgba(0,255,65,.4),0 4px 30px rgba(0,0,0,.9);
+  --t-alert-radius:      8px;
+  --t-alert-name:        #00ff41;
+  --t-alert-amount:      #00ff41;
+  --t-alert-amount-glow: rgba(0,255,65,.9);
+  --t-alert-label:       rgba(0,255,65,.5);
+  --t-alert-msg-bg:      rgba(0,255,65,.05);
+  --t-alert-msg-border:  #00ff41;
+  --t-alert-msg-color:   rgba(0,255,65,.88);
+  --t-alert-bar:         linear-gradient(90deg,#00ff41,#003300,#00ff41);
+  --t-avatar-bg:         linear-gradient(135deg,#003300,#00ff41);
+  --t-avatar-glow:       rgba(0,255,65,.7);
+
+  --t-chat-bg:    rgba(3,10,3,.9);
+  --t-chat-border:rgba(0,255,65,.2);
+  --t-chat-radius:4px;
+  --t-chat-text:  rgba(0,255,65,.88);
+  --t-chat-yt:    #ff3300;
+  --t-chat-tt:    #00ffcc;
+  --t-chat-blur:  0px;
+  --t-chat-name-weight:700;
+
+  --t-goal-bg:      rgba(3,10,3,.96);
+  --t-goal-border:  #00ff41;
+  --t-goal-radius:  6px;
+  --t-goal-bar:     linear-gradient(90deg,#003300,#00ff41);
+  --t-goal-bar-glow:rgba(0,255,65,.8);
+  --t-goal-current: #00ff41;
+  --t-goal-current-glow: rgba(0,255,65,.9);
+  --t-goal-title:   rgba(0,255,65,.65);
+  --t-goal-target:  rgba(0,255,65,.4);
+  --t-goal-percent: rgba(0,255,65,.4);
+  --t-goal-track:   rgba(0,255,65,.07);
+  --t-goal-blur:    0px;
+
+  --t-page-bg:      #030a03;
+  --t-page-bg-grad: radial-gradient(ellipse at 50% 0%,rgba(0,255,65,.1) 0%,transparent 70%);
+  --t-page-surface: rgba(10,20,10,.95);
+  --t-page-surface2:rgba(13,25,13,.95);
+  --t-page-border:  rgba(0,255,65,.25);
+  --t-page-accent:  #00ff41;
+  --t-page-text:    rgba(0,255,65,.9);
+  --t-page-muted:   rgba(0,255,65,.5);
+  --t-page-radius:  6px;
+  --t-page-btn:     linear-gradient(135deg,#003300,#00aa22);
+  --t-page-btn-shadow: 0 4px 20px rgba(0,255,65,.25);
+  --t-page-icon-bg: linear-gradient(135deg,#003300,#00ff41);
+
+  --bg:       #030a03;
+  --surface:  rgba(10,20,10,.95);
+  --surface2: rgba(13,25,13,.95);
+  --border:   rgba(0,255,65,.2);
+  --accent:   #00ff41;
+  --accent-dim:rgba(0,255,65,.1);
+  --green:    #00ff41;
+  --red:      #ff3300;
+  --yellow:   #ffcc00;
+  --text:     rgba(0,255,65,.9);
+  --muted:    rgba(0,255,65,.45);
+  --radius:   6px;
+}
+/* Gaming: matrix font + scanlines */
+body { background-color: #030a03 !important; font-family:'Courier New','Noto Sans Thai',monospace !important; }

@@ -1,0 +1,71 @@
+/* ── StreamTool Template: Minimal ──────────────────────────────── */
+:root {
+  --t-primary:   #6366f1;
+  --t-secondary: #8b5cf6;
+  --t-green:     #059669;
+
+  --t-alert-bg:          rgba(255,255,255,.97);
+  --t-alert-border:      rgba(0,0,0,.08);
+  --t-alert-shadow:      0 8px 40px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);
+  --t-alert-radius:      20px;
+  --t-alert-name:        #111827;
+  --t-alert-amount:      #059669;
+  --t-alert-amount-glow: transparent;
+  --t-alert-label:       #9ca3af;
+  --t-alert-msg-bg:      rgba(0,0,0,.04);
+  --t-alert-msg-border:  #6366f1;
+  --t-alert-msg-color:   #374151;
+  --t-alert-bar:         linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899);
+  --t-avatar-bg:         linear-gradient(135deg,#6366f1,#8b5cf6);
+  --t-avatar-glow:       rgba(99,102,241,.25);
+
+  --t-chat-bg:    rgba(255,255,255,.93);
+  --t-chat-border:rgba(0,0,0,.08);
+  --t-chat-radius:12px;
+  --t-chat-text:  #374151;
+  --t-chat-yt:    #dc2626;
+  --t-chat-tt:    #0f766e;
+  --t-chat-blur:  8px;
+  --t-chat-name-weight:700;
+
+  --t-goal-bg:      rgba(255,255,255,.96);
+  --t-goal-border:  rgba(0,0,0,.08);
+  --t-goal-radius:  18px;
+  --t-goal-bar:     linear-gradient(90deg,#6366f1,#059669);
+  --t-goal-bar-glow:rgba(99,102,241,.2);
+  --t-goal-current: #059669;
+  --t-goal-current-glow: transparent;
+  --t-goal-title:   #6b7280;
+  --t-goal-target:  #9ca3af;
+  --t-goal-percent: #9ca3af;
+  --t-goal-track:   rgba(0,0,0,.08);
+  --t-goal-blur:    8px;
+
+  --t-page-bg:      #f8fafc;
+  --t-page-bg-grad: none;
+  --t-page-surface: #ffffff;
+  --t-page-surface2:#f1f5f9;
+  --t-page-border:  #e2e8f0;
+  --t-page-accent:  #6366f1;
+  --t-page-text:    #1e293b;
+  --t-page-muted:   #64748b;
+  --t-page-radius:  16px;
+  --t-page-btn:     linear-gradient(135deg,#6366f1,#4f46e5);
+  --t-page-btn-shadow: 0 4px 20px rgba(99,102,241,.25);
+  --t-page-icon-bg: linear-gradient(135deg,#6366f1,#8b5cf6);
+
+  --bg:       #f1f5f9;
+  --surface:  #ffffff;
+  --surface2: #f8fafc;
+  --border:   #e2e8f0;
+  --accent:   #6366f1;
+  --accent-dim:rgba(99,102,241,.1);
+  --green:    #059669;
+  --red:      #dc2626;
+  --yellow:   #d97706;
+  --text:     #1e293b;
+  --muted:    #64748b;
+  --radius:   12px;
+}
+/* Minimal: force light background */
+body { background-color: #f1f5f9 !important; }

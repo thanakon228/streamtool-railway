@@ -1,0 +1,71 @@
+/* ── StreamTool Template: Neon ─────────────────────────────────── */
+:root {
+  --t-primary:   #00ffff;
+  --t-secondary: #ff00ff;
+  --t-green:     #00ff88;
+
+  --t-alert-bg:          #050508;
+  --t-alert-border:      #00ffff;
+  --t-alert-shadow:      0 0 28px rgba(0,255,255,.5),0 0 60px rgba(0,255,255,.15);
+  --t-alert-radius:      14px;
+  --t-alert-name:        #00ffff;
+  --t-alert-amount:      #ff00ff;
+  --t-alert-amount-glow: rgba(255,0,255,.8);
+  --t-alert-label:       rgba(0,255,255,.55);
+  --t-alert-msg-bg:      rgba(0,255,255,.06);
+  --t-alert-msg-border:  #00ffff;
+  --t-alert-msg-color:   rgba(255,255,255,.9);
+  --t-alert-bar:         linear-gradient(90deg,#00ffff,#ff00ff,#00ff88,#ff00ff,#00ffff);
+  --t-avatar-bg:         linear-gradient(135deg,#00ffff,#ff00ff);
+  --t-avatar-glow:       rgba(0,255,255,.8);
+
+  --t-chat-bg:    rgba(0,0,20,.85);
+  --t-chat-border:rgba(0,255,255,.2);
+  --t-chat-radius:8px;
+  --t-chat-text:  rgba(255,255,255,.9);
+  --t-chat-yt:    #ff4488;
+  --t-chat-tt:    #00ffff;
+  --t-chat-blur:  12px;
+  --t-chat-name-weight:700;
+
+  --t-goal-bg:      #050508;
+  --t-goal-border:  #00ffff;
+  --t-goal-radius:  10px;
+  --t-goal-bar:     linear-gradient(90deg,#00ffff,#ff00ff);
+  --t-goal-bar-glow:rgba(0,255,255,.8);
+  --t-goal-current: #00ffff;
+  --t-goal-current-glow: rgba(0,255,255,.9);
+  --t-goal-title:   rgba(0,255,255,.7);
+  --t-goal-target:  rgba(0,255,255,.4);
+  --t-goal-percent: rgba(0,255,255,.4);
+  --t-goal-track:   rgba(0,255,255,.08);
+  --t-goal-blur:    0px;
+
+  --t-page-bg:      #02020c;
+  --t-page-bg-grad: radial-gradient(ellipse at 50% 0%,rgba(0,255,255,.15) 0%,transparent 70%);
+  --t-page-surface: rgba(5,5,32,.9);
+  --t-page-surface2:rgba(10,10,40,.9);
+  --t-page-border:  rgba(0,255,255,.25);
+  --t-page-accent:  #00ffff;
+  --t-page-text:    #e0f8ff;
+  --t-page-muted:   rgba(0,255,255,.5);
+  --t-page-radius:  10px;
+  --t-page-btn:     linear-gradient(135deg,#00ffff,#0088aa);
+  --t-page-btn-shadow: 0 4px 20px rgba(0,255,255,.3);
+  --t-page-icon-bg: linear-gradient(135deg,#00ffff,#ff00ff);
+
+  --bg:       #02020c;
+  --surface:  rgba(5,5,32,.95);
+  --surface2: rgba(10,10,40,.95);
+  --border:   rgba(0,255,255,.2);
+  --accent:   #00ffff;
+  --accent-dim:rgba(0,255,255,.1);
+  --green:    #00ff88;
+  --red:      #ff0044;
+  --yellow:   #ffff00;
+  --text:     #e0f8ff;
+  --muted:    rgba(0,255,255,.5);
+  --radius:   10px;
+}
+/* Neon-specific: pulsing glow on borders */
+body { background-color: #02020c !important; }

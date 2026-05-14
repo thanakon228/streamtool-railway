@@ -26,9 +26,13 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/dashboard",      (_, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
 app.get("/donate",         (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
-app.get("/overlay/goal",   (_, res) => res.sendFile(path.join(__dirname, "public/overlay/goal.html")));
+app.get("/overlay/goal",    (_, res) => res.sendFile(path.join(__dirname, "public/overlay/goal.html")));
 app.get("/overlay/:id",    (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
 app.get("/overlay",        (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
+app.get("/widget/chat",    (_, res) => res.sendFile(path.join(__dirname, "public/widgets/chat.html")));
+app.get("/widget/alert",   (_, res) => res.sendFile(path.join(__dirname, "public/widgets/alert.html")));
+app.get("/widget/goal",    (_, res) => res.sendFile(path.join(__dirname, "public/widgets/goal.html")));
+app.get("/widget/donate",  (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
 
 // ── Data persistence ──────────────────────────────────────────────────────────
 const DONATIONS_FILE = path.join(__dirname, "donations.json");
@@ -54,12 +58,12 @@ let ttSession = null;
 // ── Goal state ────────────────────────────────────────────────────────────────
 let goal = { target: 0, title: "Goal วันนี้" };
 
-// ── Overlay theme state ───────────────────────────────────────────────────────
-let overlayTheme = {
-  alertTheme:    "classic",  // classic | neon | minimal | gaming | cute
-  alertAnimation:"slide",    // slide | bounce | zoom | flip | drop
-  alertPosition: "top-right",// top-right | top-left | bottom-right | bottom-left
-  goalTheme:     "classic",  // same options as alertTheme
+// ── Template config ───────────────────────────────────────────────────────────
+let templateConfig = {
+  template:       "classic",   // classic | neon | minimal | gaming | cute
+  alertAnimation: "slide",     // slide | bounce | zoom | flip | drop
+  alertPosition:  "top-right", // top-right | top-left | bottom-right | bottom-left
+  customCss:      "",          // raw CSS injected after template
 };
 
 function goalCurrent() {
@@ -113,26 +117,28 @@ app.get("/api/session", auth, (_, res) => res.json({
 // Donations list
 app.get("/api/donations", auth, (_, res) => res.json(donations));
 
-// Overlay config (public — no auth)
-app.get("/api/overlay-config", (_, res) => res.json({
+// Template config (public — no auth)
+app.get("/api/template-config", (_, res) => res.json({
   overlayId: OVERLAY_ID,
-  ...overlayTheme,
+  ...templateConfig,
   goal: { ...goal, current: goalCurrent() },
 }));
 
-// Overlay theme — save (auth)
-app.post("/api/overlay-theme", auth, (req, res) => {
-  const { alertTheme, alertAnimation, alertPosition, goalTheme } = req.body || {};
-  const validThemes = ["classic","neon","minimal","gaming","cute"];
-  const validAnims  = ["slide","bounce","zoom","flip","drop"];
-  const validPos    = ["top-right","top-left","bottom-right","bottom-left"];
-  if (alertTheme    && validThemes.includes(alertTheme))    overlayTheme.alertTheme    = alertTheme;
-  if (alertAnimation&& validAnims.includes(alertAnimation)) overlayTheme.alertAnimation= alertAnimation;
-  if (alertPosition && validPos.includes(alertPosition))    overlayTheme.alertPosition = alertPosition;
-  if (goalTheme     && validThemes.includes(goalTheme))     overlayTheme.goalTheme     = goalTheme;
-  // Push live update to overlays
-  io.to(`overlay:${OVERLAY_ID}`).emit("themeUpdate", overlayTheme);
-  res.json({ ok: true, theme: overlayTheme });
+// Template config — save (auth)
+app.post("/api/template-config", auth, (req, res) => {
+  const { template, alertAnimation, alertPosition, customCss } = req.body || {};
+  const validTpl  = ["classic","neon","minimal","gaming","cute"];
+  const validAnims = ["slide","bounce","zoom","flip","drop"];
+  const validPos   = ["top-right","top-left","bottom-right","bottom-left"];
+  if (template       && validTpl.includes(template))        templateConfig.template       = template;
+  if (alertAnimation && validAnims.includes(alertAnimation))templateConfig.alertAnimation = alertAnimation;
+  if (alertPosition  && validPos.includes(alertPosition))   templateConfig.alertPosition  = alertPosition;
+  if (customCss !== undefined) templateConfig.customCss = String(customCss).slice(0, 20000);
+  // Push live update to all connected clients
+  const payload = { overlayId: OVERLAY_ID, ...templateConfig };
+  io.to(`overlay:${OVERLAY_ID}`).emit("templateUpdate", payload);
+  io.to("dashboard").emit("templateUpdate", payload);
+  res.json({ ok: true, config: templateConfig });
 });
 
 // Public donate info (no auth)
@@ -482,8 +488,8 @@ io.on("connection", (socket) => {
 
   if (overlayId) {
     socket.join(`overlay:${overlayId}`);
-    socket.emit("goalUpdate",  { ...goal, current: goalCurrent() });
-    socket.emit("themeUpdate", overlayTheme);
+    socket.emit("goalUpdate",     { ...goal, current: goalCurrent() });
+    socket.emit("templateUpdate", { overlayId: OVERLAY_ID, ...templateConfig });
     console.log(`Overlay connected: ${overlayId}`);
     return;
   }

@@ -4,138 +4,114 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Donate — StreamTool</title>
+  <link id="tpl-css" rel="stylesheet" href="/templates/classic.css">
+  <style id="tpl-custom"></style>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0f1117; --surface: #1a1d27; --surface2: #252836; --border: #2d3044;
-      --accent: #7c5cfc; --green: #22c55e; --red: #ef4444; --yellow: #f59e0b;
-      --text: #e2e8f0; --muted: #64748b; --radius: 14px;
-    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
     body {
-      font-family: 'Segoe UI', 'Noto Sans Thai', system-ui, sans-serif;
-      background: var(--bg); color: var(--text); min-height: 100vh;
-      display: flex; align-items: center; justify-content: center; padding: 20px;
-      background-image: radial-gradient(ellipse at 60% 0%, rgba(124,92,252,0.12) 0%, transparent 60%),
-                        radial-gradient(ellipse at 10% 100%, rgba(236,72,153,0.08) 0%, transparent 50%);
+      font-family:'Segoe UI','Noto Sans Thai',system-ui,sans-serif;
+      background:var(--t-page-bg,#0f1117); color:var(--t-page-text,#e2e8f0);
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+      background-image:var(--t-page-bg-grad,none);
+      transition:background-color .4s, color .4s;
     }
-
-    .container { width: 100%; max-width: 480px; }
-
-    /* Header */
-    .header { text-align: center; margin-bottom: 28px; }
+    .container { width:100%; max-width:480px; }
+    .header { text-align:center; margin-bottom:28px; }
     .header-icon {
-      width: 72px; height: 72px; background: linear-gradient(135deg, #7c5cfc, #ec4899);
-      border-radius: 20px; display: flex; align-items: center; justify-content: center;
-      font-size: 32px; margin: 0 auto 14px;
-      box-shadow: 0 8px 32px rgba(124,92,252,0.35);
+      width:72px; height:72px; background:var(--t-page-icon-bg,linear-gradient(135deg,#7c5cfc,#ec4899));
+      border-radius:20px; display:flex; align-items:center; justify-content:center;
+      font-size:32px; margin:0 auto 14px;
+      box-shadow:0 8px 32px color-mix(in srgb,var(--t-page-accent,#7c5cfc) 35%,transparent);
     }
-    .header h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
-    .header p  { font-size: 14px; color: var(--muted); }
-
-    /* Card */
+    .header h1 { font-size:22px; font-weight:800; margin-bottom:4px; }
+    .header p  { font-size:14px; color:var(--t-page-muted,#64748b); }
     .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 28px; margin-bottom: 16px;
+      background:var(--t-page-surface,#1a1d27); border:1px solid var(--t-page-border,#2d3044);
+      border-radius:var(--t-page-radius,14px); padding:28px; margin-bottom:16px;
     }
-
-    /* Form */
-    .field { margin-bottom: 18px; }
-    .field:last-child { margin-bottom: 0; }
-    label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 7px; }
-    label span { color: var(--muted); font-weight: 400; }
+    .field { margin-bottom:18px; }
+    .field:last-child { margin-bottom:0; }
+    label { display:block; font-size:13px; font-weight:600; color:var(--t-page-text,#e2e8f0); margin-bottom:7px; }
+    label span { color:var(--t-page-muted,#64748b); font-weight:400; }
     .input {
-      width: 100%; background: var(--bg); border: 1.5px solid var(--border);
-      border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px;
-      font-family: inherit; outline: none; transition: border-color 0.15s;
+      width:100%; background:var(--t-page-bg,#0f1117); border:1.5px solid var(--t-page-border,#2d3044);
+      border-radius:10px; padding:12px 14px; color:var(--t-page-text,#e2e8f0); font-size:14px;
+      font-family:inherit; outline:none; transition:border-color .15s;
     }
-    .input:focus { border-color: var(--accent); }
-    .input::placeholder { color: var(--muted); }
-    textarea.input { resize: vertical; min-height: 80px; }
-
-    /* Slip upload */
+    .input:focus { border-color:var(--t-page-accent,#7c5cfc); }
+    .input::placeholder { color:var(--t-page-muted,#64748b); }
+    textarea.input { resize:vertical; min-height:80px; }
     .upload-zone {
-      border: 2px dashed var(--border); border-radius: 10px; padding: 28px 20px;
-      text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg);
-      position: relative;
+      border:2px dashed var(--t-page-border,#2d3044); border-radius:10px; padding:28px 20px;
+      text-align:center; cursor:pointer; transition:all .2s; background:var(--t-page-bg,#0f1117);
+      position:relative;
     }
-    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: rgba(124,92,252,0.05); }
-    .upload-zone.has-image { border-style: solid; border-color: var(--accent); padding: 0; overflow: hidden; }
-    .upload-icon { font-size: 28px; margin-bottom: 8px; }
-    .upload-text { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
-    .upload-hint { font-size: 11px; color: var(--muted); opacity: 0.7; }
-    #slip-preview { width: 100%; display: block; max-height: 300px; object-fit: contain; border-radius: 8px; }
-    #slip-input { display: none; }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color:var(--t-page-accent,#7c5cfc);
+      background:color-mix(in srgb,var(--t-page-accent,#7c5cfc) 5%,transparent);
+    }
+    .upload-zone.has-image { border-style:solid; border-color:var(--t-page-accent,#7c5cfc); padding:0; overflow:hidden; }
+    .upload-icon { font-size:28px; margin-bottom:8px; }
+    .upload-text { font-size:13px; color:var(--t-page-muted,#64748b); margin-bottom:4px; }
+    .upload-hint { font-size:11px; color:var(--t-page-muted,#64748b); opacity:.7; }
+    #slip-preview { width:100%; display:block; max-height:300px; object-fit:contain; border-radius:8px; }
+    #slip-input { display:none; }
     .remove-img {
-      position: absolute; top: 8px; right: 8px;
-      background: rgba(0,0,0,0.7); border: none; border-radius: 50%;
-      width: 28px; height: 28px; color: white; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; font-size: 14px;
+      position:absolute; top:8px; right:8px; background:rgba(0,0,0,.7); border:none;
+      border-radius:50%; width:28px; height:28px; color:white; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; font-size:14px;
     }
-
-    /* Submit button */
     .btn-submit {
-      width: 100%; padding: 15px; background: linear-gradient(135deg, #7c5cfc, #6d4ee6);
-      color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
-      cursor: pointer; transition: all 0.2s; font-family: inherit;
-      box-shadow: 0 4px 20px rgba(124,92,252,0.3);
+      width:100%; padding:15px; background:var(--t-page-btn,linear-gradient(135deg,#7c5cfc,#6d4ee6));
+      color:white; border:none; border-radius:10px; font-size:15px; font-weight:700;
+      cursor:pointer; transition:all .2s; font-family:inherit;
+      box-shadow:var(--t-page-btn-shadow,0 4px 20px rgba(124,92,252,.3));
     }
-    .btn-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(124,92,252,0.4); }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-    /* Result screens */
-    #screen-loading, #screen-success, #screen-error { display: none; }
-    #screen-form { display: block; }
-
-    .result-screen { text-align: center; padding: 12px 0; }
-    .result-icon { font-size: 64px; margin-bottom: 16px; }
-    .result-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
-    .result-sub   { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
-    .result-amount { font-size: 40px; font-weight: 900; color: var(--green); margin: 12px 0 4px; }
-    .result-amount-label { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-
+    .btn-submit:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); }
+    .btn-submit:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    #screen-loading, #screen-success, #screen-error { display:none; }
+    #screen-form { display:block; }
+    .result-screen { text-align:center; padding:12px 0; }
+    .result-icon   { font-size:64px; margin-bottom:16px; }
+    .result-title  { font-size:22px; font-weight:800; margin-bottom:8px; }
+    .result-sub    { font-size:14px; color:var(--t-page-muted,#64748b); line-height:1.6; margin-bottom:24px; }
+    .result-amount { font-size:40px; font-weight:900; color:var(--t-green,#22c55e); margin:12px 0 4px; }
+    .result-amount-label { font-size:13px; color:var(--t-page-muted,#64748b); margin-bottom:20px; }
     .btn-again {
-      padding: 12px 28px; background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; color: var(--text); font-size: 14px; font-weight: 600;
-      cursor: pointer; font-family: inherit; transition: all 0.15s;
+      padding:12px 28px; background:var(--t-page-surface,#1a1d27);
+      border:1px solid var(--t-page-border,#2d3044); border-radius:10px;
+      color:var(--t-page-text,#e2e8f0); font-size:14px; font-weight:600;
+      cursor:pointer; font-family:inherit; transition:all .15s;
     }
-    .btn-again:hover { background: var(--border); }
-
-    /* Error box */
+    .btn-again:hover { filter:brightness(1.1); }
     .error-box {
-      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
-      border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--red);
-      margin-bottom: 16px; display: none; line-height: 1.5;
+      background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25);
+      border-radius:10px; padding:14px 16px; font-size:13px; color:#ef4444;
+      margin-bottom:16px; display:none; line-height:1.5;
     }
-    .error-box.show { display: block; }
-
-    /* Footer */
-    .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 16px; opacity: 0.6; }
+    .error-box.show { display:block; }
+    .footer { text-align:center; font-size:11px; color:var(--t-page-muted,#64748b); margin-top:16px; opacity:.6; }
   </style>
 </head>
 <body>
 <div class="container">
-
   <div class="header">
     <div class="header-icon">💜</div>
     <h1>โดเนทให้ผู้สตรีม</h1>
     <p id="header-sub">กำลังโหลด...</p>
   </div>
 
-  <!-- Form screen -->
   <div id="screen-form">
     <div class="error-box" id="error-box"></div>
     <div class="card">
-
       <div class="field">
         <label>ชื่อของคุณ <span>(ที่จะแสดงบน stream)</span></label>
         <input id="f-name" class="input" type="text" placeholder="ชื่อเล่น หรือชื่อในเกม" maxlength="50" />
       </div>
-
       <div class="field">
         <label>ข้อความ <span>(ไม่บังคับ)</span></label>
         <textarea id="f-message" class="input" placeholder="ฝากข้อความถึง streamer..." maxlength="200"></textarea>
       </div>
-
       <div class="field">
         <label>สลิปโอนเงิน</label>
         <div class="upload-zone" id="upload-zone">
@@ -149,13 +125,10 @@
           <button type="button" class="remove-img" id="remove-img" style="display:none;">✕</button>
         </div>
       </div>
-
     </div>
-
     <button class="btn-submit" id="submit-btn" disabled>เลือกสลิปก่อนส่ง</button>
   </div>
 
-  <!-- Loading screen -->
   <div id="screen-loading">
     <div class="card result-screen">
       <div class="result-icon">⏳</div>
@@ -164,7 +137,6 @@
     </div>
   </div>
 
-  <!-- Success screen -->
   <div id="screen-success">
     <div class="card result-screen">
       <div class="result-icon">🎉</div>
@@ -176,7 +148,6 @@
     </div>
   </div>
 
-  <!-- Error screen -->
   <div id="screen-error">
     <div class="card result-screen">
       <div class="result-icon">⚠️</div>
@@ -189,127 +160,56 @@
 </div>
 
 <script>
-  // ── Init ───────────────────────────────────────────────────────────────────
   (async () => {
+    try {
+      const cfg = await fetch('/api/template-config').then(r => r.json());
+      applyTemplate(cfg);
+    } catch(e) {}
     try {
       const r = await fetch('/api/donate/info');
       const d = await r.json();
       if (!d.enabled) { showScreen('error'); return; }
       document.getElementById('header-sub').textContent = 'อัปโหลดสลิปเพื่อโดเนท ✨';
-    } catch {
-      document.getElementById('header-sub').textContent = 'เชื่อมต่อไม่ได้ — กรุณาลองใหม่';
-    }
+    } catch { document.getElementById('header-sub').textContent = 'เชื่อมต่อไม่ได้ — กรุณาลองใหม่'; }
   })();
 
-  // ── Screen control ──────────────────────────────────────────────────────────
+  function applyTemplate(cfg) {
+    const tpls = ['classic','neon','minimal','gaming','cute'];
+    document.getElementById('tpl-css').href = '/templates/' + (tpls.includes(cfg.template) ? cfg.template : 'classic') + '.css';
+    document.getElementById('tpl-custom').textContent = cfg.customCss || '';
+  }
   function showScreen(name) {
     ['form','loading','success','error'].forEach(s =>
-      document.getElementById(`screen-${s}`).style.display = s === name ? 'block' : 'none'
-    );
+      document.getElementById(`screen-${s}`).style.display = s === name ? 'block' : 'none');
   }
-
-  // ── Upload zone ─────────────────────────────────────────────────────────────
-  const zone        = document.getElementById('upload-zone');
-  const input       = document.getElementById('slip-input');
-  const preview     = document.getElementById('slip-preview');
-  const placeholder = document.getElementById('upload-placeholder');
-  const removeBtn   = document.getElementById('remove-img');
-  const submitBtn   = document.getElementById('submit-btn');
-  let slipBase64    = null;
-
-  zone.onclick = (e) => { if (e.target !== removeBtn) input.click(); };
-  input.onchange = (e) => { if (e.target.files[0]) loadFile(e.target.files[0]); };
-
-  zone.addEventListener('dragover',  (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', (e) => {
-    e.preventDefault(); zone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) loadFile(file);
-  });
-
-  removeBtn.onclick = (e) => { e.stopPropagation(); clearSlip(); };
-
-  document.addEventListener('paste', (e) => {
-    const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
-    if (item) loadFile(item.getAsFile());
-  });
-
-  function loadFile(file) {
-    if (file.size > 5 * 1024 * 1024) { showError('ไฟล์ใหญ่เกิน 5MB กรุณาลดขนาดรูปก่อน'); return; }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      slipBase64 = e.target.result;
-      preview.src = slipBase64;
-      preview.style.display = 'block';
-      placeholder.style.display = 'none';
-      removeBtn.style.display = 'flex';
-      zone.classList.add('has-image');
-      updateSubmitBtn();
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function clearSlip() {
-    slipBase64 = null;
-    preview.src = ''; preview.style.display = 'none';
-    placeholder.style.display = 'block';
-    removeBtn.style.display = 'none';
-    zone.classList.remove('has-image');
-    input.value = '';
-    updateSubmitBtn();
-  }
-
-  function updateSubmitBtn() {
-    submitBtn.disabled = !slipBase64;
-    submitBtn.textContent = slipBase64 ? 'ส่งโดเนท 💜' : 'เลือกสลิปก่อนส่ง';
-  }
-
-  // ── Submit ──────────────────────────────────────────────────────────────────
-  submitBtn.onclick = async () => {
-    if (!slipBase64) return;
-    hideError();
-    const name    = document.getElementById('f-name').value.trim() || 'ผู้ไม่ประสงค์ออกนาม';
-    const message = document.getElementById('f-message').value.trim();
+  const zone=document.getElementById('upload-zone'),input=document.getElementById('slip-input'),
+        preview=document.getElementById('slip-preview'),ph=document.getElementById('upload-placeholder'),
+        removeBtn=document.getElementById('remove-img'),submitBtn=document.getElementById('submit-btn');
+  let slipBase64=null;
+  zone.onclick=e=>{if(e.target!==removeBtn)input.click();};
+  input.onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0]);};
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))loadFile(f);});
+  removeBtn.onclick=e=>{e.stopPropagation();clearSlip();};
+  document.addEventListener('paste',e=>{const i=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(i)loadFile(i.getAsFile());});
+  function loadFile(file){if(file.size>5*1024*1024){showError('ไฟล์ใหญ่เกิน 5MB');return;}const r=new FileReader();r.onload=e=>{slipBase64=e.target.result;preview.src=slipBase64;preview.style.display='block';ph.style.display='none';removeBtn.style.display='flex';zone.classList.add('has-image');updateBtn();};r.readAsDataURL(file);}
+  function clearSlip(){slipBase64=null;preview.src='';preview.style.display='none';ph.style.display='block';removeBtn.style.display='none';zone.classList.remove('has-image');input.value='';updateBtn();}
+  function updateBtn(){submitBtn.disabled=!slipBase64;submitBtn.textContent=slipBase64?'ส่งโดเนท 💜':'เลือกสลิปก่อนส่ง';}
+  submitBtn.onclick=async()=>{
+    if(!slipBase64)return;hideError();
+    const name=document.getElementById('f-name').value.trim()||'ผู้ไม่ประสงค์ออกนาม';
+    const message=document.getElementById('f-message').value.trim();
     showScreen('loading');
-    try {
-      const r = await fetch('/api/donate/public', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ base64: slipBase64, displayName: name, message }),
-      });
-      const d = await r.json();
-      if (d.ok) {
-        document.getElementById('success-amount').textContent =
-          `฿${Number(d.amount || 0).toLocaleString('th-TH')}`;
-        showScreen('success');
-      } else {
-        showScreen('form');
-        showError(d.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
-      }
-    } catch {
-      showScreen('form');
-      showError('เชื่อมต่อกับ server ไม่ได้ กรุณาลองใหม่');
-    }
+    try{const r=await fetch('/api/donate/public',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base64:slipBase64,displayName:name,message})});
+      const d=await r.json();
+      if(d.ok){document.getElementById('success-amount').textContent=`฿${Number(d.amount||0).toLocaleString('th-TH')}`;showScreen('success');}
+      else{showScreen('form');showError(d.error||'เกิดข้อผิดพลาด');}
+    }catch{showScreen('form');showError('เชื่อมต่อกับ server ไม่ได้');}
   };
-
-  document.getElementById('btn-again').onclick = () => {
-    clearSlip();
-    document.getElementById('f-name').value = '';
-    document.getElementById('f-message').value = '';
-    hideError();
-    showScreen('form');
-  };
-
-  function showError(msg) {
-    const el = document.getElementById('error-box');
-    el.textContent = '⚠️  ' + msg;
-    el.classList.add('show');
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-  function hideError() {
-    document.getElementById('error-box').classList.remove('show');
-  }
+  document.getElementById('btn-again').onclick=()=>{clearSlip();document.getElementById('f-name').value='';document.getElementById('f-message').value='';hideError();showScreen('form');};
+  function showError(msg){const el=document.getElementById('error-box');el.textContent='⚠️  '+msg;el.classList.add('show');el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  function hideError(){document.getElementById('error-box').classList.remove('show');}
 </script>
 </body>
 </html>

@@ -1,0 +1,71 @@
+/* ── StreamTool Template: Cute ─────────────────────────────────── */
+:root {
+  --t-primary:   #ec4899;
+  --t-secondary: #a855f7;
+  --t-green:     #059669;
+
+  --t-alert-bg:          linear-gradient(135deg,rgba(253,232,245,.98),rgba(243,228,255,.98));
+  --t-alert-border:      #f9a8d4;
+  --t-alert-shadow:      0 8px 32px rgba(236,72,153,.22),0 2px 8px rgba(168,85,247,.1);
+  --t-alert-radius:      24px;
+  --t-alert-name:        #7c2d92;
+  --t-alert-amount:      #be185d;
+  --t-alert-amount-glow: rgba(190,24,93,.3);
+  --t-alert-label:       #d946ef;
+  --t-alert-msg-bg:      rgba(249,168,212,.18);
+  --t-alert-msg-border:  #f9a8d4;
+  --t-alert-msg-color:   #6b21a8;
+  --t-alert-bar:         linear-gradient(90deg,#ec4899,#a855f7,#f472b6,#a855f7,#ec4899);
+  --t-avatar-bg:         linear-gradient(135deg,#ec4899,#a855f7);
+  --t-avatar-glow:       rgba(236,72,153,.45);
+
+  --t-chat-bg:    rgba(253,232,245,.88);
+  --t-chat-border:rgba(249,168,212,.4);
+  --t-chat-radius:16px;
+  --t-chat-text:  #6b21a8;
+  --t-chat-yt:    #dc2626;
+  --t-chat-tt:    #7c3aed;
+  --t-chat-blur:  8px;
+  --t-chat-name-weight:700;
+
+  --t-goal-bg:      linear-gradient(135deg,rgba(253,232,245,.95),rgba(243,228,255,.95));
+  --t-goal-border:  #f9a8d4;
+  --t-goal-radius:  22px;
+  --t-goal-bar:     linear-gradient(90deg,#ec4899,#a855f7);
+  --t-goal-bar-glow:rgba(236,72,153,.5);
+  --t-goal-current: #be185d;
+  --t-goal-current-glow: rgba(190,24,93,.3);
+  --t-goal-title:   #d946ef;
+  --t-goal-target:  #a855f7;
+  --t-goal-percent: #9333ea;
+  --t-goal-track:   rgba(249,168,212,.3);
+  --t-goal-blur:    8px;
+
+  --t-page-bg:      #fdf0f8;
+  --t-page-bg-grad: radial-gradient(ellipse at 60% 0%,rgba(236,72,153,.15) 0%,transparent 60%),radial-gradient(ellipse at 10% 100%,rgba(168,85,247,.1) 0%,transparent 50%);
+  --t-page-surface: rgba(255,255,255,.88);
+  --t-page-surface2:rgba(255,240,252,.9);
+  --t-page-border:  rgba(249,168,212,.5);
+  --t-page-accent:  #ec4899;
+  --t-page-text:    #7c2d92;
+  --t-page-muted:   #c026d3;
+  --t-page-radius:  20px;
+  --t-page-btn:     linear-gradient(135deg,#ec4899,#a855f7);
+  --t-page-btn-shadow: 0 4px 20px rgba(236,72,153,.3);
+  --t-page-icon-bg: linear-gradient(135deg,#ec4899,#a855f7);
+
+  --bg:       #fdf0f8;
+  --surface:  rgba(255,255,255,.92);
+  --surface2: rgba(255,240,252,.95);
+  --border:   rgba(249,168,212,.5);
+  --accent:   #ec4899;
+  --accent-dim:rgba(236,72,153,.1);
+  --green:    #059669;
+  --red:      #dc2626;
+  --yellow:   #d97706;
+  --text:     #7c2d92;
+  --muted:    #c026d3;
+  --radius:   14px;
+}
+/* Cute: light background */
+body { background-color: #fdf0f8 !important; }

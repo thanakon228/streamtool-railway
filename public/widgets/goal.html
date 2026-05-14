@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Goal Widget — StreamTool</title>
+  <link id="tpl-css" rel="stylesheet" href="/templates/classic.css">
+  <style id="tpl-custom"></style>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{background:transparent;overflow:hidden;
+      font-family:'Segoe UI','Noto Sans Thai',system-ui,sans-serif;}
+    #root{padding:16px 20px;opacity:0;transition:opacity .6s ease;}
+    #root.visible{opacity:1;}
+    .goal-card{
+      background:var(--t-goal-bg);border:1.5px solid var(--t-goal-border);
+      border-radius:var(--t-goal-radius);padding:18px 22px 20px;
+      backdrop-filter:blur(var(--t-goal-blur));
+      box-shadow:0 8px 40px rgba(0,0,0,.3);position:relative;
+    }
+    .goal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .goal-left{display:flex;flex-direction:column;gap:2px;}
+    .goal-title{font-size:13px;font-weight:700;color:var(--t-goal-title);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;}
+    .goal-sub{font-size:11px;font-weight:500;color:var(--t-goal-percent);}
+    .goal-amounts{display:flex;align-items:baseline;gap:4px;}
+    .goal-current{font-size:36px;font-weight:900;color:var(--t-goal-current);text-shadow:0 0 18px var(--t-goal-current-glow);line-height:1;}
+    .goal-sep{font-size:18px;color:rgba(128,128,128,.4);}
+    .goal-target{font-size:18px;font-weight:700;color:var(--t-goal-target);}
+    .goal-milestones{display:flex;justify-content:space-between;padding:0 2px;margin-bottom:4px;}
+    .m-dot{width:7px;height:7px;border-radius:50%;background:var(--t-goal-track);transition:background .5s,box-shadow .5s;}
+    .m-dot.hit{background:var(--t-goal-current);box-shadow:0 0 6px var(--t-goal-bar-glow);}
+    .goal-track{height:14px;background:var(--t-goal-track);border-radius:99px;overflow:hidden;margin-bottom:8px;}
+    .goal-fill{height:100%;background:var(--t-goal-bar);box-shadow:0 0 12px var(--t-goal-bar-glow);border-radius:99px;width:0%;transition:width 1.5s cubic-bezier(.34,1.1,.64,1);position:relative;overflow:hidden;}
+    .goal-fill::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:gs 2s ease infinite;}
+    @keyframes gs{to{left:200%;}}
+    .goal-footer{display:flex;justify-content:space-between;align-items:center;}
+    .goal-pct{font-size:12px;font-weight:700;color:var(--t-goal-percent);}
+    .goal-reached{font-size:14px;font-weight:800;color:var(--t-goal-current);display:none;animation:pulse 1.5s ease infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+  </style>
+</head>
+<body>
+<div id="root">
+  <div class="goal-card">
+    <div class="goal-header">
+      <div class="goal-left">
+        <div class="goal-title"><span>🎯</span><span id="gt">Goal วันนี้</span></div>
+        <div class="goal-sub" id="gs">กำลังโหลด...</div>
+      </div>
+      <div class="goal-amounts">
+        <span class="goal-current" id="gc">฿0</span>
+        <span class="goal-sep">/</span>
+        <span class="goal-target" id="gtar">฿0</span>
+      </div>
+    </div>
+    <div class="goal-milestones" id="gm">
+      <div class="m-dot" data-at="25"></div>
+      <div class="m-dot" data-at="50"></div>
+      <div class="m-dot" data-at="75"></div>
+      <div class="m-dot" data-at="100"></div>
+    </div>
+    <div class="goal-track"><div class="goal-fill" id="gf"></div></div>
+    <div class="goal-footer">
+      <div class="goal-pct" id="gpct">0%</div>
+      <div class="goal-reached" id="gr"></div>
+    </div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  let overlayId='';
+  (async()=>{
+    try{const cfg=await fetch('/api/template-config').then(r=>r.json());
+      overlayId=cfg.overlayId||'default-overlay';
+      applyTemplate(cfg);
+      if(cfg.goal)updateGoal(cfg.goal);}catch(e){}
+    const socket=io({auth:{overlayId}});
+    socket.on('goalUpdate',updateGoal);
+    socket.on('templateUpdate',applyTemplate);
+  })();
+
+  function applyTemplate(cfg){
+    const tpls=['classic','neon','minimal','gaming','cute'];
+    document.getElementById('tpl-css').href='/templates/'+(tpls.includes(cfg.template)?cfg.template:'classic')+'.css';
+    document.getElementById('tpl-custom').textContent=cfg.customCss||'';
+  }
+  function updateGoal(data){
+    const{current=0,target=0,title='Goal วันนี้'}=data;
+    const root=document.getElementById('root');
+    if(!target||target<=0){root.classList.remove('visible');return;}
+    root.classList.add('visible');
+    document.getElementById('gt').textContent=title;
+    document.getElementById('gc').textContent=fmt(current);
+    document.getElementById('gtar').textContent=fmt(target);
+    const pct=Math.min(100,current/target*100);
+    document.getElementById('gf').style.width=pct+'%';
+    document.querySelectorAll('.m-dot').forEach(d=>d.classList.toggle('hit',pct>=parseInt(d.dataset.at)));
+    const pctEl=document.getElementById('gpct'),reach=document.getElementById('gr'),sub=document.getElementById('gs');
+    if(pct>=100){
+      pctEl.style.display='none';reach.style.display='';reach.textContent='🎉 ถึง Goal แล้ว!';
+      sub.textContent='ยอดรวม '+fmt(current);
+    }else{
+      pctEl.style.display='';reach.style.display='none';
+      pctEl.textContent=Math.round(pct)+'%';
+      sub.textContent='เหลืออีก '+fmt(target-current);
+    }
+  }
+  function fmt(n){return'฿'+Number(n).toLocaleString('th-TH');}
+</script>
+</body>
+</html>

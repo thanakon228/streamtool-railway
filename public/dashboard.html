@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StreamTool — Dashboard</title>
+  <!-- Template CSS — swapped live by JS -->
+  <link id="tpl-css" rel="stylesheet" href="/templates/classic.css">
+  <style id="tpl-custom"></style>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -173,54 +176,78 @@
     .overview-right .card { margin-bottom: 0; }
     @media (max-width: 960px) { .overview-grid { grid-template-columns: 1fr; min-height: auto; } .overview-right { order: -1; } .overview-right .card { max-height: 350px; } }
 
-    /* ── Theme picker ── */
-    .theme-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-bottom:6px; }
-    .theme-card {
-      border:2px solid var(--border); border-radius:12px; padding:14px 12px 12px;
-      cursor:pointer; transition:all 0.18s; position:relative; overflow:hidden;
-      text-align:center;
+    /* ── Templates tab ── */
+    .tpl-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:6px; }
+    .tpl-card {
+      border:2px solid var(--border); border-radius:14px; padding:0;
+      cursor:pointer; transition:all .18s; position:relative; overflow:hidden;
+      background:var(--surface2);
     }
-    .theme-card:hover { border-color:var(--accent); transform:translateY(-2px); }
-    .theme-card.selected { border-color:var(--accent); background:var(--accent-dim); }
-    .theme-card .tc-preview {
-      height:56px; border-radius:8px; margin-bottom:8px;
-      display:flex; align-items:center; justify-content:center; gap:6px; font-size:11px;
-      overflow:hidden; position:relative;
+    .tpl-card:hover { border-color:var(--accent); transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.3); }
+    .tpl-card.selected { border-color:var(--accent); }
+    .tpl-preview {
+      height:80px; width:100%; display:flex; align-items:center; justify-content:center;
+      gap:6px; font-size:12px; position:relative; overflow:hidden; padding:10px;
     }
-    .theme-card .tc-name  { font-size:12px; font-weight:700; }
-    .theme-card .tc-badge {
-      position:absolute; top:6px; right:6px; background:var(--accent); color:white;
-      font-size:9px; font-weight:800; padding:2px 7px; border-radius:99px;
-      display:none;
+    .tpl-info { padding:10px 12px; border-top:1px solid var(--border); }
+    .tpl-name  { font-size:13px; font-weight:700; margin-bottom:2px; }
+    .tpl-desc  { font-size:11px; color:var(--muted); }
+    .tpl-check {
+      position:absolute; top:8px; right:8px; width:22px; height:22px;
+      background:var(--accent); color:white; border-radius:50%;
+      display:none; align-items:center; justify-content:center; font-size:12px; font-weight:800;
     }
-    .theme-card.selected .tc-badge { display:block; }
+    .tpl-card.selected .tpl-check { display:flex; }
 
-    /* Preview swatches */
-    .tc-classic  { background:linear-gradient(135deg,#0e0b22,#181034); border:1px solid rgba(124,92,252,0.4); }
-    .tc-neon     { background:#050508; border:2px solid #00ffff; box-shadow:0 0 10px rgba(0,255,255,0.4); }
-    .tc-minimal  { background:rgba(255,255,255,0.97); border:1px solid rgba(0,0,0,0.1); }
-    .tc-gaming   { background:rgba(3,10,3,0.97); border:1px solid #00ff41; box-shadow:0 0 8px rgba(0,255,65,0.3); }
-    .tc-cute     { background:linear-gradient(135deg,#fde8f5,#f3e4ff); border:2px solid #f9a8d4; }
+    /* Template preview swatches */
+    .p-classic { background:linear-gradient(135deg,#0e0b22,#181034); }
+    .p-neon    { background:#050508; border:1px solid rgba(0,255,255,.3); }
+    .p-minimal { background:#f8fafc; border-bottom:1px solid #e2e8f0; }
+    .p-gaming  { background:rgba(3,10,3,.97); }
+    .p-cute    { background:linear-gradient(135deg,#fde8f5,#f3e4ff); }
 
-    .anim-btn-grid  { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
-    .anim-btn {
-      padding:8px 16px; border:1.5px solid var(--border); border-radius:8px;
+    /* Mini alert mock */
+    .mock-alert {
+      width:100%; background:var(--mock-bg,rgba(14,11,34,.97));
+      border:1.5px solid var(--mock-border,rgba(124,92,252,.5));
+      border-radius:var(--mock-radius,10px);
+      padding:6px 8px; display:flex; align-items:center; gap:6px;
+    }
+    .mock-av  { width:24px; height:24px; border-radius:50%; flex-shrink:0; }
+    .mock-txt { flex:1; }
+    .mock-name{ height:6px; border-radius:3px; margin-bottom:3px; width:60%; }
+    .mock-amt { height:8px; border-radius:4px; width:30%; }
+
+    .chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
+    .chip {
+      padding:7px 14px; border:1.5px solid var(--border); border-radius:8px;
       background:transparent; color:var(--muted); font-size:12px; font-weight:600;
-      cursor:pointer; transition:all 0.15s;
+      cursor:pointer; transition:all .15s; font-family:inherit;
     }
-    .anim-btn:hover   { border-color:var(--accent); color:var(--text); }
-    .anim-btn.selected{ border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
+    .chip:hover    { border-color:var(--accent); color:var(--text); }
+    .chip.selected { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
 
-    .pos-grid {
-      display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:280px;
-    }
+    .pos-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:280px; }
     .pos-btn {
       padding:10px; border:1.5px solid var(--border); border-radius:8px;
       background:transparent; color:var(--muted); font-size:12px; font-weight:600;
-      cursor:pointer; transition:all 0.15s; text-align:center;
+      cursor:pointer; transition:all .15s; text-align:center; font-family:inherit;
     }
-    .pos-btn:hover   { border-color:var(--accent); color:var(--text); }
-    .pos-btn.selected{ border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
+    .pos-btn:hover    { border-color:var(--accent); color:var(--text); }
+    .pos-btn.selected { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
+
+    .css-editor {
+      width:100%; min-height:180px; background:var(--bg); border:1.5px solid var(--border);
+      border-radius:10px; padding:14px; color:var(--text); font-family:'Courier New',monospace;
+      font-size:12px; line-height:1.6; outline:none; resize:vertical;
+      transition:border-color .15s;
+    }
+    .css-editor:focus { border-color:var(--accent); }
+    .var-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .var-row  { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+    .var-row:last-child { border-bottom:none; }
+    .var-label { font-size:12px; color:var(--muted); font-family:'Courier New',monospace; }
+    .var-color { width:36px; height:28px; border:none; border-radius:6px; cursor:pointer; padding:0; background:none; }
 
     /* ── Responsive ── */
     @media (max-width: 640px) {
@@ -287,9 +314,9 @@
         <span>TTS & Test</span>
       </button>
 
-      <button class="nav-item" data-tab="overlay">
+      <button class="nav-item" data-tab="templates">
         <span class="nav-icon">🎨</span>
-        <span>Overlay</span>
+        <span>Templates</span>
       </button>
 
       <div class="nav-section">ระบบ</div>
@@ -560,52 +587,95 @@
         </div>
       </div>
 
-      <!-- ── Tab: Overlay Theme ── -->
-      <div class="tab-panel" id="tab-overlay">
-        <div class="page-title">🎨 Overlay Theme</div>
+      <!-- ── Tab: Templates ── -->
+      <div class="tab-panel" id="tab-templates">
+        <div class="page-title">🎨 Templates</div>
 
-        <!-- Alert Theme -->
+        <!-- Template Gallery -->
         <div class="card">
-          <div class="card-header"><div class="card-title">🖼️ รูปแบบ Alert</div></div>
+          <div class="card-header"><div class="card-title">🖼️ เลือก Template</div></div>
           <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">เลือกธีมการแสดง donation alert บน overlay</div>
-            <div class="theme-grid" id="alert-theme-grid">
-              <div class="theme-card" data-theme="classic">
-                <div class="tc-preview tc-classic">
-                  <div style="color:rgba(124,92,252,0.9);font-size:16px;">💜</div>
-                  <div style="color:rgba(255,255,255,0.7);font-size:10px;">Classic</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Template จะเปลี่ยนรูปแบบทุกหน้าพร้อมกัน — Alert, Chat, Goal, หน้าโดเนท และ Dashboard</div>
+            <div class="tpl-gallery" id="tpl-gallery">
+              <div class="tpl-card" data-tpl="classic">
+                <div class="tpl-preview p-classic">
+                  <div class="mock-alert" style="--mock-bg:rgba(14,11,34,.97);--mock-border:rgba(124,92,252,.5);--mock-radius:10px;width:88%;">
+                    <div class="mock-av" style="background:linear-gradient(135deg,#7c5cfc,#ec4899);"></div>
+                    <div class="mock-txt">
+                      <div class="mock-name" style="background:rgba(255,255,255,.4);"></div>
+                      <div class="mock-amt" style="background:#7c5cfc;"></div>
+                    </div>
+                  </div>
                 </div>
-                <div class="tc-name">Classic</div>
-                <div class="tc-badge">✓</div>
+                <div class="tpl-info">
+                  <div class="tpl-name">Classic</div>
+                  <div style="font-size:11px;color:var(--muted);">Dark Purple</div>
+                </div>
+                <div class="tpl-check">✓</div>
               </div>
-              <div class="theme-card" data-theme="neon">
-                <div class="tc-preview tc-neon">
-                  <div style="color:#00ffff;font-size:14px;text-shadow:0 0 8px #00ffff;">NEON</div>
+              <div class="tpl-card" data-tpl="neon">
+                <div class="tpl-preview p-neon">
+                  <div class="mock-alert" style="--mock-bg:rgba(0,0,8,.95);--mock-border:rgba(0,255,255,.6);--mock-radius:6px;width:88%;box-shadow:0 0 8px rgba(0,255,255,.2);">
+                    <div class="mock-av" style="background:linear-gradient(135deg,#00ffff,#ff00ff);"></div>
+                    <div class="mock-txt">
+                      <div class="mock-name" style="background:rgba(0,255,255,.4);"></div>
+                      <div class="mock-amt" style="background:#00ffff;"></div>
+                    </div>
+                  </div>
                 </div>
-                <div class="tc-name" style="color:#00ffff;">Neon</div>
-                <div class="tc-badge">✓</div>
+                <div class="tpl-info">
+                  <div class="tpl-name" style="color:#00ffff;">Neon</div>
+                  <div style="font-size:11px;color:var(--muted);">Cyan / Magenta</div>
+                </div>
+                <div class="tpl-check">✓</div>
               </div>
-              <div class="theme-card" data-theme="minimal">
-                <div class="tc-preview tc-minimal">
-                  <div style="color:#374151;font-weight:700;font-size:13px;">Minimal</div>
+              <div class="tpl-card" data-tpl="minimal">
+                <div class="tpl-preview p-minimal">
+                  <div class="mock-alert" style="--mock-bg:#ffffff;--mock-border:#e2e8f0;--mock-radius:12px;width:88%;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+                    <div class="mock-av" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);"></div>
+                    <div class="mock-txt">
+                      <div class="mock-name" style="background:#cbd5e1;"></div>
+                      <div class="mock-amt" style="background:#6366f1;"></div>
+                    </div>
+                  </div>
                 </div>
-                <div class="tc-name">Minimal</div>
-                <div class="tc-badge">✓</div>
+                <div class="tpl-info">
+                  <div class="tpl-name" style="color:#6366f1;">Minimal</div>
+                  <div style="font-size:11px;color:var(--muted);">Light / Clean</div>
+                </div>
+                <div class="tpl-check">✓</div>
               </div>
-              <div class="theme-card" data-theme="gaming">
-                <div class="tc-preview tc-gaming">
-                  <div style="color:#00ff41;font-family:monospace;font-size:12px;text-shadow:0 0 8px #00ff41;">&gt; GAMING_</div>
+              <div class="tpl-card" data-tpl="gaming">
+                <div class="tpl-preview p-gaming">
+                  <div class="mock-alert" style="--mock-bg:rgba(3,10,3,.95);--mock-border:rgba(0,255,65,.5);--mock-radius:4px;width:88%;box-shadow:0 0 10px rgba(0,255,65,.15);">
+                    <div class="mock-av" style="background:linear-gradient(135deg,#00ff41,#00cc33);"></div>
+                    <div class="mock-txt">
+                      <div class="mock-name" style="background:rgba(0,255,65,.3);"></div>
+                      <div class="mock-amt" style="background:#00ff41;"></div>
+                    </div>
+                  </div>
                 </div>
-                <div class="tc-name" style="color:#00ff41;">Gaming</div>
-                <div class="tc-badge">✓</div>
+                <div class="tpl-info">
+                  <div class="tpl-name" style="color:#00ff41;">Gaming</div>
+                  <div style="font-size:11px;color:var(--muted);">Matrix Green</div>
+                </div>
+                <div class="tpl-check">✓</div>
               </div>
-              <div class="theme-card" data-theme="cute">
-                <div class="tc-preview tc-cute">
-                  <div style="font-size:20px;">🌸</div>
-                  <div style="color:#be185d;font-size:12px;font-weight:700;">Cute</div>
+              <div class="tpl-card" data-tpl="cute">
+                <div class="tpl-preview p-cute">
+                  <div class="mock-alert" style="--mock-bg:rgba(255,240,253,.97);--mock-border:rgba(236,72,153,.35);--mock-radius:16px;width:88%;">
+                    <div class="mock-av" style="background:linear-gradient(135deg,#ec4899,#a855f7);"></div>
+                    <div class="mock-txt">
+                      <div class="mock-name" style="background:rgba(236,72,153,.3);"></div>
+                      <div class="mock-amt" style="background:#ec4899;"></div>
+                    </div>
+                  </div>
                 </div>
-                <div class="tc-name" style="color:#be185d;">Cute</div>
-                <div class="tc-badge">✓</div>
+                <div class="tpl-info">
+                  <div class="tpl-name" style="color:#be185d;">Cute 🌸</div>
+                  <div style="font-size:11px;color:var(--muted);">Pink / Soft</div>
+                </div>
+                <div class="tpl-check">✓</div>
               </div>
             </div>
           </div>
@@ -613,15 +683,15 @@
 
         <!-- Alert Animation -->
         <div class="card">
-          <div class="card-header"><div class="card-title">✨ Animation เข้า</div></div>
+          <div class="card-header"><div class="card-title">✨ Animation</div></div>
           <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">แอนิเมชั่นตอน alert โผล่ขึ้น</div>
-            <div class="anim-btn-grid" id="anim-btn-grid">
-              <button class="anim-btn" data-anim="slide">⟶ Slide</button>
-              <button class="anim-btn" data-anim="bounce">⬇ Bounce</button>
-              <button class="anim-btn" data-anim="zoom">⊕ Zoom</button>
-              <button class="anim-btn" data-anim="flip">↻ Flip</button>
-              <button class="anim-btn" data-anim="drop">⬇ Drop</button>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">แอนิเมชั่นตอน alert โผล่ขึ้นบน overlay</div>
+            <div class="chip-row" id="anim-chips">
+              <button class="chip" data-anim="slide">⟶ Slide</button>
+              <button class="chip" data-anim="bounce">⬆ Bounce</button>
+              <button class="chip" data-anim="zoom">⊕ Zoom</button>
+              <button class="chip" data-anim="flip">↻ Flip</button>
+              <button class="chip" data-anim="drop">⬇ Drop</button>
             </div>
           </div>
         </div>
@@ -631,7 +701,7 @@
           <div class="card-header"><div class="card-title">📌 ตำแหน่ง Alert</div></div>
           <div class="card-body">
             <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">มุมที่ alert จะโผล่บน overlay</div>
-            <div class="pos-grid" id="pos-btn-grid">
+            <div class="pos-grid" id="pos-chips">
               <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
               <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
               <button class="pos-btn" data-pos="bottom-left">↙ ล่างซ้าย</button>
@@ -640,66 +710,73 @@
           </div>
         </div>
 
-        <!-- Goal Theme -->
+        <!-- Custom CSS Editor -->
         <div class="card">
-          <div class="card-header"><div class="card-title">🎯 ธีม Goal Bar</div></div>
+          <div class="card-header">
+            <div class="card-title">🎨 Custom CSS</div>
+            <div style="font-size:11px;color:var(--muted);">เขียน CSS เพิ่มเติมหลัง template — override ค่า template ได้</div>
+          </div>
           <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">ธีมสำหรับ Goal Bar overlay (ใช้ได้ทั้งใน overlay หลักและ /overlay/goal)</div>
-            <div class="theme-grid" id="goal-theme-grid">
-              <div class="theme-card" data-theme="classic">
-                <div class="tc-preview tc-classic"><div style="color:#22c55e;font-size:10px;font-weight:700;">฿350/฿1000</div></div>
-                <div class="tc-name">Classic</div><div class="tc-badge">✓</div>
-              </div>
-              <div class="theme-card" data-theme="neon">
-                <div class="tc-preview tc-neon"><div style="color:#00ffff;font-size:10px;font-weight:700;text-shadow:0 0 8px #00ffff;">฿350/฿1000</div></div>
-                <div class="tc-name" style="color:#00ffff;">Neon</div><div class="tc-badge">✓</div>
-              </div>
-              <div class="theme-card" data-theme="minimal">
-                <div class="tc-preview tc-minimal"><div style="color:#059669;font-size:10px;font-weight:700;">฿350/฿1000</div></div>
-                <div class="tc-name">Minimal</div><div class="tc-badge">✓</div>
-              </div>
-              <div class="theme-card" data-theme="gaming">
-                <div class="tc-preview tc-gaming"><div style="color:#00ff41;font-family:monospace;font-size:10px;text-shadow:0 0 6px #00ff41;">฿350/฿1000</div></div>
-                <div class="tc-name" style="color:#00ff41;">Gaming</div><div class="tc-badge">✓</div>
-              </div>
-              <div class="theme-card" data-theme="cute">
-                <div class="tc-preview tc-cute"><div style="color:#be185d;font-size:10px;font-weight:700;">฿350/฿1000 🌸</div></div>
-                <div class="tc-name" style="color:#be185d;">Cute</div><div class="tc-badge">✓</div>
-              </div>
-            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ตัวอย่าง CSS variable ที่ override ได้:</div>
+            <code style="display:block;margin-bottom:12px;background:var(--surface2);padding:8px 10px;border-radius:6px;font-size:11px;line-height:1.9;color:var(--accent);">--t-alert-bg: rgba(0,0,0,.9);<br>--t-alert-border: rgba(255,255,255,.2);<br>--t-goal-bar: linear-gradient(90deg,#22c55e,#16a34a);<br>--t-chat-bg: rgba(0,0,0,.6);</code>
+            <textarea class="css-editor" id="custom-css-editor" placeholder="/* เขียน CSS ของคุณที่นี่ */
+:root {
+  --t-primary: #7c5cfc;
+  --t-alert-bg: rgba(0,0,0,.85);
+}"></textarea>
           </div>
         </div>
 
-        <!-- OBS URLs -->
+        <!-- OBS Widget URLs -->
         <div class="card">
-          <div class="card-header"><div class="card-title">🔗 OBS Browser Sources</div></div>
+          <div class="card-header"><div class="card-title">🔗 OBS Widget URLs</div></div>
           <div class="card-body" style="padding:0 18px;">
             <div class="setting-row">
               <div>
-                <div class="setting-label">Overlay หลัก (Alert + Chat + Goal)</div>
-                <div class="setting-desc">วาง URL นี้ใน OBS</div>
+                <div class="setting-label">🖥️ Overlay หลัก (Alert + Chat + Goal)</div>
+                <div class="setting-desc">วาง URL นี้ใน OBS Browser Source</div>
               </div>
               <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-                <div class="setting-value" id="ov-main-url" style="max-width:240px;">—</div>
-                <button class="btn btn-sm btn-secondary" id="ov-copy-main">คัดลอก</button>
+                <div class="setting-value" id="url-overlay-main" style="max-width:220px;font-size:11px;">—</div>
+                <button class="btn btn-sm btn-secondary" id="copy-url-overlay-main">คัดลอก</button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">🔔 Alert Widget แยก</div>
+                <div class="setting-desc">เฉพาะ alert — ใส่เป็น source แยกใน OBS</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <div class="setting-value" id="url-widget-alert" style="max-width:220px;font-size:11px;">—</div>
+                <button class="btn btn-sm btn-secondary" id="copy-url-widget-alert">คัดลอก</button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">💬 Chat Widget แยก</div>
+                <div class="setting-desc">เฉพาะ chat overlay</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <div class="setting-value" id="url-widget-chat" style="max-width:220px;font-size:11px;">—</div>
+                <button class="btn btn-sm btn-secondary" id="copy-url-widget-chat">คัดลอก</button>
               </div>
             </div>
             <div class="setting-row" style="border-bottom:none;">
               <div>
-                <div class="setting-label">Goal Overlay แยก</div>
-                <div class="setting-desc">แค่ Goal Bar — ใส่เป็น source แยกใน OBS</div>
+                <div class="setting-label">🎯 Goal Widget แยก</div>
+                <div class="setting-desc">เฉพาะ goal bar</div>
               </div>
               <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-                <div class="setting-value" id="ov-goal-url" style="max-width:240px;">—</div>
-                <button class="btn btn-sm btn-secondary" id="ov-copy-goal">คัดลอก</button>
+                <div class="setting-value" id="url-widget-goal" style="max-width:220px;font-size:11px;">—</div>
+                <button class="btn btn-sm btn-secondary" id="copy-url-widget-goal">คัดลอก</button>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Save button -->
-        <button class="btn btn-primary" id="overlay-theme-save" style="width:100%;padding:14px;font-size:15px;">
-          💾 บันทึกธีม
+        <button class="btn btn-primary" id="tpl-save-btn" style="width:100%;padding:14px;font-size:15px;">
+          💾 บันทึก Template
         </button>
       </div>
 
@@ -908,7 +985,7 @@
     setupChatFilters();
     setupTtsUI();
     setupGoalUI();
-    setupOverlayThemeUI();
+    setupTemplatesUI();
   }
 
   function copyText(text, btnId) {
@@ -1257,69 +1334,72 @@
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────────
-  // ── Overlay Theme UI ─────────────────────────────────────────────────────────
-  function setupOverlayThemeUI() {
+  // ── Templates UI ─────────────────────────────────────────────────────────────
+  function setupTemplatesUI() {
     const origin = location.origin;
 
     // Fill OBS URLs
-    document.getElementById('ov-main-url').textContent = `${origin}/overlay/${overlayId}`;
-    document.getElementById('ov-goal-url').textContent = `${origin}/overlay/goal`;
-    document.getElementById('ov-copy-main').onclick = () => copyText(`${origin}/overlay/${overlayId}`, 'ov-copy-main');
-    document.getElementById('ov-copy-goal').onclick = () => copyText(`${origin}/overlay/goal`, 'ov-copy-goal');
+    const urls = {
+      'url-overlay-main': `${origin}/overlay/${overlayId}`,
+      'url-widget-alert': `${origin}/widget/alert`,
+      'url-widget-chat':  `${origin}/widget/chat`,
+      'url-widget-goal':  `${origin}/widget/goal`,
+    };
+    Object.entries(urls).forEach(([id, url]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = url;
+    });
+    document.getElementById('copy-url-overlay-main').onclick = () => copyText(urls['url-overlay-main'], 'copy-url-overlay-main');
+    document.getElementById('copy-url-widget-alert').onclick = () => copyText(urls['url-widget-alert'], 'copy-url-widget-alert');
+    document.getElementById('copy-url-widget-chat').onclick  = () => copyText(urls['url-widget-chat'],  'copy-url-widget-chat');
+    document.getElementById('copy-url-widget-goal').onclick  = () => copyText(urls['url-widget-goal'],  'copy-url-widget-goal');
 
     // Local state
-    let currentTheme = { alertTheme:'classic', alertAnimation:'slide', alertPosition:'top-right', goalTheme:'classic' };
+    let cfg = { template:'classic', alertAnimation:'slide', alertPosition:'top-right', customCss:'' };
 
-    // Load current theme from server
-    fetch('/api/overlay-config').then(r => r.json()).then(cfg => {
-      currentTheme.alertTheme     = cfg.alertTheme     || 'classic';
-      currentTheme.alertAnimation = cfg.alertAnimation || 'slide';
-      currentTheme.alertPosition  = cfg.alertPosition  || 'top-right';
-      currentTheme.goalTheme      = cfg.goalTheme      || 'classic';
+    // Load from server
+    fetch('/api/template-config').then(r => r.json()).then(d => {
+      cfg.template       = d.template       || 'classic';
+      cfg.alertAnimation = d.alertAnimation || 'slide';
+      cfg.alertPosition  = d.alertPosition  || 'top-right';
+      cfg.customCss      = d.customCss      || '';
       applySelections();
     }).catch(() => applySelections());
 
     function applySelections() {
-      // Alert theme cards
-      document.querySelectorAll('#alert-theme-grid .theme-card').forEach(card => {
-        card.classList.toggle('selected', card.dataset.theme === currentTheme.alertTheme);
-      });
-      // Goal theme cards
-      document.querySelectorAll('#goal-theme-grid .theme-card').forEach(card => {
-        card.classList.toggle('selected', card.dataset.theme === currentTheme.goalTheme);
-      });
-      // Animation buttons
-      document.querySelectorAll('#anim-btn-grid .anim-btn').forEach(btn => {
-        btn.classList.toggle('selected', btn.dataset.anim === currentTheme.alertAnimation);
-      });
-      // Position buttons
-      document.querySelectorAll('#pos-btn-grid .pos-btn').forEach(btn => {
-        btn.classList.toggle('selected', btn.dataset.pos === currentTheme.alertPosition);
-      });
+      document.querySelectorAll('#tpl-gallery .tpl-card').forEach(c =>
+        c.classList.toggle('selected', c.dataset.tpl === cfg.template));
+      document.querySelectorAll('#anim-chips .chip').forEach(c =>
+        c.classList.toggle('selected', c.dataset.anim === cfg.alertAnimation));
+      document.querySelectorAll('#pos-chips .pos-btn').forEach(c =>
+        c.classList.toggle('selected', c.dataset.pos === cfg.alertPosition));
+      document.getElementById('custom-css-editor').value = cfg.customCss;
     }
 
     // Click handlers
-    document.querySelectorAll('#alert-theme-grid .theme-card').forEach(card => {
-      card.onclick = () => { currentTheme.alertTheme = card.dataset.theme; applySelections(); };
-    });
-    document.querySelectorAll('#goal-theme-grid .theme-card').forEach(card => {
-      card.onclick = () => { currentTheme.goalTheme = card.dataset.theme; applySelections(); };
-    });
-    document.querySelectorAll('#anim-btn-grid .anim-btn').forEach(btn => {
-      btn.onclick = () => { currentTheme.alertAnimation = btn.dataset.anim; applySelections(); };
-    });
-    document.querySelectorAll('#pos-btn-grid .pos-btn').forEach(btn => {
-      btn.onclick = () => { currentTheme.alertPosition = btn.dataset.pos; applySelections(); };
-    });
+    document.querySelectorAll('#tpl-gallery .tpl-card').forEach(c =>
+      c.onclick = () => { cfg.template = c.dataset.tpl; applySelections(); });
+    document.querySelectorAll('#anim-chips .chip').forEach(c =>
+      c.onclick = () => { cfg.alertAnimation = c.dataset.anim; applySelections(); });
+    document.querySelectorAll('#pos-chips .pos-btn').forEach(c =>
+      c.onclick = () => { cfg.alertPosition = c.dataset.pos; applySelections(); });
 
     // Save
-    document.getElementById('overlay-theme-save').onclick = async () => {
-      const btn = document.getElementById('overlay-theme-save');
+    document.getElementById('tpl-save-btn').onclick = async () => {
+      const btn = document.getElementById('tpl-save-btn');
       btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
-      const r = await api('/api/overlay-theme', currentTheme);
-      btn.disabled = false; btn.textContent = '💾 บันทึกธีม';
-      if (r?.ok) toast('บันทึกธีม Overlay แล้ว ✓ — Overlay จะอัปเดตทันที');
-      else toast(r?.error || 'บันทึกไม่สำเร็จ', 'error');
+      cfg.customCss = document.getElementById('custom-css-editor').value;
+      const r = await api('/api/template-config', cfg);
+      btn.disabled = false; btn.textContent = '💾 บันทึก Template';
+      if (r?.ok) {
+        // Apply template change to dashboard itself immediately
+        const tpls = ['classic','neon','minimal','gaming','cute'];
+        document.getElementById('tpl-css').href = '/templates/' + (tpls.includes(cfg.template) ? cfg.template : 'classic') + '.css';
+        document.getElementById('tpl-custom').textContent = cfg.customCss || '';
+        toast('บันทึก Template แล้ว ✓ — ทุก widget จะอัปเดตทันที');
+      } else {
+        toast(r?.error || 'บันทึกไม่สำเร็จ', 'error');
+      }
     };
   }
 

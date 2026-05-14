@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Widget — StreamTool</title>
+  <link id="tpl-css" rel="stylesheet" href="/templates/classic.css">
+  <style id="tpl-custom"></style>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{background:transparent;overflow:hidden;
+      font-family:'Segoe UI','Noto Sans Thai',system-ui,sans-serif;}
+    #chat-zone{display:flex;flex-direction:column;gap:6px;padding:8px;pointer-events:none;}
+    .chat-msg{
+      display:flex;align-items:flex-start;gap:8px;
+      background:var(--t-chat-bg); border:1px solid var(--t-chat-border);
+      border-radius:var(--t-chat-radius); padding:8px 12px;
+      backdrop-filter:blur(var(--t-chat-blur)); animation:chatIn .3s ease;
+    }
+    @keyframes chatIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+    .chat-plat{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px;}
+    .chat-plat.youtube{background:rgba(255,0,0,.2);}
+    .chat-plat.tiktok{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);}
+    .chat-inner{flex:1;min-width:0;}
+    .chat-name{font-size:12px;font-weight:var(--t-chat-name-weight,700);margin-bottom:1px;}
+    .chat-name.youtube{color:var(--t-chat-yt);}
+    .chat-name.tiktok{color:var(--t-chat-tt);}
+    .chat-text{font-size:13px;color:var(--t-chat-text);line-height:1.4;word-break:break-word;}
+  </style>
+</head>
+<body>
+<div id="chat-zone"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  let overlayId='', maxMessages=5;
+  (async()=>{
+    try{const cfg=await fetch('/api/template-config').then(r=>r.json());
+      overlayId=cfg.overlayId||'default-overlay';
+      applyTemplate(cfg);}catch(e){}
+    const socket=io({auth:{overlayId}});
+    socket.on('chat',appendMsg);
+    socket.on('templateUpdate',applyTemplate);
+  })();
+
+  function applyTemplate(cfg){
+    const tpls=['classic','neon','minimal','gaming','cute'];
+    const name=tpls.includes(cfg.template)?cfg.template:'classic';
+    document.getElementById('tpl-css').href='/templates/'+name+'.css';
+    document.getElementById('tpl-custom').textContent=cfg.customCss||'';
+  }
+  function appendMsg(data){
+    const{platform='unknown',displayName='viewer',message=''}=data;
+    const icon=platform==='youtube'?'▶':'♪';
+    const zone=document.getElementById('chat-zone');
+    const el=document.createElement('div');
+    el.className='chat-msg';
+    el.innerHTML=`<div class="chat-plat ${platform}">${icon}</div><div class="chat-inner"><div class="chat-name ${platform}">${esc(displayName)}</div><div class="chat-text">${esc(message)}</div></div>`;
+    zone.appendChild(el);
+    while(zone.children.length>maxMessages){
+      const o=zone.children[0];o.style.transition='opacity .3s';o.style.opacity='0';
+      setTimeout(()=>o.remove(),300);break;}
+  }
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
