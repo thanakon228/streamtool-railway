@@ -67,5 +67,3 @@
   --muted:    rgba(0,255,65,.45);
   --radius:   6px;
 }
-/* Gaming: matrix font + scanlines */
-body { background-color: #030a03 !important; font-family:'Courier New','Noto Sans Thai',monospace !important; }

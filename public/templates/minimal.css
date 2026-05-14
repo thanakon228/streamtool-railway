@@ -67,5 +67,3 @@
   --muted:    #64748b;
   --radius:   12px;
 }
-/* Minimal: force light background */
-body { background-color: #f1f5f9 !important; }

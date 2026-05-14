@@ -67,5 +67,3 @@
   --muted:    rgba(0,255,255,.5);
   --radius:   10px;
 }
-/* Neon-specific: pulsing glow on borders */
-body { background-color: #02020c !important; }
