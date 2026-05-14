@@ -173,6 +173,55 @@
     .overview-right .card { margin-bottom: 0; }
     @media (max-width: 960px) { .overview-grid { grid-template-columns: 1fr; min-height: auto; } .overview-right { order: -1; } .overview-right .card { max-height: 350px; } }
 
+    /* ── Theme picker ── */
+    .theme-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-bottom:6px; }
+    .theme-card {
+      border:2px solid var(--border); border-radius:12px; padding:14px 12px 12px;
+      cursor:pointer; transition:all 0.18s; position:relative; overflow:hidden;
+      text-align:center;
+    }
+    .theme-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+    .theme-card.selected { border-color:var(--accent); background:var(--accent-dim); }
+    .theme-card .tc-preview {
+      height:56px; border-radius:8px; margin-bottom:8px;
+      display:flex; align-items:center; justify-content:center; gap:6px; font-size:11px;
+      overflow:hidden; position:relative;
+    }
+    .theme-card .tc-name  { font-size:12px; font-weight:700; }
+    .theme-card .tc-badge {
+      position:absolute; top:6px; right:6px; background:var(--accent); color:white;
+      font-size:9px; font-weight:800; padding:2px 7px; border-radius:99px;
+      display:none;
+    }
+    .theme-card.selected .tc-badge { display:block; }
+
+    /* Preview swatches */
+    .tc-classic  { background:linear-gradient(135deg,#0e0b22,#181034); border:1px solid rgba(124,92,252,0.4); }
+    .tc-neon     { background:#050508; border:2px solid #00ffff; box-shadow:0 0 10px rgba(0,255,255,0.4); }
+    .tc-minimal  { background:rgba(255,255,255,0.97); border:1px solid rgba(0,0,0,0.1); }
+    .tc-gaming   { background:rgba(3,10,3,0.97); border:1px solid #00ff41; box-shadow:0 0 8px rgba(0,255,65,0.3); }
+    .tc-cute     { background:linear-gradient(135deg,#fde8f5,#f3e4ff); border:2px solid #f9a8d4; }
+
+    .anim-btn-grid  { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
+    .anim-btn {
+      padding:8px 16px; border:1.5px solid var(--border); border-radius:8px;
+      background:transparent; color:var(--muted); font-size:12px; font-weight:600;
+      cursor:pointer; transition:all 0.15s;
+    }
+    .anim-btn:hover   { border-color:var(--accent); color:var(--text); }
+    .anim-btn.selected{ border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
+
+    .pos-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:280px;
+    }
+    .pos-btn {
+      padding:10px; border:1.5px solid var(--border); border-radius:8px;
+      background:transparent; color:var(--muted); font-size:12px; font-weight:600;
+      cursor:pointer; transition:all 0.15s; text-align:center;
+    }
+    .pos-btn:hover   { border-color:var(--accent); color:var(--text); }
+    .pos-btn.selected{ border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
+
     /* ── Responsive ── */
     @media (max-width: 640px) {
       nav { width: 60px; }
@@ -238,6 +287,11 @@
         <span>TTS & Test</span>
       </button>
 
+      <button class="nav-item" data-tab="overlay">
+        <span class="nav-icon">🎨</span>
+        <span>Overlay</span>
+      </button>
+
       <div class="nav-section">ระบบ</div>
       <button class="nav-item" data-tab="settings">
         <span class="nav-icon">⚙️</span>
@@ -285,7 +339,7 @@
                   <span class="url-text" id="overlay-url">กำลังโหลด...</span>
                   <button class="copy-btn" id="copy-url-btn">คัดลอก</button>
                 </div>
-                <p style="font-size:12px;color:var(--muted);">วาง URL นี้ใน OBS → Sources → Browser Source</p>
+                <p style="font-size:12px;color:var(--muted);">วาง URL นี้ใน OBS → Sources → Browser Source — ดูธีมได้ที่ <button onclick="switchTab('overlay')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">🎨 Overlay</button></p>
               </div>
             </div>
 
@@ -506,6 +560,149 @@
         </div>
       </div>
 
+      <!-- ── Tab: Overlay Theme ── -->
+      <div class="tab-panel" id="tab-overlay">
+        <div class="page-title">🎨 Overlay Theme</div>
+
+        <!-- Alert Theme -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🖼️ รูปแบบ Alert</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">เลือกธีมการแสดง donation alert บน overlay</div>
+            <div class="theme-grid" id="alert-theme-grid">
+              <div class="theme-card" data-theme="classic">
+                <div class="tc-preview tc-classic">
+                  <div style="color:rgba(124,92,252,0.9);font-size:16px;">💜</div>
+                  <div style="color:rgba(255,255,255,0.7);font-size:10px;">Classic</div>
+                </div>
+                <div class="tc-name">Classic</div>
+                <div class="tc-badge">✓</div>
+              </div>
+              <div class="theme-card" data-theme="neon">
+                <div class="tc-preview tc-neon">
+                  <div style="color:#00ffff;font-size:14px;text-shadow:0 0 8px #00ffff;">NEON</div>
+                </div>
+                <div class="tc-name" style="color:#00ffff;">Neon</div>
+                <div class="tc-badge">✓</div>
+              </div>
+              <div class="theme-card" data-theme="minimal">
+                <div class="tc-preview tc-minimal">
+                  <div style="color:#374151;font-weight:700;font-size:13px;">Minimal</div>
+                </div>
+                <div class="tc-name">Minimal</div>
+                <div class="tc-badge">✓</div>
+              </div>
+              <div class="theme-card" data-theme="gaming">
+                <div class="tc-preview tc-gaming">
+                  <div style="color:#00ff41;font-family:monospace;font-size:12px;text-shadow:0 0 8px #00ff41;">&gt; GAMING_</div>
+                </div>
+                <div class="tc-name" style="color:#00ff41;">Gaming</div>
+                <div class="tc-badge">✓</div>
+              </div>
+              <div class="theme-card" data-theme="cute">
+                <div class="tc-preview tc-cute">
+                  <div style="font-size:20px;">🌸</div>
+                  <div style="color:#be185d;font-size:12px;font-weight:700;">Cute</div>
+                </div>
+                <div class="tc-name" style="color:#be185d;">Cute</div>
+                <div class="tc-badge">✓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alert Animation -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">✨ Animation เข้า</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">แอนิเมชั่นตอน alert โผล่ขึ้น</div>
+            <div class="anim-btn-grid" id="anim-btn-grid">
+              <button class="anim-btn" data-anim="slide">⟶ Slide</button>
+              <button class="anim-btn" data-anim="bounce">⬇ Bounce</button>
+              <button class="anim-btn" data-anim="zoom">⊕ Zoom</button>
+              <button class="anim-btn" data-anim="flip">↻ Flip</button>
+              <button class="anim-btn" data-anim="drop">⬇ Drop</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alert Position -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📌 ตำแหน่ง Alert</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">มุมที่ alert จะโผล่บน overlay</div>
+            <div class="pos-grid" id="pos-btn-grid">
+              <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
+              <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
+              <button class="pos-btn" data-pos="bottom-left">↙ ล่างซ้าย</button>
+              <button class="pos-btn" data-pos="bottom-right">↘ ล่างขวา</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Goal Theme -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎯 ธีม Goal Bar</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">ธีมสำหรับ Goal Bar overlay (ใช้ได้ทั้งใน overlay หลักและ /overlay/goal)</div>
+            <div class="theme-grid" id="goal-theme-grid">
+              <div class="theme-card" data-theme="classic">
+                <div class="tc-preview tc-classic"><div style="color:#22c55e;font-size:10px;font-weight:700;">฿350/฿1000</div></div>
+                <div class="tc-name">Classic</div><div class="tc-badge">✓</div>
+              </div>
+              <div class="theme-card" data-theme="neon">
+                <div class="tc-preview tc-neon"><div style="color:#00ffff;font-size:10px;font-weight:700;text-shadow:0 0 8px #00ffff;">฿350/฿1000</div></div>
+                <div class="tc-name" style="color:#00ffff;">Neon</div><div class="tc-badge">✓</div>
+              </div>
+              <div class="theme-card" data-theme="minimal">
+                <div class="tc-preview tc-minimal"><div style="color:#059669;font-size:10px;font-weight:700;">฿350/฿1000</div></div>
+                <div class="tc-name">Minimal</div><div class="tc-badge">✓</div>
+              </div>
+              <div class="theme-card" data-theme="gaming">
+                <div class="tc-preview tc-gaming"><div style="color:#00ff41;font-family:monospace;font-size:10px;text-shadow:0 0 6px #00ff41;">฿350/฿1000</div></div>
+                <div class="tc-name" style="color:#00ff41;">Gaming</div><div class="tc-badge">✓</div>
+              </div>
+              <div class="theme-card" data-theme="cute">
+                <div class="tc-preview tc-cute"><div style="color:#be185d;font-size:10px;font-weight:700;">฿350/฿1000 🌸</div></div>
+                <div class="tc-name" style="color:#be185d;">Cute</div><div class="tc-badge">✓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OBS URLs -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔗 OBS Browser Sources</div></div>
+          <div class="card-body" style="padding:0 18px;">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Overlay หลัก (Alert + Chat + Goal)</div>
+                <div class="setting-desc">วาง URL นี้ใน OBS</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <div class="setting-value" id="ov-main-url" style="max-width:240px;">—</div>
+                <button class="btn btn-sm btn-secondary" id="ov-copy-main">คัดลอก</button>
+              </div>
+            </div>
+            <div class="setting-row" style="border-bottom:none;">
+              <div>
+                <div class="setting-label">Goal Overlay แยก</div>
+                <div class="setting-desc">แค่ Goal Bar — ใส่เป็น source แยกใน OBS</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <div class="setting-value" id="ov-goal-url" style="max-width:240px;">—</div>
+                <button class="btn btn-sm btn-secondary" id="ov-copy-goal">คัดลอก</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save button -->
+        <button class="btn btn-primary" id="overlay-theme-save" style="width:100%;padding:14px;font-size:15px;">
+          💾 บันทึกธีม
+        </button>
+      </div>
+
       <!-- ── Tab: Settings ── -->
       <div class="tab-panel" id="tab-settings">
         <div class="page-title">ตั้งค่า</div>
@@ -711,6 +908,7 @@
     setupChatFilters();
     setupTtsUI();
     setupGoalUI();
+    setupOverlayThemeUI();
   }
 
   function copyText(text, btnId) {
@@ -1059,6 +1257,77 @@
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────────
+  // ── Overlay Theme UI ─────────────────────────────────────────────────────────
+  function setupOverlayThemeUI() {
+    const origin = location.origin;
+
+    // Fill OBS URLs
+    document.getElementById('ov-main-url').textContent = `${origin}/overlay/${overlayId}`;
+    document.getElementById('ov-goal-url').textContent = `${origin}/overlay/goal`;
+    document.getElementById('ov-copy-main').onclick = () => copyText(`${origin}/overlay/${overlayId}`, 'ov-copy-main');
+    document.getElementById('ov-copy-goal').onclick = () => copyText(`${origin}/overlay/goal`, 'ov-copy-goal');
+
+    // Local state
+    let currentTheme = { alertTheme:'classic', alertAnimation:'slide', alertPosition:'top-right', goalTheme:'classic' };
+
+    // Load current theme from server
+    fetch('/api/overlay-config').then(r => r.json()).then(cfg => {
+      currentTheme.alertTheme     = cfg.alertTheme     || 'classic';
+      currentTheme.alertAnimation = cfg.alertAnimation || 'slide';
+      currentTheme.alertPosition  = cfg.alertPosition  || 'top-right';
+      currentTheme.goalTheme      = cfg.goalTheme      || 'classic';
+      applySelections();
+    }).catch(() => applySelections());
+
+    function applySelections() {
+      // Alert theme cards
+      document.querySelectorAll('#alert-theme-grid .theme-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.theme === currentTheme.alertTheme);
+      });
+      // Goal theme cards
+      document.querySelectorAll('#goal-theme-grid .theme-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.theme === currentTheme.goalTheme);
+      });
+      // Animation buttons
+      document.querySelectorAll('#anim-btn-grid .anim-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.anim === currentTheme.alertAnimation);
+      });
+      // Position buttons
+      document.querySelectorAll('#pos-btn-grid .pos-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.pos === currentTheme.alertPosition);
+      });
+    }
+
+    // Click handlers
+    document.querySelectorAll('#alert-theme-grid .theme-card').forEach(card => {
+      card.onclick = () => { currentTheme.alertTheme = card.dataset.theme; applySelections(); };
+    });
+    document.querySelectorAll('#goal-theme-grid .theme-card').forEach(card => {
+      card.onclick = () => { currentTheme.goalTheme = card.dataset.theme; applySelections(); };
+    });
+    document.querySelectorAll('#anim-btn-grid .anim-btn').forEach(btn => {
+      btn.onclick = () => { currentTheme.alertAnimation = btn.dataset.anim; applySelections(); };
+    });
+    document.querySelectorAll('#pos-btn-grid .pos-btn').forEach(btn => {
+      btn.onclick = () => { currentTheme.alertPosition = btn.dataset.pos; applySelections(); };
+    });
+
+    // Save
+    document.getElementById('overlay-theme-save').onclick = async () => {
+      const btn = document.getElementById('overlay-theme-save');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      const r = await api('/api/overlay-theme', currentTheme);
+      btn.disabled = false; btn.textContent = '💾 บันทึกธีม';
+      if (r?.ok) toast('บันทึกธีม Overlay แล้ว ✓ — Overlay จะอัปเดตทันที');
+      else toast(r?.error || 'บันทึกไม่สำเร็จ', 'error');
+    };
+  }
+
+  // ── Env check ────────────────────────────────────────────────────────────────
+  function checkTtsKey() {
+    // nothing to do here — checked inside setupTtsUI via /api/health
+  }
+
   (async () => {
     if (token) {
       const res = await fetch('/api/session', { headers: { Authorization: `Bearer ${token}` } });

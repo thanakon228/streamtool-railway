@@ -24,9 +24,11 @@ const io     = new Server(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
-app.get("/donate",    (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
-app.get("/overlay/*", (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
+app.get("/dashboard",      (_, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
+app.get("/donate",         (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
+app.get("/overlay/goal",   (_, res) => res.sendFile(path.join(__dirname, "public/overlay/goal.html")));
+app.get("/overlay/:id",    (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
+app.get("/overlay",        (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
 
 // ── Data persistence ──────────────────────────────────────────────────────────
 const DONATIONS_FILE = path.join(__dirname, "donations.json");
@@ -51,6 +53,14 @@ let ttSession = null;
 
 // ── Goal state ────────────────────────────────────────────────────────────────
 let goal = { target: 0, title: "Goal วันนี้" };
+
+// ── Overlay theme state ───────────────────────────────────────────────────────
+let overlayTheme = {
+  alertTheme:    "classic",  // classic | neon | minimal | gaming | cute
+  alertAnimation:"slide",    // slide | bounce | zoom | flip | drop
+  alertPosition: "top-right",// top-right | top-left | bottom-right | bottom-left
+  goalTheme:     "classic",  // same options as alertTheme
+};
 
 function goalCurrent() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -102,6 +112,28 @@ app.get("/api/session", auth, (_, res) => res.json({
 
 // Donations list
 app.get("/api/donations", auth, (_, res) => res.json(donations));
+
+// Overlay config (public — no auth)
+app.get("/api/overlay-config", (_, res) => res.json({
+  overlayId: OVERLAY_ID,
+  ...overlayTheme,
+  goal: { ...goal, current: goalCurrent() },
+}));
+
+// Overlay theme — save (auth)
+app.post("/api/overlay-theme", auth, (req, res) => {
+  const { alertTheme, alertAnimation, alertPosition, goalTheme } = req.body || {};
+  const validThemes = ["classic","neon","minimal","gaming","cute"];
+  const validAnims  = ["slide","bounce","zoom","flip","drop"];
+  const validPos    = ["top-right","top-left","bottom-right","bottom-left"];
+  if (alertTheme    && validThemes.includes(alertTheme))    overlayTheme.alertTheme    = alertTheme;
+  if (alertAnimation&& validAnims.includes(alertAnimation)) overlayTheme.alertAnimation= alertAnimation;
+  if (alertPosition && validPos.includes(alertPosition))    overlayTheme.alertPosition = alertPosition;
+  if (goalTheme     && validThemes.includes(goalTheme))     overlayTheme.goalTheme     = goalTheme;
+  // Push live update to overlays
+  io.to(`overlay:${OVERLAY_ID}`).emit("themeUpdate", overlayTheme);
+  res.json({ ok: true, theme: overlayTheme });
+});
 
 // Public donate info (no auth)
 app.get("/api/donate/info", (_, res) => res.json({
@@ -450,7 +482,8 @@ io.on("connection", (socket) => {
 
   if (overlayId) {
     socket.join(`overlay:${overlayId}`);
-    socket.emit("goalUpdate", { ...goal, current: goalCurrent() });
+    socket.emit("goalUpdate",  { ...goal, current: goalCurrent() });
+    socket.emit("themeUpdate", overlayTheme);
     console.log(`Overlay connected: ${overlayId}`);
     return;
   }

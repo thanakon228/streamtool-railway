@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Goal Overlay — StreamTool</title>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html, body {
+      width:100%; height:100%; background:transparent; overflow:hidden;
+      font-family: 'Segoe UI', 'Noto Sans Thai', system-ui, sans-serif;
+    }
+
+    /* ── Outer wrapper — centered ── */
+    #root {
+      position:fixed; bottom:0; left:0; right:0;
+      padding: 20px 24px;
+      opacity:0; transition: opacity 0.6s ease;
+    }
+    #root.visible { opacity:1; }
+
+    /* ══════════════════════════════════════════════
+       THEMES
+    ══════════════════════════════════════════════ */
+
+    /* classic */
+    body.theme-classic #root .goal-card {
+      background: rgba(12,14,22,0.9); border: 1px solid rgba(124,92,252,0.4);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,92,252,0.1);
+      border-radius: 18px;
+    }
+    body.theme-classic .goal-fill  { background: linear-gradient(90deg,#7c5cfc,#22c55e); box-shadow:0 0 16px rgba(124,92,252,0.5); }
+    body.theme-classic .goal-current  { color:#22c55e; text-shadow:0 0 18px rgba(34,197,94,0.6); }
+    body.theme-classic .goal-title { color:rgba(255,255,255,0.65); }
+    body.theme-classic .goal-target{ color:rgba(255,255,255,0.5); }
+    body.theme-classic .goal-percent{ color:rgba(255,255,255,0.4); }
+    body.theme-classic .goal-track { background:rgba(255,255,255,0.07); }
+    body.theme-classic .goal-bar-label { color:rgba(255,255,255,0.45); }
+
+    /* neon */
+    body.theme-neon #root .goal-card {
+      background: #050508; border: 2px solid #00ffff;
+      box-shadow: 0 0 24px rgba(0,255,255,0.5), 0 0 60px rgba(0,255,255,0.15);
+      border-radius: 14px; animation: neonPulse 2.5s ease infinite;
+    }
+    @keyframes neonPulse {
+      0%,100% { box-shadow:0 0 24px rgba(0,255,255,0.5),0 0 60px rgba(0,255,255,0.15); }
+      50%      { box-shadow:0 0 40px rgba(0,255,255,0.7),0 0 80px rgba(0,255,255,0.25); }
+    }
+    body.theme-neon .goal-fill   { background:linear-gradient(90deg,#00ffff,#ff00ff); box-shadow:0 0 16px rgba(0,255,255,0.8); }
+    body.theme-neon .goal-current{ color:#00ffff; text-shadow:0 0 16px rgba(0,255,255,0.9); }
+    body.theme-neon .goal-title  { color:rgba(0,255,255,0.7); }
+    body.theme-neon .goal-target { color:rgba(0,255,255,0.4); }
+    body.theme-neon .goal-percent{ color:rgba(0,255,255,0.4); }
+    body.theme-neon .goal-track  { background:rgba(0,255,255,0.08); }
+    body.theme-neon .goal-bar-label{ color:rgba(0,255,255,0.45); }
+
+    /* minimal */
+    body.theme-minimal #root .goal-card {
+      background: rgba(255,255,255,0.97); border: 1px solid rgba(0,0,0,0.07);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.15);
+      border-radius: 22px;
+    }
+    body.theme-minimal .goal-fill    { background:linear-gradient(90deg,#7c5cfc,#ec4899); }
+    body.theme-minimal .goal-current { color:#059669; text-shadow:none; }
+    body.theme-minimal .goal-title   { color:#374151; }
+    body.theme-minimal .goal-target  { color:#9ca3af; }
+    body.theme-minimal .goal-percent { color:#9ca3af; }
+    body.theme-minimal .goal-track   { background:rgba(0,0,0,0.08); }
+    body.theme-minimal .goal-bar-label{ color:#6b7280; }
+    body.theme-minimal .goal-sep     { color:#d1d5db; }
+
+    /* gaming */
+    body.theme-gaming #root .goal-card {
+      background: rgba(3,10,3,0.97); border: 1px solid #00ff41;
+      box-shadow: 0 0 20px rgba(0,255,65,0.4);
+      border-radius: 8px;
+      font-family: 'Courier New', 'Noto Sans Thai', monospace;
+    }
+    body.theme-gaming #root .goal-card::before {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,255,65,0.03) 2px, rgba(0,255,65,0.03) 4px);
+      border-radius: 8px;
+    }
+    body.theme-gaming .goal-fill    { background:linear-gradient(90deg,#003300,#00ff41); box-shadow:0 0 16px rgba(0,255,65,0.8); }
+    body.theme-gaming .goal-current { color:#00ff41; text-shadow:0 0 16px rgba(0,255,65,0.9); }
+    body.theme-gaming .goal-title   { color:rgba(0,255,65,0.65); }
+    body.theme-gaming .goal-target  { color:rgba(0,255,65,0.4); }
+    body.theme-gaming .goal-percent { color:rgba(0,255,65,0.4); }
+    body.theme-gaming .goal-track   { background:rgba(0,255,65,0.07); }
+    body.theme-gaming .goal-bar-label{ color:rgba(0,255,65,0.4); }
+
+    /* cute */
+    body.theme-cute #root .goal-card {
+      background: linear-gradient(135deg,rgba(253,232,245,0.97),rgba(243,228,255,0.97));
+      border: 2px solid #f9a8d4;
+      box-shadow: 0 8px 32px rgba(236,72,153,0.25);
+      border-radius: 28px;
+    }
+    body.theme-cute .goal-fill    { background:linear-gradient(90deg,#ec4899,#a855f7); box-shadow:0 0 14px rgba(236,72,153,0.5); }
+    body.theme-cute .goal-current { color:#be185d; text-shadow:none; }
+    body.theme-cute .goal-title   { color:#d946ef; }
+    body.theme-cute .goal-target  { color:#a855f7; }
+    body.theme-cute .goal-percent { color:#9333ea; }
+    body.theme-cute .goal-track   { background:rgba(249,168,212,0.3); }
+    body.theme-cute .goal-sep     { color:#f0abfc; }
+    body.theme-cute .goal-bar-label{ color:#d946ef; }
+
+    /* ══════════════════════════════════════════════
+       LAYOUT
+    ══════════════════════════════════════════════ */
+    .goal-card {
+      position:relative; padding: 18px 22px 20px;
+      backdrop-filter: blur(16px);
+    }
+
+    .goal-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:14px;
+    }
+    .goal-left  { display:flex; flex-direction:column; gap:2px; }
+    .goal-title {
+      font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px;
+      text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .goal-bar-label { font-size:11px; font-weight:500; }
+    .goal-amounts   { display:flex; align-items:baseline; gap:4px; }
+    .goal-current   { font-size:36px; font-weight:900; line-height:1; }
+    .goal-sep       { font-size:18px; color:rgba(255,255,255,0.25); }
+    .goal-target    { font-size:18px; font-weight:700; }
+
+    .goal-track {
+      height:14px; border-radius:99px; overflow:hidden; margin-bottom:8px;
+    }
+    .goal-fill {
+      height:100%; border-radius:99px; width:0%;
+      transition: width 1.5s cubic-bezier(0.34,1.1,0.64,1);
+      position:relative; overflow:hidden;
+    }
+    .goal-fill::after {
+      content:''; position:absolute; top:0; left:-100%; width:60%; height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent);
+      animation:goalShimmer 2s ease infinite;
+    }
+    @keyframes goalShimmer { to { left:200%; } }
+
+    .goal-footer  { display:flex; align-items:center; justify-content:space-between; }
+    .goal-percent { font-size:12px; font-weight:700; }
+    .goal-reached {
+      font-size:14px; font-weight:800; color:#22c55e;
+      animation: reachedPulse 1.5s ease infinite;
+    }
+    @keyframes reachedPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+    /* Milestones dots */
+    .goal-milestones {
+      display:flex; justify-content:space-between; padding:0 2px; margin-bottom:4px;
+    }
+    .milestone-dot {
+      width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.15);
+      transition: background 0.5s ease, box-shadow 0.5s ease;
+    }
+    .milestone-dot.reached {
+      background:#22c55e;
+      box-shadow: 0 0 6px rgba(34,197,94,0.8);
+    }
+  </style>
+</head>
+<body class="theme-classic">
+
+<div id="root">
+  <div class="goal-card">
+    <div class="goal-header">
+      <div class="goal-left">
+        <div class="goal-title">
+          <span>🎯</span>
+          <span id="goal-title-text">Goal วันนี้</span>
+        </div>
+        <div class="goal-bar-label" id="goal-bar-label">กำลังโหลด...</div>
+      </div>
+      <div class="goal-amounts">
+        <span class="goal-current" id="goal-current">฿0</span>
+        <span class="goal-sep">/</span>
+        <span class="goal-target" id="goal-target">฿0</span>
+      </div>
+    </div>
+
+    <!-- Milestone dots (25 / 50 / 75 / 100%) -->
+    <div class="goal-milestones" id="goal-milestones">
+      <div class="milestone-dot" data-at="25"></div>
+      <div class="milestone-dot" data-at="50"></div>
+      <div class="milestone-dot" data-at="75"></div>
+      <div class="milestone-dot" data-at="100"></div>
+    </div>
+
+    <div class="goal-track">
+      <div class="goal-fill" id="goal-fill"></div>
+    </div>
+
+    <div class="goal-footer">
+      <div class="goal-percent" id="goal-percent">0%</div>
+      <div class="goal-reached" id="goal-reached" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  let overlayId = '';
+
+  (async () => {
+    try {
+      const cfg = await fetch('/api/overlay-config').then(r => r.json());
+      overlayId = cfg.overlayId || 'default-overlay';
+      applyTheme(cfg.goalTheme || 'classic');
+      if (cfg.goal) updateGoal(cfg.goal);
+    } catch(e) {
+      overlayId = 'default-overlay';
+    }
+    connect();
+  })();
+
+  function connect() {
+    const socket = io({ auth: { overlayId } });
+    socket.on('goalUpdate',  updateGoal);
+    socket.on('themeUpdate', (cfg) => applyTheme(cfg.goalTheme || 'classic'));
+  }
+
+  function applyTheme(t) {
+    const themes = ['classic','neon','minimal','gaming','cute'];
+    const body = document.body;
+    themes.forEach(x => body.classList.remove('theme-'+x));
+    body.classList.add('theme-' + (themes.includes(t) ? t : 'classic'));
+  }
+
+  function updateGoal(data) {
+    const { current=0, target=0, title='Goal วันนี้' } = data;
+    const root = document.getElementById('root');
+
+    if (!target || target <= 0) { root.classList.remove('visible'); return; }
+    root.classList.add('visible');
+
+    document.getElementById('goal-title-text').textContent = title;
+    document.getElementById('goal-current').textContent = fmt(current);
+    document.getElementById('goal-target').textContent  = fmt(target);
+
+    const pct = Math.min(100, current / target * 100);
+    document.getElementById('goal-fill').style.width = pct + '%';
+
+    // Milestone dots
+    document.querySelectorAll('.milestone-dot').forEach(dot => {
+      dot.classList.toggle('reached', pct >= parseInt(dot.dataset.at));
+    });
+
+    // Footer
+    const pctEl     = document.getElementById('goal-percent');
+    const reachedEl = document.getElementById('goal-reached');
+    const labelEl   = document.getElementById('goal-bar-label');
+
+    if (pct >= 100) {
+      pctEl.style.display     = 'none';
+      reachedEl.style.display = '';
+      reachedEl.textContent   = '🎉 ถึง Goal แล้ว!';
+      labelEl.textContent     = `ยอดรวม ${fmt(current)}`;
+      document.getElementById('goal-fill').style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
+    } else {
+      pctEl.style.display     = '';
+      reachedEl.style.display = 'none';
+      pctEl.textContent       = Math.round(pct) + '%';
+      labelEl.textContent     = `เหลืออีก ${fmt(target - current)}`;
+      document.getElementById('goal-fill').style.background = '';
+    }
+  }
+
+  function fmt(n) {
+    return '฿' + Number(n).toLocaleString('th-TH');
+  }
+</script>
+</body>
+</html>

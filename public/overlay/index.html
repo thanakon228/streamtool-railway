@@ -5,113 +5,349 @@
   <title>StreamTool Overlay</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; font-family: 'Segoe UI', 'Noto Sans Thai', system-ui, sans-serif; }
-
-    /* ── Alert zone ── */
-    #alert-zone { position: fixed; top: 50%; right: 40px; transform: translateY(-50%); width: 400px; pointer-events: none; }
-
-    #alert-card {
-      background: linear-gradient(135deg, rgba(15,12,35,0.97), rgba(25,18,55,0.97));
-      border: 1px solid rgba(124,92,252,0.5);
-      border-radius: 18px; overflow: hidden;
-      box-shadow: 0 12px 50px rgba(124,92,252,0.35), 0 0 0 1px rgba(124,92,252,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
-      opacity: 0; transform: translateX(440px) scale(0.95);
-      transition: opacity 0.45s cubic-bezier(0.34,1.56,0.64,1), transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+    html, body { width: 100%; height: 100%; background: transparent; overflow: hidden;
+      font-family: 'Segoe UI', 'Noto Sans Thai', system-ui, sans-serif;
+      perspective: 1200px;
     }
-    #alert-card.show {
-      opacity: 1; transform: translateX(0) scale(1);
+
+    /* ═══════════════════════════════════════════════════════
+       ALERT ZONE — position
+    ═══════════════════════════════════════════════════════ */
+    #alert-zone {
+      position: fixed; width: 420px; pointer-events: none;
+      /* default: top-right */
+      top: 40px; right: 40px;
+    }
+    body.pos-top-left     #alert-zone { top:40px;    left:40px;  right:auto;  bottom:auto; }
+    body.pos-bottom-right #alert-zone { bottom:180px;right:40px; left:auto;   top:auto;    }
+    body.pos-bottom-left  #alert-zone { bottom:180px;left:40px;  right:auto;  top:auto;    }
+
+    /* ═══════════════════════════════════════════════════════
+       ALERT CARD — base (invisible)
+    ═══════════════════════════════════════════════════════ */
+    #alert-card {
+      border-radius: 18px; overflow: hidden;
+      opacity: 0; will-change: transform, opacity;
+      transition: opacity 0.4s cubic-bezier(0.34,1.3,0.64,1),
+                  transform 0.4s cubic-bezier(0.34,1.3,0.64,1);
     }
     #alert-card.hide {
-      opacity: 0; transform: translateX(440px) scale(0.95);
-      transition: opacity 0.3s ease-in, transform 0.3s ease-in;
+      transition: opacity 0.28s ease-in, transform 0.28s ease-in !important;
     }
-    #alert-card.show .alert-avatar { animation: avatarPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.2s both; }
-    #alert-card.show .alert-amount { animation: amountPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both; }
-    @keyframes avatarPop { from{transform:scale(0) rotate(-10deg)} to{transform:scale(1) rotate(0deg)} }
-    @keyframes amountPop { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
 
-    .alert-accent-bar { height: 3px; background: linear-gradient(90deg,#7c5cfc,#ec4899,#f59e0b,#22c55e,#7c5cfc); background-size: 300% 100%; animation: gradientShift 4s linear infinite; }
+    /* ── avatar / amount pop ── */
+    #alert-card.show .alert-avatar { animation: avatarPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.18s both; }
+    #alert-card.show .alert-amount { animation: amountPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.28s both; }
+    @keyframes avatarPop { from{transform:scale(0) rotate(-12deg)} to{transform:scale(1) rotate(0deg)} }
+    @keyframes amountPop { from{transform:scale(0.4);opacity:0}     to{transform:scale(1);opacity:1} }
+
+    /* ═══════════════════════════════════════════════════════
+       ANIMATIONS
+    ═══════════════════════════════════════════════════════ */
+
+    /* slide (default) — from right */
+    body.anim-slide #alert-card           { transform: translateX(460px) scale(0.92); }
+    body.anim-slide #alert-card.show      { transform: translateX(0) scale(1); opacity:1; }
+    body.anim-slide #alert-card.hide      { transform: translateX(460px) scale(0.92); opacity:0; }
+    /* slide from left when positioned on left */
+    body.pos-top-left.anim-slide   #alert-card      { transform: translateX(-460px) scale(0.92); }
+    body.pos-bottom-left.anim-slide #alert-card     { transform: translateX(-460px) scale(0.92); }
+    body.pos-top-left.anim-slide   #alert-card.show { transform: translateX(0) scale(1); opacity:1; }
+    body.pos-bottom-left.anim-slide #alert-card.show{ transform: translateX(0) scale(1); opacity:1; }
+    body.pos-top-left.anim-slide   #alert-card.hide { transform: translateX(-460px) scale(0.92); opacity:0; }
+    body.pos-bottom-left.anim-slide #alert-card.hide{ transform: translateX(-460px) scale(0.92); opacity:0; }
+
+    /* bounce — drop from top */
+    body.anim-bounce #alert-card      { transform: translateY(-90px) scale(0.85); opacity:0; }
+    body.anim-bounce #alert-card.show { transform: translateY(0) scale(1); opacity:1;
+      transition: opacity 0.35s ease, transform 0.55s cubic-bezier(0.22,1.8,0.36,1); }
+    body.anim-bounce #alert-card.hide { transform: translateY(-60px) scale(0.88); opacity:0; }
+
+    /* zoom — scale from center */
+    body.anim-zoom #alert-card      { transform: scale(0.2) translateY(20px); opacity:0; }
+    body.anim-zoom #alert-card.show { transform: scale(1) translateY(0); opacity:1;
+      transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+    body.anim-zoom #alert-card.hide { transform: scale(0.2) translateY(20px); opacity:0; }
+
+    /* flip — 3D Y-axis */
+    body.anim-flip #alert-card      { transform: rotateY(90deg) scaleX(0.6); opacity:0; }
+    body.anim-flip #alert-card.show { transform: rotateY(0deg) scaleX(1); opacity:1;
+      transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.34,1.2,0.64,1); }
+    body.anim-flip #alert-card.hide { transform: rotateY(-90deg) scaleX(0.6); opacity:0; }
+
+    /* drop — fall with slight tilt */
+    body.anim-drop #alert-card      { transform: translateY(-120px) rotate(-6deg) scale(0.8); opacity:0; }
+    body.anim-drop #alert-card.show { transform: translateY(0) rotate(0deg) scale(1); opacity:1;
+      transition: opacity 0.3s ease, transform 0.6s cubic-bezier(0.22,1.5,0.36,1); }
+    body.anim-drop #alert-card.hide { transform: translateY(60px) rotate(4deg) scale(0.85); opacity:0; }
+
+    /* ═══════════════════════════════════════════════════════
+       THEMES — CSS variables
+    ═══════════════════════════════════════════════════════ */
+
+    /* ── Classic (default) ── */
+    body.theme-classic {
+      --card-bg:      linear-gradient(135deg, rgba(14,11,34,0.97), rgba(24,16,52,0.97));
+      --card-border:  rgba(124,92,252,0.55);
+      --card-shadow:  0 12px 50px rgba(124,92,252,0.35), 0 0 0 1px rgba(124,92,252,0.12);
+      --card-radius:  18px;
+      --bar-gradient: linear-gradient(90deg,#7c5cfc,#ec4899,#f59e0b,#22c55e,#7c5cfc);
+      --name-color:   #fff;
+      --label-color:  rgba(255,255,255,0.42);
+      --amount-color: #22c55e;
+      --amount-glow:  rgba(34,197,94,0.55);
+      --msg-bg:       rgba(255,255,255,0.05);
+      --msg-border:   rgba(124,92,252,0.7);
+      --msg-color:    rgba(255,255,255,0.85);
+      --avatar-bg:    linear-gradient(135deg,#7c5cfc,#ec4899);
+      --avatar-glow:  rgba(124,92,252,0.65);
+    }
+
+    /* ── Neon ── */
+    body.theme-neon {
+      --card-bg:      #050508;
+      --card-border:  #00ffff;
+      --card-shadow:  0 0 28px rgba(0,255,255,0.5), 0 0 60px rgba(0,255,255,0.15), inset 0 0 20px rgba(0,255,255,0.04);
+      --card-radius:  14px;
+      --bar-gradient: linear-gradient(90deg,#00ffff,#ff00ff,#00ff88,#ff00ff,#00ffff);
+      --name-color:   #00ffff;
+      --label-color:  rgba(0,255,255,0.55);
+      --amount-color: #ff00ff;
+      --amount-glow:  rgba(255,0,255,0.8);
+      --msg-bg:       rgba(0,255,255,0.06);
+      --msg-border:   #00ffff;
+      --msg-color:    rgba(255,255,255,0.9);
+      --avatar-bg:    linear-gradient(135deg,#00ffff,#ff00ff);
+      --avatar-glow:  rgba(0,255,255,0.8);
+    }
+    body.theme-neon #alert-card { animation: neonPulse 2.5s ease infinite; }
+    @keyframes neonPulse {
+      0%,100% { box-shadow: 0 0 28px rgba(0,255,255,0.5), 0 0 60px rgba(0,255,255,0.15); }
+      50%      { box-shadow: 0 0 40px rgba(0,255,255,0.7), 0 0 80px rgba(0,255,255,0.25); }
+    }
+    body.theme-neon #alert-card.hide { animation: none; }
+
+    /* ── Minimal ── */
+    body.theme-minimal {
+      --card-bg:      rgba(255,255,255,0.97);
+      --card-border:  rgba(0,0,0,0.06);
+      --card-shadow:  0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+      --card-radius:  20px;
+      --bar-gradient: linear-gradient(90deg,#7c5cfc,#ec4899);
+      --name-color:   #111827;
+      --label-color:  #9ca3af;
+      --amount-color: #059669;
+      --amount-glow:  transparent;
+      --msg-bg:       rgba(0,0,0,0.04);
+      --msg-border:   #7c5cfc;
+      --msg-color:    #374151;
+      --avatar-bg:    linear-gradient(135deg,#7c5cfc,#ec4899);
+      --avatar-glow:  rgba(124,92,252,0.2);
+    }
+
+    /* ── Gaming ── */
+    body.theme-gaming {
+      --card-bg:      rgba(3,10,3,0.97);
+      --card-border:  #00ff41;
+      --card-shadow:  0 0 18px rgba(0,255,65,0.4), 0 4px 30px rgba(0,0,0,0.9);
+      --card-radius:  8px;
+      --bar-gradient: linear-gradient(90deg,#00ff41,#003300,#00ff41);
+      --name-color:   #00ff41;
+      --label-color:  rgba(0,255,65,0.5);
+      --amount-color: #00ff41;
+      --amount-glow:  rgba(0,255,65,0.9);
+      --msg-bg:       rgba(0,255,65,0.05);
+      --msg-border:   #00ff41;
+      --msg-color:    rgba(0,255,65,0.88);
+      --avatar-bg:    linear-gradient(135deg,#003300,#00ff41);
+      --avatar-glow:  rgba(0,255,65,0.7);
+    }
+    body.theme-gaming { font-family: 'Courier New', 'Noto Sans Thai', monospace !important; }
+    body.theme-gaming #alert-card::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 10;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,255,65,0.03) 2px, rgba(0,255,65,0.03) 4px);
+    }
+
+    /* ── Cute ── */
+    body.theme-cute {
+      --card-bg:      linear-gradient(135deg, rgba(253,232,245,0.98), rgba(243,228,255,0.98));
+      --card-border:  #f9a8d4;
+      --card-shadow:  0 8px 32px rgba(236,72,153,0.22), 0 2px 8px rgba(168,85,247,0.1);
+      --card-radius:  24px;
+      --bar-gradient: linear-gradient(90deg,#ec4899,#a855f7,#f472b6,#a855f7,#ec4899);
+      --name-color:   #7c2d92;
+      --label-color:  #d946ef;
+      --amount-color: #be185d;
+      --amount-glow:  rgba(190,24,93,0.3);
+      --msg-bg:       rgba(249,168,212,0.18);
+      --msg-border:   #f9a8d4;
+      --msg-color:    #6b21a8;
+      --avatar-bg:    linear-gradient(135deg,#ec4899,#a855f7);
+      --avatar-glow:  rgba(236,72,153,0.45);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       ALERT CARD — structure (uses theme vars)
+    ═══════════════════════════════════════════════════════ */
+    #alert-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      border-radius: var(--card-radius, 18px);
+      box-shadow: var(--card-shadow);
+      position: relative;
+    }
+
+    .alert-accent-bar {
+      height: 3px;
+      background: var(--bar-gradient);
+      background-size: 300% 100%;
+      animation: gradientShift 4s linear infinite;
+    }
     @keyframes gradientShift { 0%{background-position:0%} 100%{background-position:300%} }
 
-    .alert-body { padding: 18px 20px 20px; }
+    .alert-body   { padding: 16px 20px 20px; }
     .alert-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+
     .alert-avatar {
       width: 52px; height: 52px; border-radius: 50%;
-      background: linear-gradient(135deg,#7c5cfc,#ec4899);
+      background: var(--avatar-bg);
       display: flex; align-items: center; justify-content: center;
       font-size: 24px; font-weight: 800; color: white; flex-shrink: 0;
-      box-shadow: 0 0 20px rgba(124,92,252,0.6), 0 0 40px rgba(124,92,252,0.2);
+      box-shadow: 0 0 20px var(--avatar-glow), 0 0 40px color-mix(in srgb, var(--avatar-glow) 40%, transparent);
     }
+
     .alert-name-wrap { flex: 1; min-width: 0; }
-    .alert-label { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 3px; }
-    .alert-name  { font-size: 17px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .alert-amount { font-size: 30px; font-weight: 900; color: #22c55e; text-shadow: 0 0 24px rgba(34,197,94,0.6); white-space: nowrap; flex-shrink: 0; }
+    .alert-label {
+      font-size: 10px; color: var(--label-color);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 3px;
+    }
+    .alert-name {
+      font-size: 17px; font-weight: 700; color: var(--name-color);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .alert-amount {
+      font-size: 30px; font-weight: 900; color: var(--amount-color);
+      text-shadow: 0 0 22px var(--amount-glow);
+      white-space: nowrap; flex-shrink: 0;
+    }
     .alert-message {
-      font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.55;
-      background: rgba(255,255,255,0.05); border-radius: 9px;
-      padding: 10px 14px; margin-top: 2px; border-left: 2px solid rgba(124,92,252,0.7);
+      font-size: 13px; color: var(--msg-color); line-height: 1.55;
+      background: var(--msg-bg); border-radius: 9px;
+      padding: 10px 14px; margin-top: 2px;
+      border-left: 2px solid var(--msg-border);
     }
 
-    /* ── Confetti ── */
-    .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
-    .confetti-piece { position: absolute; animation: confettiFall linear forwards; opacity: 0; }
-    @keyframes confettiFall { 0%{opacity:1;transform:translateY(-20px) rotate(0deg)} 100%{opacity:0;transform:translateY(110vh) rotate(720deg)} }
+    /* ═══════════════════════════════════════════════════════
+       CONFETTI
+    ═══════════════════════════════════════════════════════ */
+    .confetti-container { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:hidden; }
+    .confetti-piece { position:absolute; animation: confettiFall linear forwards; opacity:0; }
+    @keyframes confettiFall {
+      0%   { opacity:1; transform: translateY(-20px) rotate(0deg); }
+      100% { opacity:0; transform: translateY(110vh)  rotate(720deg); }
+    }
 
-    /* ── Chat ── */
-    #chat-zone { position: fixed; bottom: 160px; left: 40px; width: 340px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
-    .chat-msg { display: flex; align-items: flex-start; gap: 8px; background: rgba(12,14,22,0.82); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 8px 12px; backdrop-filter: blur(10px); animation: chatSlideIn 0.3s ease; }
+    /* ═══════════════════════════════════════════════════════
+       CHAT
+    ═══════════════════════════════════════════════════════ */
+    #chat-zone { position:fixed; bottom:160px; left:40px; width:340px; display:flex; flex-direction:column; gap:6px; pointer-events:none; }
+    .chat-msg { display:flex; align-items:flex-start; gap:8px; background:rgba(12,14,22,0.82); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:8px 12px; backdrop-filter:blur(10px); animation:chatSlideIn 0.3s ease; }
     @keyframes chatSlideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
-    .chat-platform { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; margin-top: 1px; }
-    .chat-platform.youtube { background: rgba(255,0,0,0.2); }
-    .chat-platform.tiktok  { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
-    .chat-content { flex: 1; min-width: 0; }
-    .chat-name { font-size: 12px; font-weight: 700; margin-bottom: 1px; }
-    .chat-name.youtube { color: #ff5555; }
-    .chat-name.tiktok  { color: #69c9d0; }
-    .chat-text { font-size: 13px; color: rgba(255,255,255,0.88); line-height: 1.4; word-break: break-word; }
+    .chat-platform { width:18px; height:18px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; margin-top:1px; }
+    .chat-platform.youtube { background:rgba(255,0,0,0.2); }
+    .chat-platform.tiktok  { background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); }
+    .chat-content { flex:1; min-width:0; }
+    .chat-name { font-size:12px; font-weight:700; margin-bottom:1px; }
+    .chat-name.youtube { color:#ff5555; }
+    .chat-name.tiktok  { color:#69c9d0; }
+    .chat-text { font-size:13px; color:rgba(255,255,255,0.88); line-height:1.4; word-break:break-word; }
 
-    /* ── Goal bar ── */
+    /* ═══════════════════════════════════════════════════════
+       GOAL BAR  (overlay/index.html embedded version)
+    ═══════════════════════════════════════════════════════ */
     #goal-zone {
-      position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-      width: 560px; max-width: calc(100vw - 80px);
-      pointer-events: none;
-      opacity: 0; transition: opacity 0.5s ease;
+      position:fixed; bottom:40px; left:50%; transform:translateX(-50%);
+      width:560px; max-width:calc(100vw - 80px);
+      pointer-events:none; opacity:0; transition:opacity 0.5s ease;
     }
-    #goal-zone.visible { opacity: 1; }
+    #goal-zone.visible { opacity:1; }
+
+    /* goal themes */
     .goal-card {
-      background: rgba(12,14,22,0.88); border: 1px solid rgba(124,92,252,0.35);
       border-radius: 14px; padding: 14px 18px;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
+    }
+    /* classic goal */
+    body.goal-classic .goal-card {
+      background: rgba(12,14,22,0.88); border: 1px solid rgba(124,92,252,0.35);
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
-    .goal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .goal-title  { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 6px; }
-    .goal-title-icon { font-size: 14px; }
-    .goal-amounts { font-size: 13px; font-weight: 700; }
-    .goal-current { color: #22c55e; }
-    .goal-sep     { color: rgba(255,255,255,0.3); margin: 0 4px; }
-    .goal-target  { color: rgba(255,255,255,0.6); }
-    .goal-track {
-      height: 10px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden;
+    body.goal-classic .goal-fill { background: linear-gradient(90deg,#7c5cfc,#22c55e); box-shadow:0 0 12px rgba(34,197,94,0.5); }
+    body.goal-classic .goal-current { color:#22c55e; }
+
+    /* neon goal */
+    body.goal-neon .goal-card {
+      background: #050508; border: 2px solid #00ffff;
+      box-shadow: 0 0 20px rgba(0,255,255,0.4);
     }
-    .goal-fill {
-      height: 100%; background: linear-gradient(90deg, #7c5cfc, #22c55e);
-      border-radius: 99px; width: 0%; transition: width 1.2s cubic-bezier(0.34,1.1,0.64,1);
-      box-shadow: 0 0 12px rgba(34,197,94,0.5);
-      position: relative; overflow: hidden;
+    body.goal-neon .goal-fill { background: linear-gradient(90deg,#00ffff,#ff00ff); box-shadow:0 0 12px rgba(0,255,255,0.7); }
+    body.goal-neon .goal-current { color:#00ffff; }
+    body.goal-neon .goal-title  { color:rgba(0,255,255,0.8) !important; }
+
+    /* minimal goal */
+    body.goal-minimal .goal-card {
+      background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.14);
+    }
+    body.goal-minimal .goal-fill { background: linear-gradient(90deg,#7c5cfc,#ec4899); }
+    body.goal-minimal .goal-current { color:#059669; }
+    body.goal-minimal .goal-title, body.goal-minimal .goal-target, body.goal-minimal .goal-percent { color:#374151 !important; opacity:1 !important; }
+    body.goal-minimal .goal-track { background:rgba(0,0,0,0.1); }
+
+    /* gaming goal */
+    body.goal-gaming .goal-card {
+      background: rgba(3,10,3,0.96); border: 1px solid #00ff41;
+      box-shadow: 0 0 16px rgba(0,255,65,0.35); border-radius:8px;
+    }
+    body.goal-gaming .goal-fill { background: linear-gradient(90deg,#003300,#00ff41); box-shadow:0 0 12px rgba(0,255,65,0.7); }
+    body.goal-gaming .goal-current { color:#00ff41; }
+    body.goal-gaming .goal-title  { color:rgba(0,255,65,0.7) !important; font-family:'Courier New',monospace !important; }
+
+    /* cute goal */
+    body.goal-cute .goal-card {
+      background: linear-gradient(135deg,rgba(253,232,245,0.95),rgba(243,228,255,0.95));
+      border: 2px solid #f9a8d4; box-shadow: 0 8px 24px rgba(236,72,153,0.2); border-radius:20px;
+    }
+    body.goal-cute .goal-fill { background: linear-gradient(90deg,#ec4899,#a855f7); box-shadow:0 0 12px rgba(236,72,153,0.4); }
+    body.goal-cute .goal-current { color:#be185d; }
+    body.goal-cute .goal-title  { color:#d946ef !important; }
+    body.goal-cute .goal-target, body.goal-cute .goal-percent { color:#7c2d92 !important; opacity:1 !important; }
+    body.goal-cute .goal-track  { background:rgba(249,168,212,0.3); }
+
+    /* goal bar common elements */
+    .goal-header  { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .goal-title   { font-size:12px; font-weight:700; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px; }
+    .goal-title-icon { font-size:14px; }
+    .goal-amounts { font-size:13px; font-weight:700; }
+    .goal-current { }
+    .goal-sep     { color:rgba(255,255,255,0.3); margin:0 4px; }
+    .goal-target  { color:rgba(255,255,255,0.55); }
+    .goal-track   { height:10px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden; }
+    .goal-fill    {
+      height:100%; border-radius:99px; width:0%;
+      transition:width 1.2s cubic-bezier(0.34,1.1,0.64,1);
+      position:relative; overflow:hidden;
     }
     .goal-fill::after {
-      content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      animation: goalShimmer 2s ease infinite;
+      content:''; position:absolute; top:0; left:-100%; width:60%; height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
+      animation:goalShimmer 2s ease infinite;
     }
-    @keyframes goalShimmer { to { left: 200%; } }
-    .goal-percent {
-      font-size: 11px; color: rgba(255,255,255,0.4); text-align: right; margin-top: 5px;
-    }
+    @keyframes goalShimmer { to { left:200%; } }
+    .goal-percent { font-size:11px; color:rgba(255,255,255,0.4); text-align:right; margin-top:5px; }
   </style>
 </head>
-<body>
+<body class="theme-classic anim-slide pos-top-right goal-classic">
 
 <div class="confetti-container" id="confetti-container"></div>
 
@@ -140,7 +376,10 @@
 <div id="goal-zone">
   <div class="goal-card">
     <div class="goal-header">
-      <div class="goal-title"><span class="goal-title-icon">🎯</span><span id="goal-title-text">Goal วันนี้</span></div>
+      <div class="goal-title">
+        <span class="goal-title-icon">🎯</span>
+        <span id="goal-title-text">Goal วันนี้</span>
+      </div>
       <div class="goal-amounts">
         <span class="goal-current" id="goal-current">฿0</span>
         <span class="goal-sep">/</span>
@@ -154,177 +393,200 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  const overlayId = location.pathname.replace(/^\/overlay\/?/, '').split('/')[0];
+  // ── Overlay ID from URL ────────────────────────────────────────────────────
+  const overlayId = location.pathname.replace(/^\/overlay\/?/,'').split('/')[0];
   if (!overlayId) {
-    document.body.innerHTML = '<div style="color:red;padding:20px;">ไม่พบ Overlay ID</div>';
+    document.body.innerHTML = '<div style="color:red;padding:20px;font-size:18px;">ไม่พบ Overlay ID — ตรวจสอบ URL</div>';
   } else {
+    init();
+  }
+
+  async function init() {
+    // Load theme from server first, then connect socket
+    try {
+      const cfg = await fetch('/api/overlay-config').then(r => r.json());
+      applyTheme(cfg);
+    } catch(e) {}
+
     const socket = io({ auth: { overlayId } });
 
-    // ── Alert sound (Web Audio API) ────────────────────────────────────────
-    let audioCtx = null;
-    function getAudioCtx() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      return audioCtx;
-    }
+    socket.on('themeUpdate', applyTheme);
+    socket.on('goalUpdate',  updateGoal);
+    socket.on('alert',  (data) => { alertQueue.push(data); processQueue(); });
+    socket.on('chat',   appendChatMsg);
+  }
 
-    function playChime(amount) {
-      try {
-        const ctx = getAudioCtx();
-        const play = (freq, startAt, dur, vol = 0.25) => {
-          const osc  = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain); gain.connect(ctx.destination);
-          osc.type = 'sine';
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(0, ctx.currentTime + startAt);
-          gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + startAt + 0.015);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + dur);
-          osc.start(ctx.currentTime + startAt);
-          osc.stop(ctx.currentTime + startAt + dur + 0.05);
-        };
-        if (amount >= 500) {
-          // Big donation — 4 note fanfare
-          play(523, 0,    0.5, 0.3);  // C5
-          play(659, 0.1,  0.5, 0.3);  // E5
-          play(784, 0.2,  0.5, 0.3);  // G5
-          play(1047,0.35, 0.8, 0.25); // C6
-        } else if (amount >= 100) {
-          // Medium — 3 note chime
-          play(659, 0,    0.4, 0.25); // E5
-          play(784, 0.12, 0.4, 0.25); // G5
-          play(1047,0.24, 0.6, 0.2);  // C6
-        } else {
-          // Small — 2 note ping
-          play(784, 0,    0.3, 0.2);  // G5
-          play(1047,0.15, 0.45, 0.18); // C6
-        }
-      } catch(e) {}
-    }
+  // ── Theme apply ────────────────────────────────────────────────────────────
+  function applyTheme(cfg) {
+    const themes = ['classic','neon','minimal','gaming','cute'];
+    const anims  = ['slide','bounce','zoom','flip','drop'];
+    const pos    = ['top-right','top-left','bottom-right','bottom-left'];
+    const goals  = themes;
+    const body   = document.body;
+    // Remove old classes
+    themes.forEach(t => body.classList.remove('theme-'+t));
+    anims .forEach(a => body.classList.remove('anim-'+a));
+    pos   .forEach(p => body.classList.remove('pos-'+p));
+    goals .forEach(g => body.classList.remove('goal-'+g));
+    // Apply new
+    if (cfg.alertTheme    && themes.includes(cfg.alertTheme))    body.classList.add('theme-'+cfg.alertTheme);
+    if (cfg.alertAnimation&& anims.includes(cfg.alertAnimation)) body.classList.add('anim-'+cfg.alertAnimation);
+    if (cfg.alertPosition && pos.includes(cfg.alertPosition))    body.classList.add('pos-'+cfg.alertPosition);
+    if (cfg.goalTheme     && goals.includes(cfg.goalTheme))      body.classList.add('goal-'+cfg.goalTheme);
+    // fallbacks
+    if (!body.classList.contains(...themes.map(t=>'theme-'+t))) body.classList.add('theme-classic');
+    if (!body.className.includes('anim-')) body.classList.add('anim-slide');
+    if (!body.className.includes('pos-'))  body.classList.add('pos-top-right');
+    if (!body.className.includes('goal-')) body.classList.add('goal-classic');
+  }
 
-    // ── Chat ────────────────────────────────────────────────────────────────
-    const MAX_CHAT = 5;
-    socket.on('chat', appendChatMsg);
-
-    function appendChatMsg(data) {
-      const { platform = 'unknown', displayName = 'viewer', message = '', sentAt } = data;
-      const icon = platform === 'youtube' ? '▶' : '♪';
-      const zone = document.getElementById('chat-zone');
-      const el   = document.createElement('div');
-      el.className = 'chat-msg';
-      el.innerHTML = `
-        <div class="chat-platform ${platform}">${icon}</div>
-        <div class="chat-content">
-          <div class="chat-name ${platform}">${esc(displayName)}</div>
-          <div class="chat-text">${esc(message)}</div>
-        </div>`;
-      zone.appendChild(el);
-      while (zone.children.length > MAX_CHAT) {
-        const old = zone.children[0];
-        old.style.transition = 'opacity 0.3s, transform 0.3s';
-        old.style.opacity = '0'; old.style.transform = 'translateX(-16px)';
-        setTimeout(() => old.remove(), 300);
-        break;
+  // ── Web Audio chime ────────────────────────────────────────────────────────
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function playChime(amount) {
+    try {
+      const ctx = getAudioCtx();
+      const play = (freq, startAt, dur, vol=0.25) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, ctx.currentTime + startAt);
+        gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + startAt + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + dur);
+        osc.start(ctx.currentTime + startAt);
+        osc.stop(ctx.currentTime + startAt + dur + 0.05);
+      };
+      if (amount >= 500) {
+        play(523, 0, 0.5, 0.3); play(659, 0.1, 0.5, 0.3);
+        play(784, 0.2, 0.5, 0.3); play(1047, 0.35, 0.8, 0.25);
+      } else if (amount >= 100) {
+        play(659, 0, 0.4, 0.25); play(784, 0.12, 0.4, 0.25); play(1047, 0.24, 0.6, 0.2);
+      } else {
+        play(784, 0, 0.3, 0.2); play(1047, 0.15, 0.45, 0.18);
       }
+    } catch(e) {}
+  }
+
+  // ── Chat ────────────────────────────────────────────────────────────────────
+  const MAX_CHAT = 5;
+  function appendChatMsg(data) {
+    const { platform='unknown', displayName='viewer', message='' } = data;
+    const icon = platform === 'youtube' ? '▶' : '♪';
+    const zone = document.getElementById('chat-zone');
+    const el = document.createElement('div');
+    el.className = 'chat-msg';
+    el.innerHTML = `
+      <div class="chat-platform ${platform}">${icon}</div>
+      <div class="chat-content">
+        <div class="chat-name ${platform}">${esc(displayName)}</div>
+        <div class="chat-text">${esc(message)}</div>
+      </div>`;
+    zone.appendChild(el);
+    while (zone.children.length > MAX_CHAT) {
+      const old = zone.children[0];
+      old.style.transition = 'opacity 0.3s, transform 0.3s';
+      old.style.opacity = '0'; old.style.transform = 'translateX(-16px)';
+      setTimeout(() => old.remove(), 300);
+      break;
     }
+  }
 
-    // ── Alert ───────────────────────────────────────────────────────────────
-    const alertQueue = [];
-    let alertBusy = false;
+  // ── Alert queue ─────────────────────────────────────────────────────────────
+  const alertQueue = [];
+  let alertBusy = false;
 
-    socket.on('alert', (data) => { alertQueue.push(data); processQueue(); });
+  function processQueue() {
+    if (alertBusy || alertQueue.length === 0) return;
+    alertBusy = true;
+    showAlert(alertQueue.shift());
+  }
 
-    function processQueue() {
-      if (alertBusy || alertQueue.length === 0) return;
-      alertBusy = true;
-      showAlert(alertQueue.shift());
-    }
+  function showAlert(data) {
+    const name   = data.displayName || 'ไม่ระบุ';
+    const amount = data.amount ?? 0;
 
-    function showAlert(data) {
-      const name   = data.displayName || 'ไม่ระบุ';
-      const amount = data.amount ?? 0;
+    document.getElementById('alert-avatar').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('alert-name').textContent   = name;
+    document.getElementById('alert-amount').textContent = `฿${amount.toLocaleString('th-TH')}`;
 
-      document.getElementById('alert-avatar').textContent = name.charAt(0).toUpperCase();
-      document.getElementById('alert-name').textContent   = name;
-      document.getElementById('alert-amount').textContent = `฿${amount.toLocaleString('th-TH')}`;
+    const msgEl = document.getElementById('alert-message');
+    if (data.message) { msgEl.textContent = data.message; msgEl.style.display = 'block'; }
+    else { msgEl.style.display = 'none'; }
 
-      const msgEl = document.getElementById('alert-message');
-      if (data.message) { msgEl.textContent = data.message; msgEl.style.display = 'block'; }
-      else { msgEl.style.display = 'none'; }
+    const card = document.getElementById('alert-card');
+    card.classList.remove('hide');
+    void card.offsetWidth; // reflow
+    card.classList.add('show');
 
-      const card = document.getElementById('alert-card');
-      card.classList.remove('hide');
-      void card.offsetWidth; // reflow
-      card.classList.add('show');
+    playChime(amount);
 
-      // เสียง chime ก่อน TTS
-      playChime(amount);
-
-      // TTS
-      if (data.ttsAudio) {
-        setTimeout(() => {
-          const audio = new Audio(`data:audio/mp3;base64,${data.ttsAudio}`);
-          audio.play().catch(() => {});
-        }, 600);
-      }
-
-      if (amount >= 100) spawnConfetti(amount);
-
-      const duration = 8000 + (data.message ? Math.min(data.message.length * 40, 3000) : 0);
+    if (data.ttsAudio) {
+      const isWav = data.ttsAudio.startsWith('UklGR');
+      const mime  = isWav ? 'audio/wav' : 'audio/mp3';
       setTimeout(() => {
-        card.classList.remove('show');
-        card.classList.add('hide');
-        setTimeout(() => { card.classList.remove('hide'); alertBusy = false; processQueue(); }, 350);
-      }, duration);
+        const audio = new Audio(`data:${mime};base64,${data.ttsAudio}`);
+        audio.play().catch(() => {});
+      }, 600);
     }
 
-    // ── Confetti ─────────────────────────────────────────────────────────────
-    const COLORS = ['#7c5cfc','#ec4899','#f59e0b','#22c55e','#38bdf8','#fff','#fb923c'];
-    function spawnConfetti(amount) {
-      const count = amount >= 500 ? 120 : amount >= 100 ? 70 : 40;
-      const c = document.getElementById('confetti-container');
-      for (let i = 0; i < count; i++) {
-        const p = document.createElement('div');
-        p.className = 'confetti-piece';
-        const size = 5 + Math.random() * 9;
-        const isCircle = Math.random() > 0.4;
-        p.style.cssText = `left:${Math.random()*100}%;top:0;background:${COLORS[Math.floor(Math.random()*COLORS.length)]};width:${size}px;height:${size}px;border-radius:${isCircle?'50%':'2px'};animation-duration:${2.5+Math.random()*3}s;animation-delay:${Math.random()*1}s;`;
-        c.appendChild(p);
-        p.addEventListener('animationend', () => p.remove());
-      }
+    if (amount >= 100) spawnConfetti(amount);
+
+    const duration = 8000 + (data.message ? Math.min(data.message.length * 40, 3000) : 0);
+    setTimeout(() => {
+      card.classList.remove('show');
+      card.classList.add('hide');
+      setTimeout(() => {
+        card.classList.remove('hide');
+        alertBusy = false;
+        processQueue();
+      }, 350);
+    }, duration);
+  }
+
+  // ── Confetti ────────────────────────────────────────────────────────────────
+  const COLORS = ['#7c5cfc','#ec4899','#f59e0b','#22c55e','#38bdf8','#fff','#fb923c'];
+  function spawnConfetti(amount) {
+    const count = amount >= 500 ? 120 : amount >= 100 ? 70 : 40;
+    const c = document.getElementById('confetti-container');
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      const size = 5 + Math.random() * 9;
+      const isCircle = Math.random() > 0.4;
+      p.style.cssText = `left:${Math.random()*100}%;top:0;background:${COLORS[Math.floor(Math.random()*COLORS.length)]};width:${size}px;height:${size}px;border-radius:${isCircle?'50%':'2px'};animation-duration:${2.5+Math.random()*3}s;animation-delay:${Math.random()*1}s;`;
+      c.appendChild(p);
+      p.addEventListener('animationend', () => p.remove());
     }
+  }
 
-    // ── Goal Bar ──────────────────────────────────────────────────────────────
-    socket.on('goalUpdate', updateGoal);
-
-    function updateGoal(data) {
-      const { current = 0, target = 0, title = 'Goal วันนี้' } = data;
-      const zone = document.getElementById('goal-zone');
-
-      if (!target || target <= 0) {
-        zone.classList.remove('visible');
-        return;
-      }
-
-      zone.classList.add('visible');
-      document.getElementById('goal-title-text').textContent = title;
-      document.getElementById('goal-current').textContent = `฿${Number(current).toLocaleString('th-TH')}`;
-      document.getElementById('goal-target').textContent  = `฿${Number(target).toLocaleString('th-TH')}`;
-
-      const pct = Math.min(100, Math.round((current / target) * 100));
-      document.getElementById('goal-fill').style.width = `${pct}%`;
-      document.getElementById('goal-percent').textContent = `${pct}%`;
-
-      // เปลี่ยนสีเมื่อถึง goal
-      if (pct >= 100) {
-        document.getElementById('goal-fill').style.background = 'linear-gradient(90deg,#22c55e,#f59e0b)';
-        document.getElementById('goal-percent').textContent = '🎉 ถึง Goal แล้ว!';
-      }
+  // ── Goal Bar ────────────────────────────────────────────────────────────────
+  function updateGoal(data) {
+    const { current=0, target=0, title='Goal วันนี้' } = data;
+    const zone = document.getElementById('goal-zone');
+    if (!target || target <= 0) { zone.classList.remove('visible'); return; }
+    zone.classList.add('visible');
+    document.getElementById('goal-title-text').textContent = title;
+    document.getElementById('goal-current').textContent = `฿${current.toLocaleString('th-TH')}`;
+    document.getElementById('goal-target').textContent  = `฿${target.toLocaleString('th-TH')}`;
+    const pct = Math.min(100, Math.round(current / target * 100));
+    document.getElementById('goal-fill').style.width   = pct + '%';
+    const pctEl = document.getElementById('goal-percent');
+    if (pct >= 100) {
+      document.getElementById('goal-fill').style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
+      pctEl.textContent = '🎉 ถึง Goal แล้ว!';
+      pctEl.style.color = '#22c55e';
+    } else {
+      pctEl.textContent = pct + '%';
+      pctEl.style.color = '';
     }
+  }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    function esc(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+  // ── Util ────────────────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 </script>
 </body>
