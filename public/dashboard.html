@@ -166,6 +166,13 @@
     #toast.success { border-color: var(--green); color: var(--green); }
     #toast.error   { border-color: var(--red);   color: var(--red); }
 
+    /* ── Overview grid ── */
+    .overview-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; min-height: 420px; }
+    .overview-left { display: flex; flex-direction: column; gap: 16px; }
+    .overview-left .card { margin-bottom: 0; }
+    .overview-right .card { margin-bottom: 0; }
+    @media (max-width: 960px) { .overview-grid { grid-template-columns: 1fr; min-height: auto; } .overview-right { order: -1; } .overview-right .card { max-height: 350px; } }
+
     /* ── Responsive ── */
     @media (max-width: 640px) {
       nav { width: 60px; }
@@ -210,11 +217,6 @@
       <button class="nav-item active" data-tab="overview">
         <span class="nav-icon">📊</span>
         <span>ภาพรวม</span>
-      </button>
-      <button class="nav-item" data-tab="chat">
-        <span class="nav-icon">💬</span>
-        <span>Live Chat</span>
-        <span class="nav-badge" id="chat-badge" style="display:none;">0</span>
       </button>
       <button class="nav-item" data-tab="donations">
         <span class="nav-icon">💰</span>
@@ -269,46 +271,49 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header"><div class="card-title">🔗 Overlay URL สำหรับ OBS</div></div>
-          <div class="card-body">
-            <div class="url-box" style="margin-bottom:10px;">
-              <span class="url-text" id="overlay-url">กำลังโหลด...</span>
-              <button class="copy-btn" id="copy-url-btn">คัดลอก</button>
+        <div class="overview-grid">
+          <!-- Left column -->
+          <div class="overview-left">
+            <div class="card">
+              <div class="card-header"><div class="card-title">🔗 Overlay URL สำหรับ OBS</div></div>
+              <div class="card-body">
+                <div class="url-box" style="margin-bottom:10px;">
+                  <span class="url-text" id="overlay-url">กำลังโหลด...</span>
+                  <button class="copy-btn" id="copy-url-btn">คัดลอก</button>
+                </div>
+                <p style="font-size:12px;color:var(--muted);">วาง URL นี้ใน OBS → Sources → Browser Source</p>
+              </div>
             </div>
-            <p style="font-size:12px;color:var(--muted);">วาง URL นี้ใน OBS → Sources → Browser Source</p>
-          </div>
-        </div>
 
-        <!-- Recent donations preview -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><div class="live-dot"></div>Donations ล่าสุด</div>
-            <button class="btn btn-sm btn-secondary" onclick="switchTab('donations')">ดูทั้งหมด →</button>
-          </div>
-          <div class="card-body" style="padding:0 18px;">
-            <div id="overview-donations">
-              <div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><div class="live-dot"></div>Donations ล่าสุด</div>
+                <button class="btn btn-sm btn-secondary" onclick="switchTab('donations')">ดูทั้งหมด →</button>
+              </div>
+              <div class="card-body" style="padding:0 18px;">
+                <div id="overview-donations">
+                  <div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- ── Tab: Chat ── -->
-      <div class="tab-panel" id="tab-chat">
-        <div class="page-title">Live Chat Feed</div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><div class="live-dot"></div>ข้อความสด</div>
-            <div class="filter-bar">
-              <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
-              <button class="filter-btn" data-filter="youtube">▶ YouTube</button>
-              <button class="filter-btn" data-filter="tiktok">♪ TikTok</button>
-            </div>
-          </div>
-          <div class="card-body" style="padding:0 18px;">
-            <div id="chat-feed" class="chat-feed">
-              <div class="empty-state" id="chat-feed-empty"><div class="empty-icon">💬</div>รอข้อความจาก platform</div>
+          <!-- Right column: Live Chat -->
+          <div class="overview-right">
+            <div class="card" style="height:100%;display:flex;flex-direction:column;">
+              <div class="card-header">
+                <div class="card-title"><div class="live-dot"></div>Live Chat</div>
+                <div class="filter-bar">
+                  <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+                  <button class="filter-btn" data-filter="youtube">▶ YT</button>
+                  <button class="filter-btn" data-filter="tiktok">♪ TT</button>
+                </div>
+              </div>
+              <div class="card-body" style="padding:0 18px;flex:1;overflow:hidden;">
+                <div id="chat-feed" class="chat-feed" style="max-height:100%;height:100%;">
+                  <div class="empty-state" id="chat-feed-empty"><div class="empty-icon">💬</div>รอข้อความจาก platform</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -556,9 +561,6 @@
   function switchTab(name) {
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.tab === name));
     document.querySelectorAll('.tab-panel').forEach(el => el.classList.toggle('active', el.id === `tab-${name}`));
-    if (name === 'chat') {
-      document.getElementById('chat-badge').style.display = 'none';
-    }
   }
 
   document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
@@ -663,13 +665,6 @@
       chatCount++;
       document.getElementById('stat-chat').textContent = chatCount;
 
-      // badge ถ้าไม่ได้อยู่ใน tab chat
-      const chatPanel = document.getElementById('tab-chat');
-      if (!chatPanel.classList.contains('active')) {
-        const badge = document.getElementById('chat-badge');
-        badge.style.display = '';
-        badge.textContent = parseInt(badge.textContent || '0') + 1;
-      }
     });
 
     socket.on('donation', (d) => {
