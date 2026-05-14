@@ -49,6 +49,20 @@ function saveSessions() {
 let ytSession = null;
 let ttSession = null;
 
+// ── Goal state ────────────────────────────────────────────────────────────────
+let goal = { target: 0, title: "Goal วันนี้" };
+
+function goalCurrent() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return donations
+    .filter(d => d.createdAt && new Date(d.createdAt) >= today && !d.isTest)
+    .reduce((s, d) => s + (d.amount || 0), 0);
+}
+function emitGoal() {
+  io.to(`overlay:${OVERLAY_ID}`).emit("goalUpdate", { ...goal, current: goalCurrent() });
+  io.to("dashboard").emit("goalUpdate", { ...goal, current: goalCurrent() });
+}
+
 // ── Auth middleware ───────────────────────────────────────────────────────────
 function auth(req, res, next) {
   const token = req.headers.authorization?.split("Bearer ")[1];
@@ -138,6 +152,7 @@ app.post("/api/donate/public", async (req, res) => {
 
     io.to("dashboard").emit("donation", donation);
     io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
+    emitGoal();
 
     res.json({ ok: true, amount: donation.amount });
   } catch (e) {
@@ -240,6 +255,7 @@ app.post("/api/donate", auth, async (req, res) => {
 
     io.to("dashboard").emit("donation", donation);
     io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
+    emitGoal();
 
     res.json({ ok: true, slipId: transRef, amount: donation.amount });
   } catch (e) {
@@ -282,6 +298,34 @@ app.post("/api/test-tts", auth, async (req, res) => {
   const audio = await generateTTS(text);
   if (!audio) return res.status(500).json({ error: "TTS generation failed" });
   res.json({ ok: true, audio });
+});
+
+// Test Alert (ส่ง fake alert ไป overlay โดยไม่ต้องใช้สลิปจริง)
+app.post("/api/test-alert", auth, async (req, res) => {
+  const { displayName = "ทดสอบ", amount = 100, message = "ทดสอบระบบ alert 🎉" } = req.body || {};
+  const donation = {
+    slipId: `test_${Date.now()}`,
+    amount: Number(amount) || 100,
+    displayName: String(displayName).trim().slice(0, 50),
+    message: String(message).trim().slice(0, 200),
+    createdAt: new Date().toISOString(),
+    isTest: true,
+  };
+  const ttsText = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
+  const ttsAudio = await generateTTS(ttsText);
+  io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
+  res.json({ ok: true });
+});
+
+// Goal — get (public) / set (auth)
+app.get("/api/goal", (_, res) => res.json({ ...goal, current: goalCurrent() }));
+
+app.post("/api/goal", auth, (req, res) => {
+  const { target, title } = req.body || {};
+  if (target !== undefined) goal.target = Math.max(0, Number(target) || 0);
+  if (title  !== undefined) goal.title  = String(title).trim().slice(0, 60) || "Goal วันนี้";
+  emitGoal();
+  res.json({ ok: true, goal: { ...goal, current: goalCurrent() } });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -406,6 +450,7 @@ io.on("connection", (socket) => {
 
   if (overlayId) {
     socket.join(`overlay:${overlayId}`);
+    socket.emit("goalUpdate", { ...goal, current: goalCurrent() });
     console.log(`Overlay connected: ${overlayId}`);
     return;
   }

@@ -229,9 +229,13 @@
         <span class="nav-icon">📡</span>
         <span>Platform</span>
       </button>
+      <button class="nav-item" data-tab="goal">
+        <span class="nav-icon">🎯</span>
+        <span>Goal Bar</span>
+      </button>
       <button class="nav-item" data-tab="tts">
         <span class="nav-icon">🔊</span>
-        <span>TTS</span>
+        <span>TTS & Test</span>
       </button>
 
       <div class="nav-section">ระบบ</div>
@@ -395,20 +399,86 @@
         </div>
       </div>
 
-      <!-- ── Tab: TTS ── -->
-      <div class="tab-panel" id="tab-tts">
-        <div class="page-title">Text-to-Speech</div>
+      <!-- ── Tab: Goal ── -->
+      <div class="tab-panel" id="tab-goal">
+        <div class="page-title">Goal Bar</div>
 
         <div class="card">
-          <div class="card-header"><div class="card-title">🔊 ทดสอบเสียง</div></div>
+          <div class="card-header"><div class="card-title">🎯 ตั้งค่า Goal</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ชื่อ Goal</div>
+              <input id="goal-title-input" class="input-field" type="text" placeholder="เช่น Goal วันนี้, ค่าเช่าโรงแรม..." maxlength="60" value="Goal วันนี้" />
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ยอดเป้าหมาย (บาท)</div>
+              <input id="goal-target-input" class="input-field" type="number" placeholder="เช่น 1000" min="0" />
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" id="goal-save-btn" style="flex:1;">💾 บันทึก Goal</button>
+              <button class="btn btn-danger btn-sm" id="goal-clear-btn">ปิด Goal</button>
+            </div>
+            <div id="goal-save-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 สถานะปัจจุบัน</div></div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div>
+                <div style="font-size:13px;color:var(--muted);">ยอดวันนี้</div>
+                <div style="font-size:28px;font-weight:800;color:var(--green);" id="goal-stat-current">฿0</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:13px;color:var(--muted);">เป้าหมาย</div>
+                <div style="font-size:28px;font-weight:800;color:var(--text);" id="goal-stat-target">—</div>
+              </div>
+            </div>
+            <div style="height:12px;background:var(--surface2);border-radius:99px;overflow:hidden;">
+              <div id="goal-stat-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:99px;width:0%;transition:width 0.8s ease;"></div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);text-align:right;margin-top:6px;" id="goal-stat-pct">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: TTS ── -->
+      <div class="tab-panel" id="tab-tts">
+        <div class="page-title">TTS & ทดสอบ</div>
+
+        <!-- Test Alert -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🧪 ทดสอบ Alert (ไม่ต้องใช้สลิปจริง)</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ชื่อ</div>
+                <input id="test-name" class="input-field" type="text" placeholder="ผู้ทดสอบ" value="ทดสอบ" />
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ยอดเงิน (บาท)</div>
+                <input id="test-amount" class="input-field" type="number" placeholder="100" value="100" min="1" />
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ข้อความ</div>
+              <input id="test-message" class="input-field" type="text" placeholder="ทดสอบระบบ alert 🎉" value="ทดสอบระบบ alert 🎉" />
+            </div>
+            <button class="btn btn-primary" id="test-alert-btn">🚀 ส่ง Test Alert ไป Overlay</button>
+            <div id="test-alert-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <!-- TTS Test -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔊 ทดสอบ TTS</div></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
             <div>
               <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ข้อความที่ต้องการให้อ่าน</div>
               <textarea id="tts-text" class="input-field" rows="3" placeholder="พิมพ์ข้อความภาษาไทย..." style="resize:vertical;"></textarea>
             </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary" id="tts-test-btn" style="flex:1;">▶ เล่นเสียง</button>
-            </div>
+            <button class="btn btn-primary" id="tts-test-btn">▶ เล่นเสียง TTS</button>
             <div id="tts-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
           </div>
         </div>
@@ -423,10 +493,6 @@
             <div class="tts-info-row">
               <span class="tts-info-label">Voice</span>
               <span>th-TH-Neural2-C (ภาษาไทย)</span>
-            </div>
-            <div class="tts-info-row">
-              <span class="tts-info-label">Format</span>
-              <span>MP3</span>
             </div>
             <div class="tts-info-row">
               <span class="tts-info-label">API Key (Railway Env)</span>
@@ -644,6 +710,7 @@
     setupPlatformUI();
     setupChatFilters();
     setupTtsUI();
+    setupGoalUI();
   }
 
   function copyText(text, btnId) {
@@ -882,27 +949,95 @@
     }).catch(() => {});
   }
 
+  // ── Goal UI ───────────────────────────────────────────────────────────────
+  function setupGoalUI() {
+    // โหลด goal ปัจจุบัน
+    api('/api/goal').then(d => {
+      if (d.target) document.getElementById('goal-target-input').value = d.target;
+      if (d.title)  document.getElementById('goal-title-input').value  = d.title;
+      updateGoalStat(d);
+    }).catch(() => {});
+
+    // socket event
+    if (socket) socket.on('goalUpdate', updateGoalStat);
+
+    document.getElementById('goal-save-btn').onclick = async () => {
+      const target = Number(document.getElementById('goal-target-input').value) || 0;
+      const title  = document.getElementById('goal-title-input').value.trim() || 'Goal วันนี้';
+      const btn = document.getElementById('goal-save-btn');
+      const st  = document.getElementById('goal-save-status');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      const r = await api('/api/goal', { target, title });
+      btn.disabled = false; btn.textContent = '💾 บันทึก Goal';
+      if (r?.ok) {
+        st.textContent = 'บันทึกแล้ว ✓'; st.style.color = 'var(--green)';
+        updateGoalStat(r.goal);
+        toast('บันทึก Goal เรียบร้อย ✓');
+      } else {
+        st.textContent = r?.error || 'เกิดข้อผิดพลาด'; st.style.color = 'var(--red)';
+      }
+      setTimeout(() => { st.textContent = ''; }, 3000);
+    };
+
+    document.getElementById('goal-clear-btn').onclick = async () => {
+      const r = await api('/api/goal', { target: 0 });
+      if (r?.ok) {
+        document.getElementById('goal-target-input').value = '';
+        updateGoalStat({ current: 0, target: 0 });
+        toast('ปิด Goal แล้ว');
+      }
+    };
+  }
+
+  function updateGoalStat(d) {
+    const current = d?.current || 0;
+    const target  = d?.target  || 0;
+    document.getElementById('goal-stat-current').textContent = `฿${Number(current).toLocaleString('th-TH')}`;
+    document.getElementById('goal-stat-target').textContent  = target ? `฿${Number(target).toLocaleString('th-TH')}` : '—';
+    const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+    document.getElementById('goal-stat-bar').style.width = `${pct}%`;
+    document.getElementById('goal-stat-pct').textContent = target ? `${pct}%` : '—';
+  }
+
   function setupTtsUI() {
+    // Test Alert
+    document.getElementById('test-alert-btn').onclick = async () => {
+      const name    = document.getElementById('test-name').value.trim() || 'ทดสอบ';
+      const amount  = Number(document.getElementById('test-amount').value) || 100;
+      const message = document.getElementById('test-message').value.trim();
+      const btn = document.getElementById('test-alert-btn');
+      const st  = document.getElementById('test-alert-status');
+      btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+      const r = await api('/api/test-alert', { displayName: name, amount, message });
+      btn.disabled = false; btn.textContent = '🚀 ส่ง Test Alert ไป Overlay';
+      if (r?.ok) {
+        st.textContent = 'ส่งไปยัง Overlay แล้ว ✓'; st.style.color = 'var(--green)';
+        toast('ส่ง Test Alert แล้ว ✓');
+      } else {
+        st.textContent = r?.error || 'เกิดข้อผิดพลาด'; st.style.color = 'var(--red)';
+        toast(r?.error || 'ส่งไม่สำเร็จ', 'error');
+      }
+      setTimeout(() => { st.textContent = ''; }, 3000);
+    };
+
+    // TTS Test
     document.getElementById('tts-test-btn').onclick = async () => {
       const text = document.getElementById('tts-text').value.trim();
       if (!text) return toast('ใส่ข้อความก่อน', 'error');
       const btn    = document.getElementById('tts-test-btn');
       const status = document.getElementById('tts-status');
       btn.textContent = 'กำลังโหลด...'; btn.disabled = true;
-      status.textContent = '';
-      status.style.color = 'var(--muted)';
+      status.textContent = ''; status.style.color = 'var(--muted)';
 
       const r = await api('/api/test-tts', { text });
-      btn.textContent = '▶ เล่นเสียง'; btn.disabled = false;
+      btn.textContent = '▶ เล่นเสียง TTS'; btn.disabled = false;
 
       if (r?.ok && r?.audio) {
-        status.textContent = 'เล่นเสียงแล้ว ✓';
-        status.style.color = 'var(--green)';
+        status.textContent = 'เล่นเสียงแล้ว ✓'; status.style.color = 'var(--green)';
         const audio = new Audio(`data:audio/mp3;base64,${r.audio}`);
         audio.play().catch(() => toast('เบราว์เซอร์บล็อกเสียง — ลองคลิกที่หน้าเพจก่อน', 'error'));
       } else {
-        status.textContent = r?.error || 'เกิดข้อผิดพลาด';
-        status.style.color = 'var(--red)';
+        status.textContent = r?.error || 'เกิดข้อผิดพลาด'; status.style.color = 'var(--red)';
         toast(r?.error || 'TTS ล้มเหลว', 'error');
       }
     };
