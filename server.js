@@ -25,6 +25,7 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
+app.get("/donate",    (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
 app.get("/overlay/*", (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
 
 // ── Data persistence ──────────────────────────────────────────────────────────
@@ -87,6 +88,63 @@ app.get("/api/session", auth, (_, res) => res.json({
 
 // Donations list
 app.get("/api/donations", auth, (_, res) => res.json(donations));
+
+// Public donate info (no auth)
+app.get("/api/donate/info", (_, res) => res.json({
+  enabled: !!EASYSLIP_KEY,
+  overlayId: OVERLAY_ID,
+}));
+
+// Public donate endpoint (ผู้ชมใช้ — ไม่ต้อง auth)
+app.post("/api/donate/public", async (req, res) => {
+  const { base64, url, payload, message, displayName } = req.body || {};
+  if (!EASYSLIP_KEY) return res.status(503).json({ error: "ระบบโดเนทยังไม่เปิดใช้งาน" });
+  if ([base64, url, payload].filter(Boolean).length !== 1)
+    return res.status(400).json({ error: "กรุณาแนบสลิปให้ถูกต้อง" });
+
+  const body = { checkDuplicate: true };
+  if (base64)  body.base64  = base64.startsWith("data:image/") ? base64 : `data:image/jpeg;base64,${base64}`;
+  if (url)     body.url     = String(url).trim();
+  if (payload) body.payload = String(payload).trim();
+
+  try {
+    const r = await fetch("https://api.easyslip.com/v2/verify/bank", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${EASYSLIP_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const d = await r.json().catch(() => null);
+    if (!r.ok)       return res.status(400).json({ error: d?.error?.message || "ตรวจสอบสลิปไม่สำเร็จ" });
+    if (!d?.success) return res.status(400).json({ error: d?.error?.message || "สลิปไม่ถูกต้อง" });
+
+    const transRef = d?.data?.rawSlip?.transRef;
+    const amount   = d?.data?.amountInSlip ?? d?.data?.rawSlip?.amount?.amount;
+    if (!transRef) return res.status(500).json({ error: "ไม่พบข้อมูลสลิป" });
+    if (donations.find(x => x.slipId === transRef))
+      return res.status(409).json({ error: "สลิปนี้ถูกใช้งานไปแล้ว" });
+
+    const donation = {
+      slipId: transRef, amount: Number(amount || 0),
+      displayName: (displayName || "ผู้ไม่ประสงค์ออกนาม").trim().slice(0, 50),
+      message: (message || "").trim().slice(0, 200),
+      createdAt: new Date().toISOString(),
+    };
+    donations.unshift(donation);
+    if (donations.length > 1000) donations.length = 1000;
+    saveDonations();
+
+    const ttsText = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
+    const ttsAudio = await generateTTS(ttsText);
+
+    io.to("dashboard").emit("donation", donation);
+    io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
+
+    res.json({ ok: true, amount: donation.amount });
+  } catch (e) {
+    console.error("donate/public:", e);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในระบบ" });
+  }
+});
 
 // ── YouTube ───────────────────────────────────────────────────────────────────
 app.post("/api/startYouTubeChat", auth, async (req, res) => {
