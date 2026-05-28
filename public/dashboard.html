@@ -309,20 +309,11 @@
       <div class="nav-section">จัดการ</div>
       <button class="nav-item" data-tab="platform">
         <span class="nav-icon">📡</span>
-        <span>Platform</span>
+        <span>Platforms</span>
       </button>
-      <button class="nav-item" data-tab="goal">
-        <span class="nav-icon">🎯</span>
-        <span>Goal Bar</span>
-      </button>
-      <button class="nav-item" data-tab="tts">
-        <span class="nav-icon">🔊</span>
-        <span>TTS & Test</span>
-      </button>
-
-      <button class="nav-item" data-tab="templates">
+      <button class="nav-item" data-tab="overlay">
         <span class="nav-icon">🎨</span>
-        <span>Templates</span>
+        <span>Overlay</span>
       </button>
 
       <div class="nav-section">ระบบ</div>
@@ -359,6 +350,27 @@
             <div class="stat-label">📡 Platform ที่เชื่อมต่อ</div>
             <div class="stat-value" id="stat-platforms">—</div>
             <div class="stat-sub" id="stat-platforms-sub">ไม่มีการเชื่อมต่อ</div>
+          </div>
+        </div>
+
+        <!-- Goal progress (moved from tab-goal) -->
+        <div class="card" id="overview-goal-card">
+          <div class="card-header"><div class="card-title">🎯 Goal วันนี้</div></div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div>
+                <div style="font-size:13px;color:var(--muted);">ยอดวันนี้</div>
+                <div style="font-size:28px;font-weight:800;color:var(--green);" id="goal-stat-current">฿0</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:13px;color:var(--muted);">เป้าหมาย</div>
+                <div style="font-size:28px;font-weight:800;color:var(--text);" id="goal-stat-target">—</div>
+              </div>
+            </div>
+            <div style="height:12px;background:var(--surface2);border-radius:99px;overflow:hidden;">
+              <div id="goal-stat-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:99px;width:0%;transition:width 0.8s ease;"></div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);text-align:right;margin-top:6px;" id="goal-stat-pct">0%</div>
           </div>
         </div>
 
@@ -434,6 +446,49 @@
             <div id="donations-full-list">
               <div class="empty-state"><div class="empty-icon">💸</div>ยังไม่มี donation</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Test Alert (moved from tab-tts) -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🧪 ทดสอบ Alert</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ชื่อ</div>
+                <input id="test-name" class="input-field" type="text" placeholder="ผู้ทดสอบ" value="ทดสอบ" />
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ยอดเงิน (บาท)</div>
+                <input id="test-amount" class="input-field" type="number" placeholder="100" value="100" min="1" />
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ข้อความ</div>
+              <input id="test-message" class="input-field" type="text" placeholder="ทดสอบระบบ alert 🎉" value="ทดสอบระบบ alert 🎉" />
+            </div>
+            <button class="btn btn-primary" id="test-alert-btn">🚀 ส่ง Test Alert ไป Overlay</button>
+            <div id="test-alert-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <!-- Goal management (moved from tab-goal) -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎯 ตั้งค่า Goal</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ชื่อ Goal</div>
+              <input id="goal-title-input" class="input-field" type="text" placeholder="เช่น Goal วันนี้, ค่าเช่าโรงแรม..." maxlength="60" value="Goal วันนี้" />
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ยอดเป้าหมาย (บาท)</div>
+              <input id="goal-target-input" class="input-field" type="number" placeholder="เช่น 1000" min="0" />
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" id="goal-save-btn" style="flex:1;">💾 บันทึก Goal</button>
+              <button class="btn btn-danger btn-sm" id="goal-clear-btn">ปิด Goal</button>
+            </div>
+            <div id="goal-save-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
           </div>
         </div>
       </div>
@@ -592,78 +647,11 @@
         </div>
       </div>
 
-      <!-- ── Tab: Goal ── -->
-      <div class="tab-panel" id="tab-goal">
-        <div class="page-title">Goal Bar</div>
+      <!-- ── Tab: Overlay (was Templates + TTS test moved in) ── -->
+      <div class="tab-panel" id="tab-overlay">
+        <div class="page-title">🎨 Overlay</div>
 
-        <div class="card">
-          <div class="card-header"><div class="card-title">🎯 ตั้งค่า Goal</div></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-            <div>
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ชื่อ Goal</div>
-              <input id="goal-title-input" class="input-field" type="text" placeholder="เช่น Goal วันนี้, ค่าเช่าโรงแรม..." maxlength="60" value="Goal วันนี้" />
-            </div>
-            <div>
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ยอดเป้าหมาย (บาท)</div>
-              <input id="goal-target-input" class="input-field" type="number" placeholder="เช่น 1000" min="0" />
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary" id="goal-save-btn" style="flex:1;">💾 บันทึก Goal</button>
-              <button class="btn btn-danger btn-sm" id="goal-clear-btn">ปิด Goal</button>
-            </div>
-            <div id="goal-save-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header"><div class="card-title">📊 สถานะปัจจุบัน</div></div>
-          <div class="card-body">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-              <div>
-                <div style="font-size:13px;color:var(--muted);">ยอดวันนี้</div>
-                <div style="font-size:28px;font-weight:800;color:var(--green);" id="goal-stat-current">฿0</div>
-              </div>
-              <div style="text-align:right;">
-                <div style="font-size:13px;color:var(--muted);">เป้าหมาย</div>
-                <div style="font-size:28px;font-weight:800;color:var(--text);" id="goal-stat-target">—</div>
-              </div>
-            </div>
-            <div style="height:12px;background:var(--surface2);border-radius:99px;overflow:hidden;">
-              <div id="goal-stat-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:99px;width:0%;transition:width 0.8s ease;"></div>
-            </div>
-            <div style="font-size:12px;color:var(--muted);text-align:right;margin-top:6px;" id="goal-stat-pct">0%</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Tab: TTS ── -->
-      <div class="tab-panel" id="tab-tts">
-        <div class="page-title">TTS & ทดสอบ</div>
-
-        <!-- Test Alert -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">🧪 ทดสอบ Alert (ไม่ต้องใช้สลิปจริง)</div></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <div>
-                <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ชื่อ</div>
-                <input id="test-name" class="input-field" type="text" placeholder="ผู้ทดสอบ" value="ทดสอบ" />
-              </div>
-              <div>
-                <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ยอดเงิน (บาท)</div>
-                <input id="test-amount" class="input-field" type="number" placeholder="100" value="100" min="1" />
-              </div>
-            </div>
-            <div>
-              <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ข้อความ</div>
-              <input id="test-message" class="input-field" type="text" placeholder="ทดสอบระบบ alert 🎉" value="ทดสอบระบบ alert 🎉" />
-            </div>
-            <button class="btn btn-primary" id="test-alert-btn">🚀 ส่ง Test Alert ไป Overlay</button>
-            <div id="test-alert-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
-          </div>
-        </div>
-
-        <!-- TTS Test -->
+        <!-- TTS Test (moved from tab-tts) -->
         <div class="card">
           <div class="card-header"><div class="card-title">🔊 ทดสอบ TTS</div></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
@@ -676,7 +664,7 @@
           </div>
         </div>
 
-        <!-- Tier voice config -->
+        <!-- Tier voice config (hidden — เผื่ออนาคต) -->
         <div class="card" style="display:none;">
           <div class="card-header">
             <div class="card-title">🎚️ Voice Tier per Amount</div>
@@ -705,7 +693,7 @@
           </div>
         </div>
 
-        <!-- TTS status / env -->
+        <!-- TTS status / env (hidden — เผื่ออนาคต) -->
         <div class="card" style="display:none;">
           <div class="card-header"><div class="card-title">ℹ️ สถานะ TTS Providers</div></div>
           <div class="card-body" style="padding:0 18px;">
@@ -723,11 +711,7 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- ── Tab: Templates ── -->
-      <div class="tab-panel" id="tab-templates">
-        <div class="page-title">🎨 Templates</div>
 
         <!-- Template Gallery -->
         <div class="card">
@@ -966,32 +950,12 @@
         </div>
 
         <div class="card">
-          <div class="card-header"><div class="card-title">🔑 Environment Variables</div></div>
+          <div class="card-header">
+            <div class="card-title">🔑 Environment Variables</div>
+            <div style="font-size:11px;color:var(--muted);">สถานะดึงสด ๆ จาก <code>/api/health</code></div>
+          </div>
           <div class="card-body" style="padding:0 18px;">
-            <div class="setting-row">
-              <div><div class="setting-label">DASHBOARD_PASSWORD</div><div class="setting-desc">รหัสผ่านสำหรับ login</div></div>
-              <span style="font-size:12px;color:var(--green);">✓ ตั้งค่าแล้ว</span>
-            </div>
-            <div class="setting-row">
-              <div><div class="setting-label">JWT_SECRET</div><div class="setting-desc">Secret สำหรับ sign JWT token</div></div>
-              <span style="font-size:12px;color:var(--green);">✓ ตั้งค่าแล้ว</span>
-            </div>
-            <div class="setting-row">
-              <div><div class="setting-label">YOUTUBE_API_KEY</div><div class="setting-desc">YouTube Data API v3</div></div>
-              <span id="env-yt" style="font-size:12px;color:var(--muted);">—</span>
-            </div>
-            <div class="setting-row">
-              <div><div class="setting-label">GOOGLE_TTS_KEY</div><div class="setting-desc">Google Cloud Text-to-Speech</div></div>
-              <span id="env-tts" style="font-size:12px;color:var(--muted);">—</span>
-            </div>
-            <div class="setting-row">
-              <div><div class="setting-label">EASYSLIP_API_KEY</div><div class="setting-desc">Verify slip donation</div></div>
-              <span id="env-slip" style="font-size:12px;color:var(--muted);">—</span>
-            </div>
-            <div class="setting-row" style="border-bottom:none;">
-              <div><div class="setting-label">TIKTOK_SESSION_ID</div><div class="setting-desc">TikTok auth (optional)</div></div>
-              <span id="env-tt" style="font-size:12px;color:var(--muted);">—</span>
-            </div>
+            <div id="env-list"></div>
           </div>
         </div>
       </div>
@@ -1429,26 +1393,6 @@
     document.getElementById('don-stat-max-name').textContent = max.displayName || '—';
   }
 
-  // ── TTS ───────────────────────────────────────────────────────────────────────
-  function checkTtsKey() {
-    // ลอง call test-tts ด้วย text ว่างเพื่อเช็ค key
-    fetch('/api/test-tts', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: '' }),
-    }).then(r => r.json()).then(d => {
-      const el = document.getElementById('tts-key-status');
-      const envEl = document.getElementById('env-tts');
-      if (d.error === 'GOOGLE_TTS_KEY not set') {
-        el.innerHTML = '<span class="tts-status-dot err"></span>ยังไม่ได้ตั้งค่า';
-        if (envEl) { envEl.textContent = '✗ ยังไม่ได้ตั้งค่า'; envEl.style.color = 'var(--red)'; }
-      } else {
-        el.innerHTML = '<span class="tts-status-dot ok"></span>ตั้งค่าแล้ว';
-        if (envEl) { envEl.textContent = '✓ ตั้งค่าแล้ว'; envEl.style.color = 'var(--green)'; }
-      }
-    }).catch(() => {});
-  }
-
   // ── Goal UI ───────────────────────────────────────────────────────────────
   function setupGoalUI() {
     // โหลด goal ปัจจุบัน
@@ -1542,20 +1486,6 @@
       }
     };
 
-    // ตรวจสอบ env vars อื่นๆ
-    fetch('/api/health').then(r => r.json()).then(d => {
-      const setEnvStatus = (id, val) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = val ? '✓ ตั้งค่าแล้ว' : '✗ ยังไม่ได้ตั้งค่า';
-        el.style.color = val ? 'var(--green)' : 'var(--red)';
-      };
-      // health endpoint บอกสถานะ youtube และ tiktok
-      setEnvStatus('env-yt',   d.youtubeKey);
-      setEnvStatus('env-slip', d.easyslipKey);
-      setEnvStatus('env-tt',   d.tiktokSession);
-      setEnvStatus('env-tts',  d.googleTtsKey);
-    }).catch(() => {});
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────────
@@ -1628,10 +1558,43 @@
     };
   }
 
-  // ── Env check ────────────────────────────────────────────────────────────────
-  function checkTtsKey() {
-    // nothing to do here — checked inside setupTtsUI via /api/health
+  // ── Env list (dynamic from /api/health) ─────────────────────────────────────
+  const ENV_ITEMS = [
+    { key: 'youtubeKey',    name: 'YOUTUBE_API_KEY',          desc: 'YouTube Data API v3 (สำหรับ YT chat)' },
+    { key: 'easyslipKey',   name: 'EASYSLIP_API_KEY',         desc: 'Verify slip donation' },
+    { key: 'googleTtsKey',  name: 'GOOGLE_TTS_KEY',           desc: 'Google Cloud Text-to-Speech (Neural2)' },
+    { key: 'tiktokSession', name: 'TIKTOK_SESSION_ID',        desc: 'TikTok auth (optional)' },
+    { key: 'geminiTtsKey',  name: 'GEMINI_API_KEY',           desc: 'Gemini TTS (อนาคต — tier กลาง)' },
+    { key: 'elevenLabsKey', name: 'ELEVENLABS_API_KEY',       desc: 'ElevenLabs TTS (อนาคต — tier สูง)' },
+    { key: 'twitchEnv',     name: 'TWITCH_CHANNEL',           desc: 'Twitch chat (อนาคต)' },
+    { key: 'kickEnv',       name: 'KICK_CHANNEL',             desc: 'Kick chat (อนาคต)' },
+    { key: 'facebookEnv',   name: 'FACEBOOK_PAGE_TOKEN',      desc: 'Facebook live comments (อนาคต)' },
+  ];
+  async function renderEnvList() {
+    const host = document.getElementById('env-list');
+    if (!host) return;
+    try {
+      const d = await fetch('/api/health').then(r => r.json());
+      host.innerHTML = ENV_ITEMS.map((item, i) => {
+        const ok  = !!d[item.key];
+        const sep = i === ENV_ITEMS.length - 1 ? 'border-bottom:none;' : '';
+        const col = ok ? 'var(--green)' : 'var(--muted)';
+        const txt = ok ? '✓ ตั้งค่าแล้ว' : '— ยังไม่ตั้ง';
+        return `<div class="setting-row" style="${sep}">
+          <div>
+            <div class="setting-label"><code>${item.name}</code></div>
+            <div class="setting-desc">${item.desc}</div>
+          </div>
+          <span style="font-size:12px;color:${col};white-space:nowrap;">${txt}</span>
+        </div>`;
+      }).join('');
+    } catch {
+      host.innerHTML = '<div class="setting-row" style="border-bottom:none;"><div class="setting-desc">โหลดสถานะไม่สำเร็จ</div></div>';
+    }
   }
+
+  // Legacy stub — kept so existing showApp() call still works
+  function checkTtsKey() { renderEnvList(); }
 
   (async () => {
     if (token) {
