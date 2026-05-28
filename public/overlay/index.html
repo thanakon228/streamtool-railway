@@ -254,7 +254,7 @@
   const MAX_CHAT = 5;
   function appendChatMsg(data) {
     const {platform='unknown',displayName='viewer',message=''} = data;
-    const icon = platform==='youtube'?'▶':'♪';
+    const icon = ({youtube:'▶',tiktok:'♪',twitch:'🟣',kick:'🟢',facebook:'🔵'})[platform] || '?';
     const zone = document.getElementById('chat-zone');
     const el   = document.createElement('div');
     el.className = 'chat-msg';
@@ -266,7 +266,7 @@
     }
   }
 
-  /* ── Alert queue ─────────────────────────────────────────────── */
+  /* ── Alert queue (FIFO — visual + audio both complete before next) ── */
   const alertQueue = []; let alertBusy = false;
   function processQueue() { if(alertBusy||!alertQueue.length)return; alertBusy=true; showAlert(alertQueue.shift()); }
   function showAlert(data) {
@@ -280,16 +280,29 @@
     const card = document.getElementById('alert-card');
     card.classList.remove('hide'); void card.offsetWidth; card.classList.add('show');
     playChime(amount);
-    if(data.ttsAudio){
-      const isWav=data.ttsAudio.startsWith('UklGR'),mime=isWav?'audio/wav':'audio/mp3';
-      setTimeout(()=>new Audio(`data:${mime};base64,${data.ttsAudio}`).play().catch(()=>{}),600);
-    }
     if(amount>=100)spawnConfetti(amount);
-    const dur = 8000+(data.message?Math.min(data.message.length*40,3000):0);
-    setTimeout(()=>{
-      card.classList.remove('show');card.classList.add('hide');
-      setTimeout(()=>{card.classList.remove('hide');alertBusy=false;processQueue();},350);
-    },dur);
+
+    const visualDur = 8000+(data.message?Math.min(data.message.length*40,3000):0);
+    const visualEnd = new Promise(resolve=>{
+      setTimeout(()=>{
+        card.classList.remove('show'); card.classList.add('hide');
+        setTimeout(()=>{ card.classList.remove('hide'); resolve(); },350);
+      }, visualDur);
+    });
+
+    const audioEnd = data.ttsAudio
+      ? new Promise(resolve=>{
+          const isWav=data.ttsAudio.startsWith('UklGR'),mime=isWav?'audio/wav':'audio/mp3';
+          const a=new Audio(`data:${mime};base64,${data.ttsAudio}`);
+          let done=false; const finish=()=>{ if(done)return; done=true; resolve(); };
+          a.onended=finish; a.onerror=finish;
+          setTimeout(()=>a.play().catch(finish),600);
+          // hard safety cap — 60s
+          setTimeout(finish, 60000);
+        })
+      : Promise.resolve();
+
+    Promise.all([visualEnd, audioEnd]).then(()=>{ alertBusy=false; processQueue(); });
   }
 
   /* ── Confetti ────────────────────────────────────────────────── */

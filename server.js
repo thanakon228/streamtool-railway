@@ -1,20 +1,46 @@
+// StreamTool — Copyright (C) 2026 thanakon228
+// Licensed under the GNU Affero General Public License v3.0 or later.
+// See LICENSE and NOTICE.md. Derivative ideas: github.com/steveseguin/social_stream
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. This program is distributed WITHOUT ANY WARRANTY; without even
+// the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 const express  = require("express");
 const http     = require("http");
 const { Server } = require("socket.io");
 const cors     = require("cors");
 const jwt      = require("jsonwebtoken");
-const fs       = require("fs");
 const path     = require("path");
-const { WebcastPushConnection } = require("tiktok-live-connector");
+
+const persistence          = require("./lib/persistence");
+const { createYouTubeChat } = require("./lib/chat/youtube");
+const { createTikTokChat }  = require("./lib/chat/tiktok");
+const { createTwitchChat }  = require("./lib/chat/twitch");
+const { createKickChat }    = require("./lib/chat/kick");
+const { createFacebookChat } = require("./lib/chat/facebook");
+const { createTtsRouter, DEFAULT_TIERS, STYLE_KEYS } = require("./lib/tts");
+const { createTipManager } = require("./lib/tips");
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const PASSWORD      = process.env.DASHBOARD_PASSWORD || "admin123";
-const JWT_SECRET    = process.env.JWT_SECRET         || "change-this-secret";
-const OVERLAY_ID    = process.env.OVERLAY_ID         || "default-overlay";
-const YT_KEY        = process.env.YOUTUBE_API_KEY    || "";
-const EASYSLIP_KEY  = process.env.EASYSLIP_API_KEY   || "";
-const TT_SESSION    = process.env.TIKTOK_SESSION_ID  || null;
-const GOOGLE_TTS_KEY = process.env.GOOGLE_TTS_KEY   || "";
+const PASSWORD       = process.env.DASHBOARD_PASSWORD || "admin123";
+const JWT_SECRET     = process.env.JWT_SECRET         || "change-this-secret";
+const OVERLAY_ID     = process.env.OVERLAY_ID         || "default-overlay";
+const YT_KEY         = process.env.YOUTUBE_API_KEY    || "";
+const EASYSLIP_KEY   = process.env.EASYSLIP_API_KEY   || "";
+const TT_SESSION     = process.env.TIKTOK_SESSION_ID  || null;
+const GOOGLE_TTS_KEY  = process.env.GOOGLE_TTS_KEY      || "";
+const GEMINI_TTS_KEY  = process.env.GEMINI_API_KEY      || "";
+const ELEVEN_TTS_KEY  = process.env.ELEVENLABS_API_KEY  || "";
+const STREAMLABS_TOKEN = process.env.STREAMLABS_SOCKET_TOKEN  || "";
+const SE_JWT           = process.env.STREAMELEMENTS_JWT       || "";
+const SE_ACCOUNT_ID    = process.env.STREAMELEMENTS_ACCOUNT_ID || "";
+const TWITCH_CHANNEL   = process.env.TWITCH_CHANNEL  || "";
+const TWITCH_OAUTH     = process.env.TWITCH_OAUTH    || "";
+const KICK_CHANNEL     = process.env.KICK_CHANNEL    || "";
+const FB_PAGE_TOKEN    = process.env.FACEBOOK_PAGE_TOKEN || "";
 
 // ── Express + Socket.IO ───────────────────────────────────────────────────────
 const app    = express();
@@ -24,51 +50,28 @@ const io     = new Server(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/dashboard",      (_, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
-app.get("/donate",         (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
-app.get("/overlay/goal",    (_, res) => res.sendFile(path.join(__dirname, "public/overlay/goal.html")));
-app.get("/overlay/:id",    (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
-app.get("/overlay",        (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
-app.get("/widget/chat",    (_, res) => res.sendFile(path.join(__dirname, "public/widgets/chat.html")));
-app.get("/widget/alert",   (_, res) => res.sendFile(path.join(__dirname, "public/widgets/alert.html")));
-app.get("/widget/goal",    (_, res) => res.sendFile(path.join(__dirname, "public/widgets/goal.html")));
-app.get("/widget/donate",  (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
+app.get("/dashboard",     (_, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
+app.get("/donate",        (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
+app.get("/overlay/goal",  (_, res) => res.sendFile(path.join(__dirname, "public/overlay/goal.html")));
+app.get("/overlay/:id",   (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
+app.get("/overlay",       (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));
+app.get("/widget/chat",   (_, res) => res.sendFile(path.join(__dirname, "public/widgets/chat.html")));
+app.get("/widget/alert",  (_, res) => res.sendFile(path.join(__dirname, "public/widgets/alert.html")));
+app.get("/widget/goal",   (_, res) => res.sendFile(path.join(__dirname, "public/widgets/goal.html")));
+app.get("/widget/donate", (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
 
-// ── Data persistence ──────────────────────────────────────────────────────────
-const DONATIONS_FILE = path.join(__dirname, "donations.json");
-const SESSIONS_FILE  = path.join(__dirname, "sessions.json");
-
-let donations = [];
-try { donations = JSON.parse(fs.readFileSync(DONATIONS_FILE, "utf8")); } catch {}
-
-let savedSessions = { youtube: null, tiktok: null };
-try { savedSessions = JSON.parse(fs.readFileSync(SESSIONS_FILE, "utf8")); } catch {}
-
-function saveDonations() {
-  fs.writeFileSync(DONATIONS_FILE, JSON.stringify(donations, null, 2));
-}
-function saveSessions() {
-  fs.writeFileSync(SESSIONS_FILE, JSON.stringify({ youtube: ytSession, tiktok: ttSession }, null, 2));
-}
-
-// ── In-memory session state ───────────────────────────────────────────────────
-let ytSession = null;
-let ttSession = null;
-
-// ── Goal state ────────────────────────────────────────────────────────────────
+// ── Goal + template ──────────────────────────────────────────────────────────
 let goal = { target: 0, title: "Goal วันนี้" };
-
-// ── Template config ───────────────────────────────────────────────────────────
 let templateConfig = {
-  template:       "classic",   // classic | neon | minimal | gaming | cute
-  alertAnimation: "slide",     // slide | bounce | zoom | flip | drop
-  alertPosition:  "top-right", // top-right | top-left | bottom-right | bottom-left
-  customCss:      "",          // raw CSS injected after template
+  template:       "classic",
+  alertAnimation: "slide",
+  alertPosition:  "top-right",
+  customCss:      "",
 };
 
 function goalCurrent() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  return donations
+  return persistence.state.donations
     .filter(d => d.createdAt && new Date(d.createdAt) >= today && !d.isTest)
     .reduce((s, d) => s + (d.amount || 0), 0);
 }
@@ -85,18 +88,78 @@ function auth(req, res, next) {
   catch { res.status(401).json({ error: "Invalid token" }); }
 }
 
+// ── Broadcast helpers (route chat events to both rooms) ──────────────────────
+function emitChat(event, data) {
+  io.to("dashboard").emit(event, data);
+  io.to(`overlay:${OVERLAY_ID}`).emit(event, data);
+}
+
+// ── Chat module instances ─────────────────────────────────────────────────────
+const yt = createYouTubeChat({
+  apiKey:          YT_KEY,
+  sessionStore:    persistence.state.sessions,
+  emit:            emitChat,
+  onSessionChange: persistence.saveSessions,
+});
+
+const tt = createTikTokChat({
+  sessionId:       TT_SESSION,
+  sessionStore:    persistence.state.sessions,
+  emit:            emitChat,
+  onSessionChange: persistence.saveSessions,
+});
+
+const twitch = createTwitchChat({
+  channel:         TWITCH_CHANNEL,
+  oauth:           TWITCH_OAUTH,
+  sessionStore:    persistence.state.sessions,
+  emit:            emitChat,
+  onSessionChange: persistence.saveSessions,
+});
+
+const kick = createKickChat({
+  channel:         KICK_CHANNEL,
+  sessionStore:    persistence.state.sessions,
+  emit:            emitChat,
+  onSessionChange: persistence.saveSessions,
+});
+
+const facebook = createFacebookChat({
+  pageToken:       FB_PAGE_TOKEN,
+  sessionStore:    persistence.state.sessions,
+  emit:            emitChat,
+  onSessionChange: persistence.saveSessions,
+});
+
+// ── TTS router ────────────────────────────────────────────────────────────────
+if (!persistence.state.voiceConfig) {
+  persistence.state.voiceConfig = { tiers: DEFAULT_TIERS, style: "random" };
+}
+const tts = createTtsRouter({
+  keys:      { google: GOOGLE_TTS_KEY, gemini: GEMINI_TTS_KEY, elevenLabs: ELEVEN_TTS_KEY },
+  configRef: () => persistence.state.voiceConfig,
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // API
 // ═══════════════════════════════════════════════════════════════════════════════
 
 app.get("/api/health", (_, res) => res.json({
-  status: "ok",
-  youtube: !!ytPoller,
-  tiktok: tiktokConns.size,
-  youtubeKey:    !!YT_KEY,
-  easyslipKey:   !!EASYSLIP_KEY,
-  googleTtsKey:  !!GOOGLE_TTS_KEY,
-  tiktokSession: !!TT_SESSION,
+  status:         "ok",
+  youtube:        yt.isActive(),
+  tiktok:         tt.connCount(),
+  twitch:         twitch.isActive(),
+  kick:           kick.isActive(),
+  facebook:       facebook.isActive(),
+  youtubeKey:     !!YT_KEY,
+  easyslipKey:    !!EASYSLIP_KEY,
+  googleTtsKey:   !!GOOGLE_TTS_KEY,
+  geminiTtsKey:   !!GEMINI_TTS_KEY,
+  elevenLabsKey:  !!ELEVEN_TTS_KEY,
+  tiktokSession:  !!TT_SESSION,
+  twitchEnv:      !!TWITCH_CHANNEL,
+  kickEnv:        !!KICK_CHANNEL,
+  facebookEnv:    !!FB_PAGE_TOKEN,
 }));
 
 // Login
@@ -109,13 +172,16 @@ app.post("/api/login", (req, res) => {
 
 // Session state
 app.get("/api/session", auth, (_, res) => res.json({
-  youtube: { active: ytSession?.active || false, videoId: ytSession?.videoId || "" },
-  tiktok:  { active: ttSession?.active || false, username: ttSession?.username || "" },
+  youtube:  { active: yt.getSession()?.active       || false, videoId:     yt.getSession()?.videoId     || "" },
+  tiktok:   { active: tt.getSession()?.active       || false, username:    tt.getSession()?.username    || "" },
+  twitch:   { active: twitch.getSession()?.active   || false, channel:     twitch.getSession()?.channel || "" },
+  kick:     { active: kick.getSession()?.active     || false, channel:     kick.getSession()?.channel   || "" },
+  facebook: { active: facebook.getSession()?.active || false, liveVideoId: facebook.getSession()?.liveVideoId || "" },
   overlayId: OVERLAY_ID,
 }));
 
 // Donations list
-app.get("/api/donations", auth, (_, res) => res.json(donations));
+app.get("/api/donations", auth, (_, res) => res.json(persistence.state.donations));
 
 // Template config (public — no auth)
 app.get("/api/template-config", (_, res) => res.json({
@@ -127,14 +193,13 @@ app.get("/api/template-config", (_, res) => res.json({
 // Template config — save (auth)
 app.post("/api/template-config", auth, (req, res) => {
   const { template, alertAnimation, alertPosition, customCss } = req.body || {};
-  const validTpl  = ["classic","neon","minimal","gaming","cute"];
+  const validTpl   = ["classic","neon","minimal","gaming","cute"];
   const validAnims = ["slide","bounce","zoom","flip","drop"];
   const validPos   = ["top-right","top-left","bottom-right","bottom-left"];
-  if (template       && validTpl.includes(template))        templateConfig.template       = template;
-  if (alertAnimation && validAnims.includes(alertAnimation))templateConfig.alertAnimation = alertAnimation;
-  if (alertPosition  && validPos.includes(alertPosition))   templateConfig.alertPosition  = alertPosition;
+  if (template       && validTpl.includes(template))         templateConfig.template       = template;
+  if (alertAnimation && validAnims.includes(alertAnimation)) templateConfig.alertAnimation = alertAnimation;
+  if (alertPosition  && validPos.includes(alertPosition))    templateConfig.alertPosition  = alertPosition;
   if (customCss !== undefined) templateConfig.customCss = String(customCss).slice(0, 20000);
-  // Push live update to all connected clients
   const payload = { overlayId: OVERLAY_ID, ...templateConfig };
   io.to(`overlay:${OVERLAY_ID}`).emit("templateUpdate", payload);
   io.to("dashboard").emit("templateUpdate", payload);
@@ -147,210 +212,246 @@ app.get("/api/donate/info", (_, res) => res.json({
   overlayId: OVERLAY_ID,
 }));
 
-// Public donate endpoint (ผู้ชมใช้ — ไม่ต้อง auth)
-app.post("/api/donate/public", async (req, res) => {
-  const { base64, url, payload, message, displayName } = req.body || {};
-  if (!EASYSLIP_KEY) return res.status(503).json({ error: "ระบบโดเนทยังไม่เปิดใช้งาน" });
-  if ([base64, url, payload].filter(Boolean).length !== 1)
-    return res.status(400).json({ error: "กรุณาแนบสลิปให้ถูกต้อง" });
-
+async function verifySlipAndBuildDonation({ base64, url, payload, message, displayName, isPublic }) {
   const body = { checkDuplicate: true };
   if (base64)  body.base64  = base64.startsWith("data:image/") ? base64 : `data:image/jpeg;base64,${base64}`;
   if (url)     body.url     = String(url).trim();
   if (payload) body.payload = String(payload).trim();
 
-  try {
-    const r = await fetch("https://api.easyslip.com/v2/verify/bank", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${EASYSLIP_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+  const r = await fetch("https://api.easyslip.com/v2/verify/bank", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${EASYSLIP_KEY}`, "Content-Type": "application/json" },
+    body:    JSON.stringify(body),
+  });
+  const d = await r.json().catch(() => null);
+  if (!r.ok)       throw Object.assign(new Error(d?.error?.message || (isPublic ? "ตรวจสอบสลิปไม่สำเร็จ" : `EasySlip ${r.status}`)), { code: 400 });
+  if (!d?.success) throw Object.assign(new Error(d?.error?.message || (isPublic ? "สลิปไม่ถูกต้อง" : "Verify failed")), { code: 400 });
+
+  const transRef = d?.data?.rawSlip?.transRef;
+  const amount   = d?.data?.amountInSlip ?? d?.data?.rawSlip?.amount?.amount;
+  if (!transRef) throw Object.assign(new Error(isPublic ? "ไม่พบข้อมูลสลิป" : "Missing transRef"), { code: 500 });
+  if (persistence.findDonation(transRef))
+    throw Object.assign(new Error(isPublic ? "สลิปนี้ถูกใช้งานไปแล้ว" : "Duplicate slip"), { code: 409 });
+
+  return {
+    slipId:      transRef,
+    amount:      Number(amount || 0),
+    displayName: (displayName || (isPublic ? "ผู้ไม่ประสงค์ออกนาม" : "donor")).trim().slice(0, 50),
+    message:     (message || "").trim().slice(0, 200),
+    createdAt:   new Date().toISOString(),
+    source:      "easyslip",
+  };
+}
+
+async function dispatchDonation(donation) {
+  persistence.addDonation(donation);
+  const unit = (!donation.currency || donation.currency === "THB") ? "บาท" : donation.currency;
+  const ttsText  = `${donation.displayName} โดเนท ${donation.amount} ${unit}${donation.message ? ` ${donation.message}` : ""}`;
+  const ttsAudio = await tts.generate(ttsText, { amount: donation.amount });
+  io.to("dashboard").emit("donation", donation);
+  io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
+  emitGoal();
+}
+
+// ── Tip provider manager ─────────────────────────────────────────────────────
+const tips = createTipManager({
+  env: { STREAMLABS_TOKEN, SE_JWT, SE_ACCOUNT_ID },
+  persistence,
+  onTip: async (tip) => {
+    await dispatchDonation({
+      slipId:      tip.tipId,
+      amount:      tip.amount,
+      currency:    tip.currency,
+      displayName: tip.displayName,
+      message:     tip.message,
+      createdAt:   tip.createdAt,
+      source:      tip.source,
     });
-    const d = await r.json().catch(() => null);
-    if (!r.ok)       return res.status(400).json({ error: d?.error?.message || "ตรวจสอบสลิปไม่สำเร็จ" });
-    if (!d?.success) return res.status(400).json({ error: d?.error?.message || "สลิปไม่ถูกต้อง" });
+  },
+  onStatus: (s) => {
+    console.log(`Tip [${s.provider}] ${s.status}${s.detail ? ": " + s.detail : ""}`);
+    io.to("dashboard").emit("tipStatus", s);
+  },
+});
 
-    const transRef = d?.data?.rawSlip?.transRef;
-    const amount   = d?.data?.amountInSlip ?? d?.data?.rawSlip?.amount?.amount;
-    if (!transRef) return res.status(500).json({ error: "ไม่พบข้อมูลสลิป" });
-    if (donations.find(x => x.slipId === transRef))
-      return res.status(409).json({ error: "สลิปนี้ถูกใช้งานไปแล้ว" });
+app.get("/api/tips/status", auth, (_, res) => res.json(tips.status()));
+app.post("/api/tips/:provider/start", auth, (req, res) => {
+  try { tips.start(req.params.provider); res.json({ ok: true }); }
+  catch (e) { res.status(e.code || 500).json({ error: e.message }); }
+});
+app.post("/api/tips/:provider/stop", auth, (req, res) => {
+  try { tips.stop(req.params.provider); res.json({ ok: true }); }
+  catch (e) { res.status(e.code || 500).json({ error: e.message }); }
+});
 
-    const donation = {
-      slipId: transRef, amount: Number(amount || 0),
-      displayName: (displayName || "ผู้ไม่ประสงค์ออกนาม").trim().slice(0, 50),
-      message: (message || "").trim().slice(0, 200),
-      createdAt: new Date().toISOString(),
-    };
-    donations.unshift(donation);
-    if (donations.length > 1000) donations.length = 1000;
-    saveDonations();
-
-    const ttsText = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
-    const ttsAudio = await generateTTS(ttsText);
-
-    io.to("dashboard").emit("donation", donation);
-    io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
-    emitGoal();
-
+// Public donate endpoint (ผู้ชมใช้ — ไม่ต้อง auth)
+app.post("/api/donate/public", async (req, res) => {
+  if (!EASYSLIP_KEY) return res.status(503).json({ error: "ระบบโดเนทยังไม่เปิดใช้งาน" });
+  const { base64, url, payload } = req.body || {};
+  if ([base64, url, payload].filter(Boolean).length !== 1)
+    return res.status(400).json({ error: "กรุณาแนบสลิปให้ถูกต้อง" });
+  try {
+    const donation = await verifySlipAndBuildDonation({ ...req.body, isPublic: true });
+    await dispatchDonation(donation);
     res.json({ ok: true, amount: donation.amount });
   } catch (e) {
+    if (e.code) return res.status(e.code).json({ error: e.message });
     console.error("donate/public:", e);
     res.status(500).json({ error: "เกิดข้อผิดพลาดในระบบ" });
   }
 });
 
-// ── YouTube ───────────────────────────────────────────────────────────────────
-app.post("/api/startYouTubeChat", auth, async (req, res) => {
-  const { videoId } = req.body;
-  if (!videoId) return res.status(400).json({ error: "videoId required" });
-  if (!YT_KEY)  return res.status(503).json({ error: "YOUTUBE_API_KEY not set" });
-
-  try {
-    const r = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${YT_KEY}`
-    );
-    const d = await r.json();
-    if (d.error) return res.status(400).json({ error: `YouTube API error: ${d.error.message}` });
-    const liveChatId = d.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
-    if (!liveChatId) return res.status(404).json({ error: "ไม่พบ live chat — ตรวจสอบ Video ID และว่า stream กำลัง live อยู่" });
-
-    ytSession = { videoId, liveChatId, nextPageToken: null, active: true };
-    saveSessions();
-    startYouTubePoller();
-    io.to("dashboard").emit("session", { youtube: { active: true, videoId } });
-    res.json({ ok: true, liveChatId });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.post("/api/stopYouTubeChat", auth, (_, res) => {
-  if (ytSession) ytSession.active = false;
-  stopYouTubePoller();
-  saveSessions();
-  io.to("dashboard").emit("session", { youtube: { active: false, videoId: "" } });
-  res.json({ ok: true });
-});
-
-// ── TikTok ────────────────────────────────────────────────────────────────────
-app.post("/api/startTikTokChat", auth, (req, res) => {
-  const { username } = req.body;
-  if (!username) return res.status(400).json({ error: "username required" });
-  ttSession = { username, active: true };
-  saveSessions();
-  startTikTokConnection(username);
-  io.to("dashboard").emit("session", { tiktok: { active: true, username } });
-  res.json({ ok: true });
-});
-
-app.post("/api/stopTikTokChat", auth, (_, res) => {
-  if (ttSession) ttSession.active = false;
-  stopTikTokConnection();
-  saveSessions();
-  io.to("dashboard").emit("session", { tiktok: { active: false, username: "" } });
-  res.json({ ok: true });
-});
-
-// ── Donate ────────────────────────────────────────────────────────────────────
+// Donate (auth)
 app.post("/api/donate", auth, async (req, res) => {
-  const { base64, url, payload, message, displayName } = req.body || {};
   if (!EASYSLIP_KEY) return res.status(503).json({ error: "EASYSLIP_API_KEY not set" });
+  const { base64, url, payload } = req.body || {};
   if ([base64, url, payload].filter(Boolean).length !== 1)
     return res.status(400).json({ error: "Provide exactly one of: base64, url, payload" });
-
-  const body = { checkDuplicate: true };
-  if (base64)  body.base64  = base64.startsWith("data:image/") ? base64 : `data:image/jpeg;base64,${base64}`;
-  if (url)     body.url     = String(url).trim();
-  if (payload) body.payload = String(payload).trim();
-
   try {
-    const r = await fetch("https://api.easyslip.com/v2/verify/bank", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${EASYSLIP_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const d = await r.json().catch(() => null);
-    if (!r.ok)       return res.status(400).json({ error: d?.error?.message || `EasySlip ${r.status}` });
-    if (!d?.success) return res.status(400).json({ error: d?.error?.message || "Verify failed" });
-
-    const transRef = d?.data?.rawSlip?.transRef;
-    const amount   = d?.data?.amountInSlip ?? d?.data?.rawSlip?.amount?.amount;
-    if (!transRef) return res.status(500).json({ error: "Missing transRef" });
-    if (donations.find(x => x.slipId === transRef))
-      return res.status(409).json({ error: "Duplicate slip" });
-
-    const donation = {
-      slipId: transRef, amount: Number(amount || 0),
-      displayName: displayName || "donor", message: message || "",
-      createdAt: new Date().toISOString(),
-    };
-    donations.unshift(donation);
-    if (donations.length > 1000) donations.length = 1000;
-    saveDonations();
-
-    const ttsText = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
-    const ttsAudio = await generateTTS(ttsText);
-
-    io.to("dashboard").emit("donation", donation);
-    io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
-    emitGoal();
-
-    res.json({ ok: true, slipId: transRef, amount: donation.amount });
+    const donation = await verifySlipAndBuildDonation({ ...req.body, isPublic: false });
+    await dispatchDonation(donation);
+    res.json({ ok: true, slipId: donation.slipId, amount: donation.amount });
   } catch (e) {
+    if (e.code) return res.status(e.code).json({ error: e.message });
     console.error("donate:", e);
     res.status(500).json({ error: e.message });
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Google TTS
-// ═══════════════════════════════════════════════════════════════════════════════
-async function generateTTS(text) {
-  if (!GOOGLE_TTS_KEY) return null;
+// ── YouTube routes ───────────────────────────────────────────────────────────
+app.post("/api/startYouTubeChat", auth, async (req, res) => {
+  const { videoId } = req.body;
+  if (!videoId) return res.status(400).json({ error: "videoId required" });
   try {
-    const r = await fetch(
-      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          input: { text },
-          voice: { languageCode: "th-TH", name: "th-TH-Neural2-C" },
-          audioConfig: { audioEncoding: "MP3" },
-        }),
-      }
-    );
-    const d = await r.json();
-    if (d.error) { console.error("TTS error:", d.error.message); return null; }
-    return d.audioContent || null;
-  } catch (e) {
-    console.error("TTS error:", e.message);
-    return null;
-  }
-}
+    const result = await yt.start(videoId);
+    io.to("dashboard").emit("session", { youtube: { active: true, videoId } });
+    res.json({ ok: true, liveChatId: result.liveChatId });
+  } catch (e) { res.status(e.code || 500).json({ error: e.message }); }
+});
 
+app.post("/api/stopYouTubeChat", auth, (_, res) => {
+  yt.stop();
+  io.to("dashboard").emit("session", { youtube: { active: false, videoId: "" } });
+  res.json({ ok: true });
+});
+
+// ── TikTok routes ────────────────────────────────────────────────────────────
+app.post("/api/startTikTokChat", auth, (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: "username required" });
+  tt.start(username);
+  io.to("dashboard").emit("session", { tiktok: { active: true, username } });
+  res.json({ ok: true });
+});
+
+app.post("/api/stopTikTokChat", auth, (_, res) => {
+  tt.stop();
+  io.to("dashboard").emit("session", { tiktok: { active: false, username: "" } });
+  res.json({ ok: true });
+});
+
+// ── Twitch routes ────────────────────────────────────────────────────────────
+app.post("/api/startTwitchChat", auth, (req, res) => {
+  try {
+    twitch.start(req.body?.channel);
+    const s = twitch.getSession();
+    io.to("dashboard").emit("session", { twitch: { active: true, channel: s?.channel || "" } });
+    res.json({ ok: true });
+  } catch (e) { res.status(e.code || 500).json({ error: e.message }); }
+});
+app.post("/api/stopTwitchChat", auth, (_, res) => {
+  twitch.stop();
+  io.to("dashboard").emit("session", { twitch: { active: false, channel: "" } });
+  res.json({ ok: true });
+});
+
+// ── Kick routes ──────────────────────────────────────────────────────────────
+app.post("/api/startKickChat", auth, (req, res) => {
+  try {
+    kick.start(req.body?.channel);
+    const s = kick.getSession();
+    io.to("dashboard").emit("session", { kick: { active: true, channel: s?.channel || "" } });
+    res.json({ ok: true });
+  } catch (e) { res.status(e.code || 500).json({ error: e.message }); }
+});
+app.post("/api/stopKickChat", auth, (_, res) => {
+  kick.stop();
+  io.to("dashboard").emit("session", { kick: { active: false, channel: "" } });
+  res.json({ ok: true });
+});
+
+// ── Facebook routes ──────────────────────────────────────────────────────────
+app.post("/api/startFacebookChat", auth, (req, res) => {
+  try {
+    facebook.start(req.body?.liveVideoId);
+    io.to("dashboard").emit("session", { facebook: { active: true, liveVideoId: req.body?.liveVideoId } });
+    res.json({ ok: true });
+  } catch (e) { res.status(e.code || 500).json({ error: e.message }); }
+});
+app.post("/api/stopFacebookChat", auth, (_, res) => {
+  facebook.stop();
+  io.to("dashboard").emit("session", { facebook: { active: false, liveVideoId: "" } });
+  res.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TTS endpoints (provider routing in lib/tts/*)
+// ═══════════════════════════════════════════════════════════════════════════════
 app.post("/api/test-tts", auth, async (req, res) => {
-  const { text } = req.body || {};
+  const { text, amount = 0, tier, style } = req.body || {};
   if (!text) return res.status(400).json({ error: "text required" });
-  if (!GOOGLE_TTS_KEY) return res.status(503).json({ error: "GOOGLE_TTS_KEY not set" });
-  const audio = await generateTTS(text);
-  if (!audio) return res.status(500).json({ error: "TTS generation failed" });
+  const audio = tier
+    ? await tts.test(text, tier, style)
+    : await tts.generate(text, { amount, style });
+  if (!audio) return res.status(500).json({ error: "TTS generation failed (check API keys)" });
   res.json({ ok: true, audio });
 });
 
-// Test Alert (ส่ง fake alert ไป overlay โดยไม่ต้องใช้สลิปจริง)
+app.get("/api/tts/config", auth, (_, res) => res.json({
+  config: persistence.state.voiceConfig,
+  styles: ["random", "neutral", ...STYLE_KEYS],
+  providers: {
+    google:     { available: !!GOOGLE_TTS_KEY },
+    gemini:     { available: !!GEMINI_TTS_KEY },
+    elevenlabs: { available: !!ELEVEN_TTS_KEY },
+  },
+}));
+
+app.post("/api/tts/config", auth, (req, res) => {
+  const { tiers, style } = req.body || {};
+  if (Array.isArray(tiers)) {
+    const clean = tiers
+      .filter(t => t && typeof t === "object" && ["google","gemini","elevenlabs"].includes(t.provider))
+      .map(t => ({
+        minAmount: Math.max(0, Number(t.minAmount) || 0),
+        provider:  t.provider,
+        voiceName: t.voiceName ? String(t.voiceName).slice(0, 80) : undefined,
+        voiceId:   t.voiceId   ? String(t.voiceId).slice(0, 80)   : undefined,
+        model:     t.model     ? String(t.model).slice(0, 40)     : undefined,
+      }));
+    if (clean.length) persistence.state.voiceConfig.tiers = clean;
+  }
+  if (style !== undefined) {
+    persistence.state.voiceConfig.style = String(style).slice(0, 30) || "random";
+  }
+  persistence.saveVoiceConfig();
+  res.json({ ok: true, config: persistence.state.voiceConfig });
+});
+
+// Test Alert
 app.post("/api/test-alert", auth, async (req, res) => {
   const { displayName = "ทดสอบ", amount = 100, message = "ทดสอบระบบ alert 🎉" } = req.body || {};
   const donation = {
-    slipId: `test_${Date.now()}`,
-    amount: Number(amount) || 100,
+    slipId:      `test_${Date.now()}`,
+    amount:      Number(amount) || 100,
     displayName: String(displayName).trim().slice(0, 50),
-    message: String(message).trim().slice(0, 200),
-    createdAt: new Date().toISOString(),
-    isTest: true,
+    message:     String(message).trim().slice(0, 200),
+    createdAt:   new Date().toISOString(),
+    isTest:      true,
+    source:      "test",
   };
-  const ttsText = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
-  const ttsAudio = await generateTTS(ttsText);
+  const ttsText  = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
+  const ttsAudio = await tts.generate(ttsText, { amount: donation.amount });
   io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
   res.json({ ok: true });
 });
@@ -365,120 +466,6 @@ app.post("/api/goal", auth, (req, res) => {
   emitGoal();
   res.json({ ok: true, goal: { ...goal, current: goalCurrent() } });
 });
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// YouTube poller
-// ═══════════════════════════════════════════════════════════════════════════════
-let ytPoller = null;
-
-async function fetchYouTubePage() {
-  if (!ytSession?.active || !YT_KEY) return null;
-
-  try {
-    const url = new URL("https://www.googleapis.com/youtube/v3/liveChat/messages");
-    url.searchParams.set("liveChatId", ytSession.liveChatId);
-    url.searchParams.set("part", "snippet,authorDetails");
-    url.searchParams.set("key", YT_KEY);
-    if (ytSession.nextPageToken) url.searchParams.set("pageToken", ytSession.nextPageToken);
-
-    const r = await fetch(url.toString());
-    const d = await r.json();
-    if (d.error) { console.error("YouTube API:", d.error.message); return 5000; }
-
-    const { nextPageToken, items = [], pollingIntervalMillis = 5000 } = d;
-    const isFirst = !ytSession.nextPageToken;
-    ytSession.nextPageToken = nextPageToken;
-
-    if (!isFirst) {
-      for (const item of items) {
-        const msg = {
-          id: item.id, platform: "youtube",
-          displayName: item.authorDetails.displayName,
-          message: item.snippet.displayMessage,
-          sentAt: item.snippet.publishedAt,
-        };
-        io.to("dashboard").emit("chat", msg);
-        io.to(`overlay:${OVERLAY_ID}`).emit("chat", msg);
-      }
-    }
-    return Math.max(pollingIntervalMillis, 2000);
-  } catch (e) {
-    console.error("fetchYouTubePage:", e.message);
-    return 5000;
-  }
-}
-
-function startYouTubePoller() {
-  if (ytPoller) return;
-  const tick = async () => {
-    const next = await fetchYouTubePage();
-    if (next === null) { ytPoller = null; return; }
-    ytPoller = setTimeout(tick, next);
-  };
-  ytPoller = setTimeout(tick, 0);
-  console.log("YouTube poller started");
-}
-
-function stopYouTubePoller() {
-  if (ytPoller) { clearTimeout(ytPoller); ytPoller = null; }
-  console.log("YouTube poller stopped");
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TikTok persistent connection
-// ═══════════════════════════════════════════════════════════════════════════════
-const tiktokConns = new Map();
-
-async function startTikTokConnection(username) {
-  if (tiktokConns.has("main")) return;
-  const connectedAt = Date.now();
-
-  const conn = new WebcastPushConnection(username, {
-    ...(TT_SESSION ? { sessionId: TT_SESSION } : {}),
-    requestPollingIntervalMs: 2000,
-    enableExtendedGiftInfo: false,
-  });
-
-  conn.on("chat", (data) => {
-    let t = Date.now();
-    if (data?.createTime != null) {
-      const n = Number(data.createTime);
-      if (Number.isFinite(n) && n > 0) t = n > 1e12 ? n : n * 1000;
-    }
-    if (t < connectedAt - 3000) return;
-
-    const msg = {
-      id: `${data.userId}_${data.createTime || t}`,
-      platform: "tiktok",
-      displayName: data.nickname || data.uniqueId || "viewer",
-      message: data.comment || "",
-      sentAt: new Date(t).toISOString(),
-    };
-    io.to("dashboard").emit("chat", msg);
-    io.to(`overlay:${OVERLAY_ID}`).emit("chat", msg);
-  });
-
-  conn.on("disconnected", () => {
-    tiktokConns.delete("main");
-    console.log("TikTok disconnected, retry in 5s");
-    if (ttSession?.active) setTimeout(() => startTikTokConnection(username), 5000);
-  });
-
-  conn.on("error", (e) => console.error("TikTok error:", e?.message || e));
-
-  try {
-    await conn.connect();
-    tiktokConns.set("main", conn);
-    console.log(`TikTok connected @${username}`);
-  } catch (e) {
-    console.error("TikTok connect failed:", e.message);
-  }
-}
-
-function stopTikTokConnection() {
-  const c = tiktokConns.get("main");
-  if (c) { c.disconnect().catch(() => {}); tiktokConns.delete("main"); }
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Socket.IO auth
@@ -505,16 +492,12 @@ io.on("connection", (socket) => {
 });
 
 // ── Resume saved sessions on startup ─────────────────────────────────────────
-if (savedSessions.youtube?.active) {
-  ytSession = savedSessions.youtube;
-  startYouTubePoller();
-  console.log("YouTube session resumed");
-}
-if (savedSessions.tiktok?.active) {
-  ttSession = savedSessions.tiktok;
-  startTikTokConnection(ttSession.username);
-  console.log(`TikTok session resumed @${ttSession.username}`);
-}
+yt.resumeIfActive();
+tt.resumeIfActive();
+twitch.resumeIfActive();
+kick.resumeIfActive();
+facebook.resumeIfActive();
+tips.resumeAll();
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;

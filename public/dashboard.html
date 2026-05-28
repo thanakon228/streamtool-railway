@@ -120,12 +120,18 @@
     .chat-feed-item:last-child { border-bottom: none; }
     .chat-feed-item.hidden { display: none; }
     .chat-platform-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
-    .chat-platform-icon.youtube { background: rgba(255,0,0,0.15); color: #ff6666; }
-    .chat-platform-icon.tiktok  { background: rgba(105,201,208,0.15); color: #69c9d0; }
+    .chat-platform-icon.youtube  { background: rgba(255,0,0,0.15);     color: #ff6666; }
+    .chat-platform-icon.tiktok   { background: rgba(105,201,208,0.15); color: #69c9d0; }
+    .chat-platform-icon.twitch   { background: rgba(145,71,255,0.15);  color: #b18bff; }
+    .chat-platform-icon.kick     { background: rgba(83,222,68,0.15);   color: #53de44; }
+    .chat-platform-icon.facebook { background: rgba(24,119,242,0.15);  color: #4c92f5; }
     .chat-content { flex: 1; min-width: 0; }
     .chat-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-    .chat-name.youtube { color: #ff4444; }
-    .chat-name.tiktok  { color: #69c9d0; }
+    .chat-name.youtube  { color: #ff4444; }
+    .chat-name.tiktok   { color: #69c9d0; }
+    .chat-name.twitch   { color: #b18bff; }
+    .chat-name.kick     { color: #53de44; }
+    .chat-name.facebook { color: #4c92f5; }
     .chat-text { font-size: 13px; color: var(--text); line-height: 1.4; word-break: break-word; }
     .chat-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
     .filter-bar { display: flex; gap: 6px; }
@@ -392,6 +398,9 @@
                   <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
                   <button class="filter-btn" data-filter="youtube">▶ YT</button>
                   <button class="filter-btn" data-filter="tiktok">♪ TT</button>
+                  <button class="filter-btn" data-filter="twitch">🟣 Tw</button>
+                  <button class="filter-btn" data-filter="kick">🟢 Kick</button>
+                  <button class="filter-btn" data-filter="facebook">🔵 FB</button>
                 </div>
               </div>
               <div class="card-body" style="padding:0 18px;flex:1;overflow:hidden;">
@@ -474,6 +483,109 @@
               <div class="connect-row">
                 <input id="tt-username" class="input-field" type="text" placeholder="เช่น username123" />
                 <button class="btn btn-primary btn-sm" id="tt-connect">เริ่ม</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🟣 Twitch Live</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="tw-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="tw-sub">IRC over wss ผ่าน tmi.js</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="tw-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="tw-toggle">เชื่อมต่อ</button>
+              </div>
+            </div>
+            <div class="platform-connect" id="tw-form">
+              <div class="connect-label">Twitch Channel (ไม่ต้องมี #)</div>
+              <div class="connect-row">
+                <input id="tw-channel" class="input-field" type="text" placeholder="เช่น ninja" />
+                <button class="btn btn-primary btn-sm" id="tw-connect">เริ่ม</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🟢 Kick Live</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="kk-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="kk-sub">Pusher WebSocket</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="kk-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="kk-toggle">เชื่อมต่อ</button>
+              </div>
+            </div>
+            <div class="platform-connect" id="kk-form">
+              <div class="connect-label">Kick Channel Slug</div>
+              <div class="connect-row">
+                <input id="kk-channel" class="input-field" type="text" placeholder="เช่น xqc" />
+                <button class="btn btn-primary btn-sm" id="kk-connect">เริ่ม</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔵 Facebook Live</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="fb-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="fb-sub">Graph API polling (ต้องมี Page Token)</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="fb-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="fb-toggle">เชื่อมต่อ</button>
+              </div>
+            </div>
+            <div class="platform-connect" id="fb-form">
+              <div class="connect-label">Live Video ID</div>
+              <div class="connect-row">
+                <input id="fb-channel" class="input-field" type="text" placeholder="เช่น 1234567890" />
+                <button class="btn btn-primary btn-sm" id="fb-connect">เริ่ม</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-title" style="margin-top:24px;">เชื่อมต่อ Tip Providers</div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">💜 Streamlabs</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="sl-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;">รับ tip events จาก Streamlabs Socket API · ต้องตั้ง <code>STREAMLABS_SOCKET_TOKEN</code> ใน env</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="sl-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="sl-toggle">เริ่มฟัง</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">💚 StreamElements</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="se-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;">รับ tip events จาก SE realtime · ต้องตั้ง <code>STREAMELEMENTS_JWT</code> ใน env</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="se-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="se-toggle">เริ่มฟัง</button>
               </div>
             </div>
           </div>
@@ -564,24 +676,50 @@
           </div>
         </div>
 
+        <!-- Tier voice config -->
         <div class="card">
-          <div class="card-header"><div class="card-title">ℹ️ รายละเอียดการตั้งค่า</div></div>
+          <div class="card-header">
+            <div class="card-title">🎚️ Voice Tier per Amount</div>
+            <div style="font-size:11px;color:var(--muted);">เลือก provider+voice ตามยอดโดเนท — provider ต่างกันต้องตั้ง env key ต่างกัน</div>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div id="tts-tiers" style="display:flex;flex-direction:column;gap:10px;"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+              <div style="font-size:12px;color:var(--muted);">Style</div>
+              <select id="tts-style" class="input-field" style="max-width:200px;">
+                <option value="random">🎲 Random</option>
+                <option value="neutral">— Neutral</option>
+                <option value="happy">😊 Happy</option>
+                <option value="sad">😢 Sad</option>
+                <option value="angry">😡 Angry</option>
+                <option value="excited">🤩 Excited</option>
+                <option value="whisper">🤫 Whisper</option>
+                <option value="evil">😈 Evil</option>
+                <option value="shy">🥺 Shy</option>
+                <option value="laughing">😂 Laughing</option>
+                <option value="serious">😐 Serious</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="tts-save-cfg">💾 บันทึก voice config</button>
+            <div id="tts-cfg-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <!-- TTS status / env -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">ℹ️ สถานะ TTS Providers</div></div>
           <div class="card-body" style="padding:0 18px;">
             <div class="tts-info-row">
-              <span class="tts-info-label">Provider</span>
-              <span>Google Cloud Text-to-Speech</span>
+              <span class="tts-info-label">Google Neural2 (<code>GOOGLE_TTS_KEY</code>)</span>
+              <span id="tts-status-google">—</span>
             </div>
             <div class="tts-info-row">
-              <span class="tts-info-label">Voice</span>
-              <span>th-TH-Neural2-C (ภาษาไทย)</span>
-            </div>
-            <div class="tts-info-row">
-              <span class="tts-info-label">API Key (Railway Env)</span>
-              <span id="tts-key-status">กำลังตรวจสอบ...</span>
+              <span class="tts-info-label">Gemini TTS (<code>GEMINI_API_KEY</code>)</span>
+              <span id="tts-status-gemini">—</span>
             </div>
             <div class="tts-info-row" style="border-bottom:none;">
-              <span class="tts-info-label">ตัวแปร Environment</span>
-              <code style="font-size:12px;color:var(--accent);">GOOGLE_TTS_KEY</code>
+              <span class="tts-info-label">ElevenLabs (<code>ELEVENLABS_API_KEY</code>)</span>
+              <span id="tts-status-elevenlabs">—</span>
             </div>
           </div>
         </div>
@@ -872,8 +1010,20 @@
   let socket     = null;
   let chatFilter = 'all';
   let chatCount  = 0;
-  let ytActive   = false;
-  let ttActive   = false;
+  const PLATFORMS = {
+    yt: { name: 'YouTube',  subDefault: 'ดึง chat ผ่าน YouTube Data API v3',         detailLabel: v => `Video ID: ${v}`,
+          startUrl: '/api/startYouTubeChat',  stopUrl: '/api/stopYouTubeChat',  inputId: 'yt-video-id', field: 'videoId' },
+    tt: { name: 'TikTok',   subDefault: 'รับ chat ผ่าน WebSocket',                  detailLabel: u => `@${u}`,
+          startUrl: '/api/startTikTokChat',   stopUrl: '/api/stopTikTokChat',   inputId: 'tt-username', field: 'username' },
+    tw: { name: 'Twitch',   subDefault: 'IRC over wss ผ่าน tmi.js',                 detailLabel: c => `#${c}`,
+          startUrl: '/api/startTwitchChat',   stopUrl: '/api/stopTwitchChat',   inputId: 'tw-channel',  field: 'channel' },
+    kk: { name: 'Kick',     subDefault: 'Pusher WebSocket',                          detailLabel: c => `#${c}`,
+          startUrl: '/api/startKickChat',     stopUrl: '/api/stopKickChat',     inputId: 'kk-channel',  field: 'channel' },
+    fb: { name: 'Facebook', subDefault: 'Graph API polling (ต้องมี Page Token)',    detailLabel: v => `Video: ${v}`,
+          startUrl: '/api/startFacebookChat', stopUrl: '/api/stopFacebookChat', inputId: 'fb-channel',  field: 'liveVideoId' },
+  };
+  const platformActive = { yt: false, tt: false, tw: false, kk: false, fb: false };
+  const tipActive      = { streamlabs: false, streamelements: false };
   const donationList = [];
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -974,16 +1124,26 @@
 
     // Load session
     const session = await api('/api/session');
-    if (session?.youtube) applyPlatformState('yt', session.youtube.active, session.youtube.videoId);
-    if (session?.tiktok)  applyPlatformState('tt', session.tiktok.active, session.tiktok.username);
+    if (session?.youtube)  applyPlatformState('yt', session.youtube.active,  session.youtube.videoId);
+    if (session?.tiktok)   applyPlatformState('tt', session.tiktok.active,   session.tiktok.username);
+    if (session?.twitch)   applyPlatformState('tw', session.twitch.active,   session.twitch.channel);
+    if (session?.kick)     applyPlatformState('kk', session.kick.active,     session.kick.channel);
+    if (session?.facebook) applyPlatformState('fb', session.facebook.active, session.facebook.liveVideoId);
+
+    // Load tip provider status
+    const tipStatus = await api('/api/tips/status');
+    if (tipStatus?.streamlabs)     refreshTip('sl', tipStatus.streamlabs.active);
+    if (tipStatus?.streamelements) refreshTip('se', tipStatus.streamelements.active);
 
     // TTS key status — try a dummy call to see if key is configured
     checkTtsKey();
 
     connectSocket();
     setupPlatformUI();
+    setupTipUI();
     setupChatFilters();
     setupTtsUI();
+    setupTtsConfigUI();
     setupGoalUI();
     setupTemplatesUI();
   }
@@ -1019,8 +1179,16 @@
     });
 
     socket.on('session', (s) => {
-      if (s.youtube !== undefined) applyPlatformState('yt', s.youtube.active, s.youtube.videoId);
-      if (s.tiktok  !== undefined) applyPlatformState('tt', s.tiktok.active, s.tiktok.username);
+      if (s.youtube  !== undefined) applyPlatformState('yt', s.youtube.active,  s.youtube.videoId);
+      if (s.tiktok   !== undefined) applyPlatformState('tt', s.tiktok.active,   s.tiktok.username);
+      if (s.twitch   !== undefined) applyPlatformState('tw', s.twitch.active,   s.twitch.channel);
+      if (s.kick     !== undefined) applyPlatformState('kk', s.kick.active,     s.kick.channel);
+      if (s.facebook !== undefined) applyPlatformState('fb', s.facebook.active, s.facebook.liveVideoId);
+    });
+
+    socket.on('tipStatus', (s) => {
+      if (s.provider === 'streamlabs')     refreshTip('sl', s.status === 'connected');
+      if (s.provider === 'streamelements') refreshTip('se', s.status === 'authenticated' || s.status === 'connected');
     });
 
     socket.on('connect_error', () => {
@@ -1029,8 +1197,10 @@
     });
   }
 
-  // ── Platform state ────────────────────────────────────────────────────────────
+  // ── Platform state (config-driven) ──────────────────────────────────────────
   function applyPlatformState(p, active, detail) {
+    const cfg = PLATFORMS[p];
+    if (!cfg) return;
     const badge      = document.getElementById(`${p}-badge`);
     const toggle     = document.getElementById(`${p}-toggle`);
     const sub        = document.getElementById(`${p}-sub`);
@@ -1043,73 +1213,127 @@
       toggle.textContent = 'หยุด';
       toggle.className   = 'btn btn-danger btn-sm';
       if (statusText) statusText.textContent = 'กำลังเชื่อมต่ออยู่';
-      sub.textContent = detail
-        ? (p === 'yt' ? `Video ID: ${detail}` : `@${detail}`)
-        : (p === 'yt' ? 'ดึง chat ผ่าน YouTube Data API v3' : 'รับ chat ผ่าน WebSocket');
-      form.classList.remove('open');
+      sub.textContent    = detail ? cfg.detailLabel(detail) : cfg.subDefault;
+      if (form) form.classList.remove('open');
     } else {
       badge.textContent  = 'ปิดอยู่';
       badge.className    = 'badge';
       toggle.textContent = 'เชื่อมต่อ';
       toggle.className   = 'btn btn-secondary btn-sm';
       if (statusText) statusText.textContent = 'ไม่ได้เชื่อมต่อ';
-      sub.textContent = p === 'yt' ? 'ดึง chat ผ่าน YouTube Data API v3' : 'รับ chat ผ่าน WebSocket';
+      sub.textContent    = cfg.subDefault;
     }
 
-    if (p === 'yt') ytActive = active;
-    if (p === 'tt') ttActive = active;
-
-    const count = (ytActive ? 1 : 0) + (ttActive ? 1 : 0);
-    document.getElementById('stat-platforms').textContent = count > 0 ? count : '—';
-    const names = [ytActive && 'YouTube', ttActive && 'TikTok'].filter(Boolean);
+    platformActive[p] = active;
+    const count = Object.values(platformActive).filter(Boolean).length;
+    const names = Object.entries(platformActive).filter(([, v]) => v).map(([k]) => PLATFORMS[k].name);
+    document.getElementById('stat-platforms').textContent     = count > 0 ? count : '—';
     document.getElementById('stat-platforms-sub').textContent = names.length ? names.join(' + ') : 'ไม่มีการเชื่อมต่อ';
-
-    // Header live badge
-    document.getElementById('header-live').style.display = count > 0 ? 'flex' : 'none';
+    document.getElementById('header-live').style.display      = count > 0 ? 'flex' : 'none';
   }
 
-  // ── Platform UI ───────────────────────────────────────────────────────────────
+  // ── Platform UI ─────────────────────────────────────────────────────────────
   function setupPlatformUI() {
-    document.getElementById('yt-toggle').onclick = async () => {
-      if (ytActive) {
-        const r = await api('/api/stopYouTubeChat', {});
-        if (r?.ok) toast('หยุด YouTube แล้ว');
+    Object.entries(PLATFORMS).forEach(([p, cfg]) => {
+      document.getElementById(`${p}-toggle`).onclick = async () => {
+        if (platformActive[p]) {
+          const r = await api(cfg.stopUrl, {});
+          if (r?.ok) toast(`หยุด ${cfg.name} แล้ว`);
+          else toast(r?.error || 'เกิดข้อผิดพลาด', 'error');
+        } else {
+          document.getElementById(`${p}-form`).classList.toggle('open');
+        }
+      };
+      document.getElementById(`${p}-connect`).onclick = async () => {
+        const val = document.getElementById(cfg.inputId).value.trim();
+        if (!val) return toast('กรอกข้อมูลก่อน', 'error');
+        const btn = document.getElementById(`${p}-connect`);
+        btn.textContent = 'กำลังเชื่อมต่อ...'; btn.disabled = true;
+        const r = await api(cfg.startUrl, { [cfg.field]: val });
+        btn.textContent = 'เริ่ม'; btn.disabled = false;
+        if (r?.ok) { toast(`เชื่อมต่อ ${cfg.name} สำเร็จ ✓`); document.getElementById(`${p}-form`).classList.remove('open'); }
+        else toast(r?.error || 'เชื่อมต่อไม่สำเร็จ', 'error');
+      };
+    });
+  }
+
+  // ── Tip provider UI ─────────────────────────────────────────────────────────
+  const TIP_PROVIDERS = { sl: 'streamlabs', se: 'streamelements' };
+  function refreshTip(id, active) {
+    const name = TIP_PROVIDERS[id];
+    tipActive[name] = active;
+    document.getElementById(`${id}-badge`).textContent  = active ? 'Live' : 'ปิดอยู่';
+    document.getElementById(`${id}-badge`).className    = active ? 'badge badge-live' : 'badge';
+    document.getElementById(`${id}-toggle`).textContent = active ? 'หยุด' : 'เริ่มฟัง';
+    document.getElementById(`${id}-toggle`).className   = active ? 'btn btn-danger btn-sm' : 'btn btn-secondary btn-sm';
+    document.getElementById(`${id}-status-text`).textContent = active ? 'กำลังฟัง tip events' : 'ไม่ได้เชื่อมต่อ';
+  }
+  function setupTipUI() {
+    Object.entries(TIP_PROVIDERS).forEach(([id, name]) => {
+      document.getElementById(`${id}-toggle`).onclick = async () => {
+        const action = tipActive[name] ? 'stop' : 'start';
+        const r = await api(`/api/tips/${name}/${action}`, {});
+        if (r?.ok) refreshTip(id, action === 'start');
         else toast(r?.error || 'เกิดข้อผิดพลาด', 'error');
-      } else {
-        document.getElementById('yt-form').classList.toggle('open');
-      }
-    };
+      };
+    });
+  }
 
-    document.getElementById('yt-connect').onclick = async () => {
-      const videoId = document.getElementById('yt-video-id').value.trim();
-      if (!videoId) return toast('ใส่ Video ID ก่อน', 'error');
-      const btn = document.getElementById('yt-connect');
-      btn.textContent = 'กำลังเชื่อมต่อ...'; btn.disabled = true;
-      const r = await api('/api/startYouTubeChat', { videoId });
-      btn.textContent = 'เริ่ม'; btn.disabled = false;
-      if (r?.ok) { toast('เชื่อมต่อ YouTube สำเร็จ ✓'); document.getElementById('yt-form').classList.remove('open'); }
-      else toast(r?.error || 'เชื่อมต่อไม่สำเร็จ', 'error');
-    };
+  // ── TTS tier config UI ──────────────────────────────────────────────────────
+  let ttsCfgCache = null;
+  function renderTiers() {
+    const host = document.getElementById('tts-tiers');
+    host.innerHTML = '';
+    (ttsCfgCache?.tiers || []).forEach((tier, idx) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:grid;grid-template-columns:80px 1fr 1fr auto;gap:8px;align-items:center;';
+      row.innerHTML = `
+        <input class="input-field" type="number" min="0" value="${tier.minAmount}" data-k="minAmount" data-idx="${idx}" placeholder="min" />
+        <select class="input-field" data-k="provider" data-idx="${idx}">
+          <option value="google"     ${tier.provider==='google'    ?'selected':''}>Google Neural2</option>
+          <option value="gemini"     ${tier.provider==='gemini'    ?'selected':''}>Gemini TTS</option>
+          <option value="elevenlabs" ${tier.provider==='elevenlabs'?'selected':''}>ElevenLabs</option>
+        </select>
+        <input class="input-field" type="text" value="${esc(tier.voiceName || tier.voiceId || '')}" data-k="voice" data-idx="${idx}" placeholder="voice name/id" />
+        <button class="btn btn-danger btn-sm" data-rm="${idx}" title="ลบ tier">✕</button>`;
+      host.appendChild(row);
+    });
+    host.querySelectorAll('input,select').forEach(el => {
+      el.onchange = el.oninput = () => {
+        const idx = +el.dataset.idx, k = el.dataset.k, t = ttsCfgCache.tiers[idx];
+        if (k === 'minAmount') t.minAmount = Math.max(0, +el.value || 0);
+        else if (k === 'provider') {
+          t.provider = el.value;
+          // Reset voice key on provider change
+          if (t.provider === 'elevenlabs') { t.voiceId = t.voiceId || '21m00Tcm4TlvDq8ikWAM'; delete t.voiceName; }
+          else { t.voiceName = t.voiceName || (t.provider === 'gemini' ? 'Kore' : 'th-TH-Neural2-C'); delete t.voiceId; }
+        }
+        else if (k === 'voice') {
+          if (t.provider === 'elevenlabs') t.voiceId = el.value;
+          else t.voiceName = el.value;
+        }
+      };
+    });
+    host.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+      ttsCfgCache.tiers.splice(+b.dataset.rm, 1); renderTiers();
+    });
+  }
+  async function setupTtsConfigUI() {
+    const r = await api('/api/tts/config');
+    if (!r) return;
+    ttsCfgCache = r.config || { tiers: [], style: 'random' };
+    document.getElementById('tts-style').value = ttsCfgCache.style || 'random';
+    renderTiers();
+    const status = (k) => r.providers?.[k]?.available ? '<span style="color:var(--green)">✓ พร้อมใช้</span>' : '<span style="color:var(--red)">✗ ยังไม่ตั้งค่า</span>';
+    document.getElementById('tts-status-google').innerHTML     = status('google');
+    document.getElementById('tts-status-gemini').innerHTML     = status('gemini');
+    document.getElementById('tts-status-elevenlabs').innerHTML = status('elevenlabs');
 
-    document.getElementById('tt-toggle').onclick = async () => {
-      if (ttActive) {
-        const r = await api('/api/stopTikTokChat', {});
-        if (r?.ok) toast('หยุด TikTok แล้ว');
-        else toast(r?.error || 'เกิดข้อผิดพลาด', 'error');
-      } else {
-        document.getElementById('tt-form').classList.toggle('open');
-      }
-    };
-
-    document.getElementById('tt-connect').onclick = async () => {
-      const username = document.getElementById('tt-username').value.trim();
-      if (!username) return toast('ใส่ username ก่อน', 'error');
-      const btn = document.getElementById('tt-connect');
-      btn.textContent = 'กำลังเชื่อมต่อ...'; btn.disabled = true;
-      const r = await api('/api/startTikTokChat', { username });
-      btn.textContent = 'เริ่ม'; btn.disabled = false;
-      if (r?.ok) { toast('เชื่อมต่อ TikTok สำเร็จ ✓'); document.getElementById('tt-form').classList.remove('open'); }
-      else toast(r?.error || 'เชื่อมต่อไม่สำเร็จ', 'error');
+    document.getElementById('tts-save-cfg').onclick = async () => {
+      ttsCfgCache.style = document.getElementById('tts-style').value;
+      const res = await api('/api/tts/config', ttsCfgCache);
+      document.getElementById('tts-cfg-status').textContent = res?.ok ? '✓ บันทึกแล้ว' : (res?.error || 'เกิดข้อผิดพลาด');
+      document.getElementById('tts-cfg-status').style.color = res?.ok ? 'var(--green)' : 'var(--red)';
     };
   }
 
@@ -1120,7 +1344,8 @@
     if (empty) empty.remove();
 
     const { platform = 'unknown', displayName = 'viewer', message = '', sentAt } = msg;
-    const icon = platform === 'youtube' ? '▶' : '♪';
+    const ICONS = { youtube: '▶', tiktok: '♪', twitch: '🟣', kick: '🟢', facebook: '🔵' };
+    const icon = ICONS[platform] || '?';
     const timeStr = sentAt
       ? new Date(sentAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false })
       : '';
