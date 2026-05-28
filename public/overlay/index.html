@@ -105,8 +105,21 @@
     }
 
     /* ── Chat (social_stream-style) ───────────────────────────── */
-    #chat-zone { position:fixed; bottom:160px; left:40px; width:360px;
-      display:flex; flex-direction:column; gap:7px; pointer-events:none; }
+    #chat-zone {
+      position:fixed;
+      width:var(--chat-width, 360px);
+      font-size:var(--chat-font-size, 13px);
+      display:flex; flex-direction:column; gap:7px; pointer-events:none;
+      top:auto; bottom:160px; left:40px; right:auto;
+    }
+    body.chat-pos-top-left     #chat-zone { top:40px;    left:40px;   right:auto; bottom:auto; }
+    body.chat-pos-top-right    #chat-zone { top:40px;    right:40px;  left:auto;  bottom:auto; }
+    body.chat-pos-bottom-left  #chat-zone { bottom:160px;left:40px;   right:auto; top:auto;    }
+    body.chat-pos-bottom-right #chat-zone { bottom:160px;right:40px;  left:auto;  top:auto;    }
+    body.chat-hidden #chat-zone { display:none !important; }
+    body.chat-no-avatar .chat-avatar { display:none; }
+    body.chat-no-pill   .chat-pill   { display:none; }
+    body.chat-no-badge  .chat-bits, body.chat-no-badge .chat-dono { display:none; }
     .chat-msg {
       display:flex; align-items:flex-start; gap:10px;
       background:var(--t-chat-bg); border:1px solid var(--t-chat-border);
@@ -114,6 +127,7 @@
       backdrop-filter:blur(var(--t-chat-blur, 10px));
       animation:chatIn .35s cubic-bezier(.22,1.5,.36,1);
       transition:opacity .45s ease, transform .45s ease;
+      font-size:inherit;
     }
     .chat-msg.has-donation {
       background:linear-gradient(135deg, rgba(245,158,11,.18), rgba(236,72,153,.12));
@@ -279,6 +293,25 @@
     pos  .forEach(p => body.classList.remove('pos-'+p));
     body.classList.add('anim-' + (anims.includes(cfg.alertAnimation) ? cfg.alertAnimation : 'slide'));
     body.classList.add('pos-'  + (pos  .includes(cfg.alertPosition)  ? cfg.alertPosition  : 'top-right'));
+    applyChatConfig(cfg.chatConfig);
+  }
+
+  /* ── Chat config apply (live updates) ────────────────────────── */
+  function applyChatConfig(c) {
+    if (!c) return;
+    const body = document.body;
+    const chatPos = ['top-left','top-right','bottom-left','bottom-right'];
+    chatPos.forEach(p => body.classList.remove('chat-pos-'+p));
+    body.classList.add('chat-pos-' + (chatPos.includes(c.position) ? c.position : 'bottom-left'));
+    body.classList.toggle('chat-hidden',    c.enabled === false);
+    body.classList.toggle('chat-no-avatar', c.showAvatar === false);
+    body.classList.toggle('chat-no-pill',   c.showPill   === false);
+    body.classList.toggle('chat-no-badge',  c.showBadge  === false);
+    if (typeof c.width === 'number')    body.style.setProperty('--chat-width',     c.width + 'px');
+    if (typeof c.fontSize === 'number') body.style.setProperty('--chat-font-size', c.fontSize + 'px');
+    if (typeof c.maxMessages === 'number')     CHAT_MAX_MESSAGES     = c.maxMessages;
+    if (typeof c.messageDuration === 'number') CHAT_MESSAGE_DURATION = c.messageDuration;
+    chatHiddenPlatforms = Array.isArray(c.hiddenPlatforms) ? c.hiddenPlatforms : [];
   }
 
   /* ── Audio ───────────────────────────────────────────────────── */
@@ -295,14 +328,16 @@
   }
 
   /* ── Chat (social_stream-style) ──────────────────────────────── */
-  const CHAT_MAX_MESSAGES     = 8;
-  const CHAT_MESSAGE_DURATION = 25000;
-  const CHAT_FADE_DURATION    = 450;
+  let CHAT_MAX_MESSAGES     = 8;
+  let CHAT_MESSAGE_DURATION = 25000;
+  const CHAT_FADE_DURATION  = 450;
   const CHAT_PLAT_ICON = { youtube:'▶', tiktok:'♪', twitch:'🟣', kick:'🟢', facebook:'🔵' };
+  let chatHiddenPlatforms = [];
 
   function appendChatMsg(data) {
     const { platform='unknown', displayName='viewer', message='',
             chatimg='', hasDonation=false, bits=0 } = data;
+    if (chatHiddenPlatforms.includes(platform)) return;
     const icon    = CHAT_PLAT_ICON[platform] || '?';
     const initial = (displayName || '?').charAt(0).toUpperCase();
     const safeImg = String(chatimg || '').replace(/['"\\)(]/g, '');

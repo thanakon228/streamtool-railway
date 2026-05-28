@@ -62,12 +62,51 @@ app.get("/widget/donate", (_, res) => res.sendFile(path.join(__dirname, "public/
 
 // ── Goal + template ──────────────────────────────────────────────────────────
 let goal = { target: 0, title: "Goal วันนี้" };
+const DEFAULT_CHAT_CONFIG = {
+  enabled:         true,
+  maxMessages:     8,
+  messageDuration: 25000,
+  position:        "bottom-left",
+  width:           360,
+  fontSize:        13,
+  showAvatar:      true,
+  showPill:        true,
+  showBadge:       true,
+  hiddenPlatforms: [],
+};
+
 let templateConfig = {
   template:       "classic",
   alertAnimation: "slide",
   alertPosition:  "top-right",
   customCss:      "",
+  chatConfig:     { ...DEFAULT_CHAT_CONFIG },
 };
+
+const VALID_CHAT_POSITIONS = ["top-left","top-right","bottom-left","bottom-right"];
+const VALID_PLATFORMS      = ["youtube","tiktok","twitch","kick","facebook"];
+
+function clamp(n, lo, hi) { const x = Number(n); return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : null; }
+
+function sanitizeChatConfig(input) {
+  if (!input || typeof input !== "object") return null;
+  const out = { ...DEFAULT_CHAT_CONFIG, ...templateConfig.chatConfig };
+  if (typeof input.enabled    === "boolean") out.enabled    = input.enabled;
+  if (typeof input.showAvatar === "boolean") out.showAvatar = input.showAvatar;
+  if (typeof input.showPill   === "boolean") out.showPill   = input.showPill;
+  if (typeof input.showBadge  === "boolean") out.showBadge  = input.showBadge;
+  const m  = clamp(input.maxMessages, 3, 20);              if (m  !== null) out.maxMessages     = Math.round(m);
+  const d  = clamp(input.messageDuration, 0, 120000);      if (d  !== null) out.messageDuration = Math.round(d);
+  const w  = clamp(input.width, 240, 500);                 if (w  !== null) out.width           = Math.round(w);
+  const fs = clamp(input.fontSize, 11, 18);                if (fs !== null) out.fontSize        = Math.round(fs);
+  if (VALID_CHAT_POSITIONS.includes(input.position)) out.position = input.position;
+  if (Array.isArray(input.hiddenPlatforms)) {
+    out.hiddenPlatforms = input.hiddenPlatforms
+      .filter(p => typeof p === "string" && VALID_PLATFORMS.includes(p))
+      .slice(0, VALID_PLATFORMS.length);
+  }
+  return out;
+}
 
 function goalCurrent() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -192,7 +231,7 @@ app.get("/api/template-config", (_, res) => res.json({
 
 // Template config — save (auth)
 app.post("/api/template-config", auth, (req, res) => {
-  const { template, alertAnimation, alertPosition, customCss } = req.body || {};
+  const { template, alertAnimation, alertPosition, customCss, chatConfig } = req.body || {};
   const validTpl   = ["classic","neon","minimal","gaming","cute"];
   const validAnims = ["slide","bounce","zoom","flip","drop"];
   const validPos   = ["top-right","top-left","bottom-right","bottom-left"];
@@ -200,10 +239,36 @@ app.post("/api/template-config", auth, (req, res) => {
   if (alertAnimation && validAnims.includes(alertAnimation)) templateConfig.alertAnimation = alertAnimation;
   if (alertPosition  && validPos.includes(alertPosition))    templateConfig.alertPosition  = alertPosition;
   if (customCss !== undefined) templateConfig.customCss = String(customCss).slice(0, 20000);
+  if (chatConfig !== undefined) {
+    const next = sanitizeChatConfig(chatConfig);
+    if (next) templateConfig.chatConfig = next;
+  }
   const payload = { overlayId: OVERLAY_ID, ...templateConfig };
   io.to(`overlay:${OVERLAY_ID}`).emit("templateUpdate", payload);
   io.to("dashboard").emit("templateUpdate", payload);
   res.json({ ok: true, config: templateConfig });
+});
+
+// Test chat — emit fake chat event to overlay + dashboard (auth)
+app.post("/api/test-chat", auth, (req, res) => {
+  const { platform = "youtube", displayName = "Tester", message = "ทดสอบข้อความ chat",
+          hasDonation = false, bits = 0, chatimg = "" } = req.body || {};
+  if (!VALID_PLATFORMS.includes(platform))
+    return res.status(400).json({ error: "platform ไม่ถูกต้อง" });
+  const msg = {
+    id:          `test_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+    platform,
+    displayName: String(displayName).slice(0, 50),
+    chatimg:     String(chatimg || "").slice(0, 500),
+    chatbadges:  [],
+    message:     String(message).slice(0, 300),
+    sentAt:      new Date().toISOString(),
+    hasDonation: !!hasDonation,
+    bits:        Math.max(0, Math.min(100000, Number(bits) || 0)),
+  };
+  io.to("dashboard").emit("chat", msg);
+  io.to(`overlay:${OVERLAY_ID}`).emit("chat", msg);
+  res.json({ ok: true });
 });
 
 // Public donate info (no auth)

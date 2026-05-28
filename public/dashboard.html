@@ -311,6 +311,10 @@
         <span class="nav-icon">📡</span>
         <span>Platforms</span>
       </button>
+      <button class="nav-item" data-tab="chat">
+        <span class="nav-icon">💬</span>
+        <span>Chat</span>
+      </button>
       <button class="nav-item" data-tab="overlay">
         <span class="nav-icon">🎨</span>
         <span>Overlay</span>
@@ -645,6 +649,126 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- ── Tab: Chat ── -->
+      <div class="tab-panel" id="tab-chat">
+        <div class="page-title">💬 Chat Overlay</div>
+
+        <!-- 1. Test Chat -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🧪 ทดสอบ Chat</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:grid;grid-template-columns:160px 1fr;gap:10px;">
+              <select id="tc-platform" class="input-field">
+                <option value="youtube">▶ YouTube</option>
+                <option value="tiktok">♪ TikTok</option>
+                <option value="twitch">🟣 Twitch</option>
+                <option value="kick">🟢 Kick</option>
+                <option value="facebook">🔵 Facebook</option>
+              </select>
+              <input id="tc-name" class="input-field" type="text" placeholder="ชื่อ" value="Tester" />
+            </div>
+            <input id="tc-message" class="input-field" type="text" placeholder="ข้อความ" value="ทดสอบข้อความ chat แบบ social_stream 🎉" />
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input id="tc-dono" type="checkbox" />💰 SUPER CHAT
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;">
+                <span>⚡ Bits:</span>
+                <input id="tc-bits" type="number" min="0" max="100000" value="0" class="input-field" style="width:100px;" />
+              </label>
+            </div>
+            <button class="btn btn-primary" id="tc-send">🚀 ส่งทดสอบไป Overlay</button>
+            <div id="tc-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <!-- 2. Behavior -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔧 พฤติกรรม</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;">
+              <span>เปิดใช้ chat overlay</span>
+              <input id="cc-enabled" type="checkbox" checked />
+            </label>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>จำนวนข้อความสูงสุดที่แสดง</span><span id="cc-max-val">8</span>
+              </div>
+              <input id="cc-max" type="range" min="3" max="20" step="1" value="8" style="width:100%;" />
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>เวลาก่อน fade-out (0 = ค้างถาวร)</span><span id="cc-dur-val">25 วินาที</span>
+              </div>
+              <input id="cc-dur" type="range" min="0" max="60" step="1" value="25" style="width:100%;" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Position / Size -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📐 ตำแหน่ง / ขนาด</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ตำแหน่งบน overlay</div>
+              <div class="pos-grid" id="cc-pos-grid">
+                <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
+                <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
+                <button class="pos-btn active" data-pos="bottom-left">↙ ล่างซ้าย</button>
+                <button class="pos-btn" data-pos="bottom-right">↘ ล่างขวา</button>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>ความกว้างกล่อง</span><span id="cc-width-val">360 px</span>
+              </div>
+              <input id="cc-width" type="range" min="240" max="500" step="10" value="360" style="width:100%;" />
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>ขนาดตัวอักษร</span><span id="cc-fs-val">13 px</span>
+              </div>
+              <input id="cc-fs" type="range" min="11" max="18" step="1" value="13" style="width:100%;" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Display options -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎨 การแสดงผล</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง avatar (รูปโปรไฟล์)</span><input id="cc-avatar" type="checkbox" checked /></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง platform pill (มุม avatar)</span><input id="cc-pill" type="checkbox" checked /></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง donation / bits badge</span><input id="cc-badge" type="checkbox" checked /></label>
+          </div>
+        </div>
+
+        <!-- 5. Filter platforms -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎯 Filter Platforms</div>
+            <div style="font-size:11px;color:var(--muted);">ปิดบาง platform ไม่ให้โผล่ใน overlay</div>
+          </div>
+          <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="youtube" checked />▶ YouTube</label>
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="tiktok" checked />♪ TikTok</label>
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="twitch" checked />🟣 Twitch</label>
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="kick" checked />🟢 Kick</label>
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="facebook" checked />🔵 Facebook</label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="cc-save-btn" style="width:100%;padding:14px;font-size:15px;">
+          💾 บันทึก Chat Settings
+        </button>
+        <div id="cc-save-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-top:8px;text-align:center;"></div>
       </div>
 
       <!-- ── Tab: Overlay (was Templates + TTS test moved in) ── -->
@@ -1110,6 +1234,8 @@
     setupTtsConfigUI();
     setupGoalUI();
     setupTemplatesUI();
+    setupTestChatUI();
+    setupChatSettingsUI();
   }
 
   function copyText(text, btnId) {
@@ -1595,6 +1721,107 @@
 
   // Legacy stub — kept so existing showApp() call still works
   function checkTtsKey() { renderEnvList(); }
+
+  // ── Test Chat UI ────────────────────────────────────────────────────────────
+  function setupTestChatUI() {
+    const btn = document.getElementById('tc-send');
+    if (!btn) return;
+    btn.onclick = async () => {
+      const r = await api('/api/test-chat', {
+        platform:    document.getElementById('tc-platform').value,
+        displayName: (document.getElementById('tc-name').value || 'Tester').trim(),
+        message:     (document.getElementById('tc-message').value || 'ทดสอบ').trim(),
+        hasDonation: document.getElementById('tc-dono').checked,
+        bits:        Number(document.getElementById('tc-bits').value) || 0,
+      });
+      const s = document.getElementById('tc-status');
+      s.textContent = r?.ok ? '✓ ส่งทดสอบไป overlay แล้ว — เปิด /overlay/' + overlayId + ' ดูได้เลย' : (r?.error || 'เกิดข้อผิดพลาด');
+      s.style.color = r?.ok ? 'var(--green)' : 'var(--red)';
+    };
+  }
+
+  // ── Chat Settings UI ────────────────────────────────────────────────────────
+  async function setupChatSettingsUI() {
+    const saveBtn = document.getElementById('cc-save-btn');
+    if (!saveBtn) return;
+
+    // Load current config
+    try {
+      const cfg = await fetch('/api/template-config').then(r => r.json());
+      applyChatCfgToForm(cfg.chatConfig || {});
+    } catch {}
+
+    // Live update labels next to sliders
+    const onRange = (id, valId, fmt) => {
+      const el = document.getElementById(id), val = document.getElementById(valId);
+      el.oninput = () => val.textContent = fmt(el.value);
+    };
+    onRange('cc-max',   'cc-max-val',   v => v);
+    onRange('cc-dur',   'cc-dur-val',   v => Number(v) === 0 ? 'ค้างถาวร' : v + ' วินาที');
+    onRange('cc-width', 'cc-width-val', v => v + ' px');
+    onRange('cc-fs',    'cc-fs-val',    v => v + ' px');
+
+    // Position grid
+    document.querySelectorAll('#cc-pos-grid .pos-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('#cc-pos-grid .pos-btn').forEach(b => b.classList.toggle('active', b === btn));
+      };
+    });
+
+    // Save
+    saveBtn.onclick = async () => {
+      const pos = document.querySelector('#cc-pos-grid .pos-btn.active')?.dataset.pos || 'bottom-left';
+      const hidden = [...document.querySelectorAll('.cc-plat-toggle input')]
+        .filter(cb => !cb.checked).map(cb => cb.dataset.plat);
+      const r = await api('/api/template-config', {
+        chatConfig: {
+          enabled:         document.getElementById('cc-enabled').checked,
+          maxMessages:     Number(document.getElementById('cc-max').value),
+          messageDuration: Number(document.getElementById('cc-dur').value) * 1000,
+          position:        pos,
+          width:           Number(document.getElementById('cc-width').value),
+          fontSize:        Number(document.getElementById('cc-fs').value),
+          showAvatar:      document.getElementById('cc-avatar').checked,
+          showPill:        document.getElementById('cc-pill').checked,
+          showBadge:       document.getElementById('cc-badge').checked,
+          hiddenPlatforms: hidden,
+        },
+      });
+      const s = document.getElementById('cc-save-status');
+      s.textContent = r?.ok ? '✓ บันทึกแล้ว — overlay อัปเดตเรียลไทม์' : (r?.error || 'เกิดข้อผิดพลาด');
+      s.style.color = r?.ok ? 'var(--green)' : 'var(--red)';
+    };
+  }
+
+  function applyChatCfgToForm(c) {
+    if ('enabled' in c)      document.getElementById('cc-enabled').checked = !!c.enabled;
+    if ('showAvatar' in c)   document.getElementById('cc-avatar').checked  = !!c.showAvatar;
+    if ('showPill' in c)     document.getElementById('cc-pill').checked    = !!c.showPill;
+    if ('showBadge' in c)    document.getElementById('cc-badge').checked   = !!c.showBadge;
+    if ('maxMessages' in c) {
+      document.getElementById('cc-max').value         = c.maxMessages;
+      document.getElementById('cc-max-val').textContent = c.maxMessages;
+    }
+    if ('messageDuration' in c) {
+      const s = Math.round((c.messageDuration || 0) / 1000);
+      document.getElementById('cc-dur').value         = s;
+      document.getElementById('cc-dur-val').textContent = s === 0 ? 'ค้างถาวร' : s + ' วินาที';
+    }
+    if ('width' in c) {
+      document.getElementById('cc-width').value           = c.width;
+      document.getElementById('cc-width-val').textContent = c.width + ' px';
+    }
+    if ('fontSize' in c) {
+      document.getElementById('cc-fs').value          = c.fontSize;
+      document.getElementById('cc-fs-val').textContent = c.fontSize + ' px';
+    }
+    const pos = c.position || 'bottom-left';
+    document.querySelectorAll('#cc-pos-grid .pos-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === pos));
+    const hidden = Array.isArray(c.hiddenPlatforms) ? c.hiddenPlatforms : [];
+    document.querySelectorAll('.cc-plat-toggle input').forEach(cb => {
+      cb.checked = !hidden.includes(cb.dataset.plat);
+    });
+  }
 
   (async () => {
     if (token) {
