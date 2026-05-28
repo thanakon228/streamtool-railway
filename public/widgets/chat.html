@@ -9,57 +9,143 @@
     *{box-sizing:border-box;margin:0;padding:0;}
     html,body{background:transparent;overflow:hidden;
       font-family:'Segoe UI','Noto Sans Thai',system-ui,sans-serif;}
-    #chat-zone{display:flex;flex-direction:column;gap:6px;padding:8px;pointer-events:none;}
+    #chat-zone{display:flex;flex-direction:column;gap:7px;padding:10px;pointer-events:none;}
     .chat-msg{
-      display:flex;align-items:flex-start;gap:8px;
+      display:flex;align-items:flex-start;gap:10px;
       background:var(--t-chat-bg); border:1px solid var(--t-chat-border);
-      border-radius:var(--t-chat-radius); padding:8px 12px;
-      backdrop-filter:blur(var(--t-chat-blur)); animation:chatIn .3s ease;
+      border-radius:var(--t-chat-radius); padding:9px 13px;
+      backdrop-filter:blur(var(--t-chat-blur, 10px));
+      animation:chatIn .35s cubic-bezier(.22,1.5,.36,1);
+      transition:opacity .45s ease, transform .45s ease;
     }
-    @keyframes chatIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
-    .chat-plat{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px;}
-    .chat-plat.youtube{background:rgba(255,0,0,.2);}
-    .chat-plat.tiktok{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);}
-    .chat-inner{flex:1;min-width:0;}
-    .chat-name{font-size:12px;font-weight:var(--t-chat-name-weight,700);margin-bottom:1px;}
-    .chat-name.youtube{color:var(--t-chat-yt);}
-    .chat-name.tiktok{color:var(--t-chat-tt);}
-    .chat-text{font-size:13px;color:var(--t-chat-text);line-height:1.4;word-break:break-word;}
+    .chat-msg.has-donation{
+      background:linear-gradient(135deg, rgba(245,158,11,.18), rgba(236,72,153,.12));
+      border-color:rgba(245,158,11,.5);
+      box-shadow:0 0 24px rgba(245,158,11,.18);
+    }
+    .chat-msg.fade-out{opacity:0;transform:translateX(-28px) scale(.95);}
+    @keyframes chatIn{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
+
+    .chat-avatar{
+      width:36px;height:36px;border-radius:50%;
+      background:var(--t-avatar-bg, linear-gradient(135deg,#7c5cfc,#ec4899));
+      background-size:cover;background-position:center;
+      flex-shrink:0;position:relative;
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;font-size:14px;
+      box-shadow:0 2px 8px rgba(0,0,0,.25);
+    }
+    .chat-avatar.has-img .chat-avatar-fb{display:none;}
+    .chat-pill{
+      position:absolute;bottom:-3px;right:-3px;
+      width:18px;height:18px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;line-height:1;
+      border:2px solid var(--t-chat-pill-border, #0a0a0a);
+      background:#18181b;color:#fff;
+    }
+    .chat-pill.youtube{background:#ff0033;}
+    .chat-pill.tiktok{background:#000;}
+    .chat-pill.twitch{background:#9147ff;}
+    .chat-pill.kick{background:#53fc18;color:#000;}
+    .chat-pill.facebook{background:#1877f2;}
+
+    .chat-body{flex:1;min-width:0;}
+    .chat-meta{display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap;}
+    .chat-name{font-size:12px;font-weight:var(--t-chat-name-weight,700);}
+    .chat-name.youtube{color:var(--t-chat-yt, #ff4444);}
+    .chat-name.tiktok{color:var(--t-chat-tt, #69c9d0);}
+    .chat-name.twitch{color:#b18bff;}
+    .chat-name.kick{color:#53de44;}
+    .chat-name.facebook{color:#4c92f5;}
+    .chat-text{font-size:13px;color:var(--t-chat-text);line-height:1.45;word-break:break-word;}
+
+    .chat-bits,.chat-dono{
+      display:inline-flex;align-items:center;gap:3px;
+      padding:1px 7px;border-radius:9px;
+      font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap;
+    }
+    .chat-bits{background:linear-gradient(90deg,#fbbf24,#f59e0b);color:#1a1a1a;}
+    .chat-dono{background:linear-gradient(90deg,#ec4899,#a855f7);color:#fff;
+      box-shadow:0 0 12px rgba(236,72,153,.45);}
   </style>
 </head>
 <body>
 <div id="chat-zone"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  let overlayId='', maxMessages=5;
-  (async()=>{
-    try{const cfg=await fetch('/api/template-config').then(r=>r.json());
-      overlayId=cfg.overlayId||'default-overlay';
-      applyTemplate(cfg);}catch(e){}
-    const socket=io({auth:{overlayId}});
-    socket.on('chat',appendMsg);
-    socket.on('templateUpdate',applyTemplate);
+  const CHAT_MAX_MESSAGES     = 8;
+  const CHAT_MESSAGE_DURATION = 25000;
+  const CHAT_FADE_DURATION    = 450;
+  const CHAT_PLAT_ICON = { youtube:'▶', tiktok:'♪', twitch:'🟣', kick:'🟢', facebook:'🔵' };
+  let overlayId = '';
+
+  (async () => {
+    try {
+      const cfg = await fetch('/api/template-config').then(r => r.json());
+      overlayId = cfg.overlayId || 'default-overlay';
+      applyTemplate(cfg);
+    } catch {}
+    const socket = io({ auth: { overlayId } });
+    socket.on('chat', appendMsg);
+    socket.on('templateUpdate', applyTemplate);
   })();
 
-  function applyTemplate(cfg){
-    const tpls=['classic','neon','minimal','gaming','cute'];
-    const name=tpls.includes(cfg.template)?cfg.template:'classic';
-    document.getElementById('tpl-css').href='/templates/'+name+'.css';
-    document.getElementById('tpl-custom').textContent=cfg.customCss||'';
+  function applyTemplate(cfg) {
+    const tpls = ['classic','neon','minimal','gaming','cute'];
+    const name = tpls.includes(cfg.template) ? cfg.template : 'classic';
+    document.getElementById('tpl-css').href = '/templates/' + name + '.css';
+    document.getElementById('tpl-custom').textContent = cfg.customCss || '';
   }
-  function appendMsg(data){
-    const{platform='unknown',displayName='viewer',message=''}=data;
-    const icon=platform==='youtube'?'▶':'♪';
-    const zone=document.getElementById('chat-zone');
-    const el=document.createElement('div');
-    el.className='chat-msg';
-    el.innerHTML=`<div class="chat-plat ${platform}">${icon}</div><div class="chat-inner"><div class="chat-name ${platform}">${esc(displayName)}</div><div class="chat-text">${esc(message)}</div></div>`;
+
+  function appendMsg(data) {
+    const { platform='unknown', displayName='viewer', message='',
+            chatimg='', hasDonation=false, bits=0 } = data;
+    const icon    = CHAT_PLAT_ICON[platform] || '?';
+    const initial = (displayName || '?').charAt(0).toUpperCase();
+    const safeImg = String(chatimg || '').replace(/['"\\)(]/g, '');
+
+    const zone = document.getElementById('chat-zone');
+    const el   = document.createElement('div');
+    el.className = 'chat-msg' + ((hasDonation || bits > 0) ? ' has-donation' : '');
+    el.dataset.platform = platform;
+
+    const avatarStyle = safeImg ? ` style="background-image:url('${safeImg}')"` : '';
+    const avatarCls   = 'chat-avatar' + (safeImg ? ' has-img' : '');
+    let badges = '';
+    if (bits > 0)             badges += `<span class="chat-bits">⚡ ${bits}</span>`;
+    if (hasDonation && !bits) badges += `<span class="chat-dono">💰 SUPER</span>`;
+
+    el.innerHTML =
+      `<div class="${avatarCls}"${avatarStyle}>
+        <span class="chat-avatar-fb">${esc(initial)}</span>
+        <span class="chat-pill ${platform}">${icon}</span>
+      </div>
+      <div class="chat-body">
+        <div class="chat-meta">
+          <span class="chat-name ${platform}">${esc(displayName)}</span>
+          ${badges}
+        </div>
+        <div class="chat-text">${esc(message)}</div>
+      </div>`;
     zone.appendChild(el);
-    while(zone.children.length>maxMessages){
-      const o=zone.children[0];o.style.transition='opacity .3s';o.style.opacity='0';
-      setTimeout(()=>o.remove(),300);break;}
+
+    el._fadeTimer = setTimeout(() => removeMsg(el), CHAT_MESSAGE_DURATION);
+
+    const live = [...zone.children].filter(c => !c.classList.contains('fade-out'));
+    if (live.length > CHAT_MAX_MESSAGES) removeMsg(live[0]);
   }
-  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function removeMsg(el) {
+    if (!el || el.classList.contains('fade-out')) return;
+    if (el._fadeTimer) { clearTimeout(el._fadeTimer); el._fadeTimer = null; }
+    el.classList.add('fade-out');
+    setTimeout(() => el.remove(), CHAT_FADE_DURATION);
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
 </script>
 </body>
 </html>
