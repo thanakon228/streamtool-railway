@@ -544,40 +544,8 @@
           </div>
         </div>
 
-        <!-- Alert appearance + sound (moved from Overlay tab) -->
-        <div class="page-title" style="margin-top:24px;">🔔 หน้าตา &amp; เสียงของ Alert</div>
-
-        <div class="card">
-          <div class="card-header"><div class="card-title">✨ Animation</div></div>
-          <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">แอนิเมชั่นตอน alert โผล่ขึ้นบน overlay</div>
-            <div class="chip-row" id="anim-chips">
-              <button class="chip" data-anim="slide">⟶ Slide</button>
-              <button class="chip" data-anim="bounce">⬆ Bounce</button>
-              <button class="chip" data-anim="zoom">⊕ Zoom</button>
-              <button class="chip" data-anim="flip">↻ Flip</button>
-              <button class="chip" data-anim="drop">⬇ Drop</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header"><div class="card-title">📌 ตำแหน่ง Alert</div></div>
-          <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">มุมที่ alert จะโผล่บน overlay</div>
-            <div class="pos-grid" id="pos-chips">
-              <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
-              <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
-              <button class="pos-btn" data-pos="bottom-left">↙ ล่างซ้าย</button>
-              <button class="pos-btn" data-pos="bottom-right">↘ ล่างขวา</button>
-            </div>
-          </div>
-        </div>
-
-        <button class="btn btn-primary" id="alert-save-btn" style="width:100%;padding:14px;font-size:15px;">
-          💾 บันทึกหน้าตา Alert
-        </button>
-        <div id="alert-save-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-top:8px;text-align:center;"></div>
+        <!-- Alert sound (TTS) — หน้าตา alert ย้ายไปแท็บ Overlay -->
+        <div class="page-title" style="margin-top:24px;">🔊 เสียงแจ้งเตือน (TTS)</div>
 
         <!-- TTS Test -->
         <div class="card">
@@ -790,91 +758,6 @@
           </div>
         </div>
 
-        <!-- 2. Behavior -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">🔧 พฤติกรรม</div></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-            <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;">
-              <span>เปิดใช้ chat overlay</span>
-              <input id="cc-enabled" type="checkbox" checked />
-            </label>
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
-                <span>จำนวนข้อความสูงสุดที่แสดง</span><span id="cc-max-val">8</span>
-              </div>
-              <input id="cc-max" type="range" min="3" max="20" step="1" value="8" style="width:100%;" />
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
-                <span>เวลาก่อน fade-out (0 = ค้างถาวร)</span><span id="cc-dur-val">25 วินาที</span>
-              </div>
-              <input id="cc-dur" type="range" min="0" max="60" step="1" value="25" style="width:100%;" />
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Position / Size -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">📐 ตำแหน่ง / ขนาด</div></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-            <div>
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ตำแหน่งบน overlay</div>
-              <div class="pos-grid" id="cc-pos-grid">
-                <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
-                <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
-                <button class="pos-btn active" data-pos="bottom-left">↙ ล่างซ้าย</button>
-                <button class="pos-btn" data-pos="bottom-right">↘ ล่างขวา</button>
-              </div>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
-                <span>ความกว้างกล่อง</span><span id="cc-width-val">360 px</span>
-              </div>
-              <input id="cc-width" type="range" min="240" max="500" step="10" value="360" style="width:100%;" />
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
-                <span>ขนาดตัวอักษร</span><span id="cc-fs-val">13 px</span>
-              </div>
-              <input id="cc-fs" type="range" min="11" max="18" step="1" value="13" style="width:100%;" />
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Display options -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">🎨 การแสดงผล</div></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
-            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง avatar (รูปโปรไฟล์)</span><input id="cc-avatar" type="checkbox" checked /></label>
-            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง platform pill (มุม avatar)</span><input id="cc-pill" type="checkbox" checked /></label>
-            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง donation / bits badge</span><input id="cc-badge" type="checkbox" checked /></label>
-          </div>
-        </div>
-
-        <!-- 5. Filter platforms -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">🎯 Filter Platforms</div>
-            <div style="font-size:11px;color:var(--muted);">ปิดบาง platform ไม่ให้โผล่ใน overlay</div>
-          </div>
-          <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
-            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
-              <input type="checkbox" data-plat="youtube" checked />▶ YouTube</label>
-            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
-              <input type="checkbox" data-plat="tiktok" checked />♪ TikTok</label>
-            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
-              <input type="checkbox" data-plat="twitch" checked />🟣 Twitch</label>
-            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
-              <input type="checkbox" data-plat="kick" checked />🟢 Kick</label>
-            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
-              <input type="checkbox" data-plat="facebook" checked />🔵 Facebook</label>
-          </div>
-        </div>
-
-        <button class="btn btn-primary" id="cc-save-btn" style="width:100%;padding:14px;font-size:15px;">
-          💾 บันทึก Chat Settings
-        </button>
-        <div id="cc-save-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-top:8px;text-align:center;"></div>
       </div>
 
       <!-- ── Tab: Overlay (was Templates + TTS test moved in) ── -->
@@ -918,6 +801,110 @@
               </div>
               <div class="tpl-stage-chat"><span class="tpl-stage-chat-name">viewer123</span> สวัสดีครับ live สนุกมาก</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Alert appearance (moved from Donations) -->
+        <div class="page-title" style="margin-top:24px;">🔔 หน้าตา Alert</div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">✨ Animation</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">แอนิเมชั่นตอน alert โผล่ขึ้นบน overlay</div>
+            <div class="chip-row" id="anim-chips">
+              <button class="chip" data-anim="slide">⟶ Slide</button>
+              <button class="chip" data-anim="bounce">⬆ Bounce</button>
+              <button class="chip" data-anim="zoom">⊕ Zoom</button>
+              <button class="chip" data-anim="flip">↻ Flip</button>
+              <button class="chip" data-anim="drop">⬇ Drop</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📌 ตำแหน่ง Alert</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">มุมที่ alert จะโผล่บน overlay</div>
+            <div class="pos-grid" id="pos-chips">
+              <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
+              <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
+              <button class="pos-btn" data-pos="bottom-left">↙ ล่างซ้าย</button>
+              <button class="pos-btn" data-pos="bottom-right">↘ ล่างขวา</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat overlay config (moved from Chat tab) -->
+        <div class="page-title" style="margin-top:24px;">💬 Chat บน Overlay</div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔧 พฤติกรรม</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;">
+              <span>เปิดใช้ chat overlay</span>
+              <input id="cc-enabled" type="checkbox" checked />
+            </label>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>จำนวนข้อความสูงสุดที่แสดง</span><span id="cc-max-val">8</span>
+              </div>
+              <input id="cc-max" type="range" min="3" max="20" step="1" value="8" style="width:100%;" />
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>เวลาก่อน fade-out (0 = ค้างถาวร)</span><span id="cc-dur-val">25 วินาที</span>
+              </div>
+              <input id="cc-dur" type="range" min="0" max="60" step="1" value="25" style="width:100%;" />
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📐 ตำแหน่ง / ขนาด</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ตำแหน่งบน overlay</div>
+              <div class="pos-grid" id="cc-pos-grid">
+                <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
+                <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
+                <button class="pos-btn active" data-pos="bottom-left">↙ ล่างซ้าย</button>
+                <button class="pos-btn" data-pos="bottom-right">↘ ล่างขวา</button>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>ความกว้างกล่อง</span><span id="cc-width-val">360 px</span>
+              </div>
+              <input id="cc-width" type="range" min="240" max="500" step="10" value="360" style="width:100%;" />
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>ขนาดตัวอักษร</span><span id="cc-fs-val">13 px</span>
+              </div>
+              <input id="cc-fs" type="range" min="11" max="18" step="1" value="13" style="width:100%;" />
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎨 การแสดงผล</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง avatar (รูปโปรไฟล์)</span><input id="cc-avatar" type="checkbox" checked /></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง platform pill (มุม avatar)</span><input id="cc-pill" type="checkbox" checked /></label>
+            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span>แสดง donation / bits badge</span><input id="cc-badge" type="checkbox" checked /></label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎯 Filter Platforms</div>
+            <div style="font-size:11px;color:var(--muted);">ปิดบาง platform ไม่ให้โผล่ใน overlay</div>
+          </div>
+          <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="youtube" checked />▶ YouTube</label>
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="tiktok" checked />♪ TikTok</label>
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="twitch" checked />🟣 Twitch</label>
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="kick" checked />🟢 Kick</label>
+            <label class="cc-plat-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="checkbox" data-plat="facebook" checked />🔵 Facebook</label>
           </div>
         </div>
 
@@ -986,8 +973,9 @@
         </div>
 
         <!-- Save button -->
+        <div id="ov-save-status" style="font-size:12px;color:var(--muted);min-height:18px;margin-bottom:8px;text-align:center;">💾 ออโต้เซฟ — เปลี่ยนอะไรก็บันทึก+อัปเดต overlay อัตโนมัติ</div>
         <button class="btn btn-primary" id="tpl-save-btn" style="width:100%;padding:14px;font-size:15px;">
-          💾 บันทึก Template
+          💾 บันทึกเดี๋ยวนี้
         </button>
       </div>
 
@@ -1577,6 +1565,56 @@
 
   // ── Init ─────────────────────────────────────────────────────────────────────
   // ── Templates UI ─────────────────────────────────────────────────────────────
+  // ── Unified overlay config: one save button + auto-save ──────────────────────
+  const TPL_LIST = ['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'];
+  function collectFullConfig() {
+    const sel    = document.getElementById('tpl-select');
+    const ccPos  = document.querySelector('#cc-pos-grid .pos-btn.active')?.dataset.pos || 'bottom-left';
+    const hidden = [...document.querySelectorAll('.cc-plat-toggle input')].filter(cb => !cb.checked).map(cb => cb.dataset.plat);
+    return {
+      template:       sel ? sel.value : 'classic',
+      alertAnimation: document.querySelector('#anim-chips .chip.selected')?.dataset.anim || 'slide',
+      alertPosition:  document.querySelector('#pos-chips .pos-btn.selected')?.dataset.pos || 'top-right',
+      customCss:      document.getElementById('custom-css-editor').value,
+      chatConfig: {
+        enabled:         document.getElementById('cc-enabled').checked,
+        maxMessages:     Number(document.getElementById('cc-max').value),
+        messageDuration: Number(document.getElementById('cc-dur').value) * 1000,
+        position:        ccPos,
+        width:           Number(document.getElementById('cc-width').value),
+        fontSize:        Number(document.getElementById('cc-fs').value),
+        showAvatar:      document.getElementById('cc-avatar').checked,
+        showPill:        document.getElementById('cc-pill').checked,
+        showBadge:       document.getElementById('cc-badge').checked,
+        hiddenPlatforms: hidden,
+      },
+    };
+  }
+  function setOvStatus(msg, color) {
+    const s = document.getElementById('ov-save-status');
+    if (s) { s.textContent = msg; s.style.color = color || 'var(--muted)'; }
+  }
+  async function saveAllConfig(manual) {
+    const body = collectFullConfig();
+    setOvStatus('กำลังบันทึก...', 'var(--muted)');
+    const r = await api('/api/template-config', body);
+    if (r?.ok) {
+      document.getElementById('tpl-css').href = '/templates/' + (TPL_LIST.includes(body.template) ? body.template : 'classic') + '.css';
+      document.getElementById('tpl-custom').textContent = body.customCss || '';
+      setOvStatus('✓ บันทึกแล้ว — overlay อัปเดตทันที', 'var(--green)');
+      if (manual) toast('บันทึกแล้ว ✓ — ทุก widget อัปเดตทันที');
+    } else {
+      setOvStatus(r?.error || 'บันทึกไม่สำเร็จ', 'var(--red)');
+      if (manual) toast(r?.error || 'บันทึกไม่สำเร็จ', 'error');
+    }
+  }
+  let _ovSaveTimer = null;
+  function autoSave() {
+    setOvStatus('กำลังบันทึก...', 'var(--muted)');
+    clearTimeout(_ovSaveTimer);
+    _ovSaveTimer = setTimeout(() => saveAllConfig(false), 600);
+  }
+
   function setupTemplatesUI() {
     const origin = location.origin;
 
@@ -1653,47 +1691,16 @@
     }
 
     // Change / click handlers
-    document.getElementById('tpl-select').onchange = (e) => { cfg.template = e.target.value; renderThemePreview(cfg.template); };
+    document.getElementById('tpl-select').onchange = (e) => { cfg.template = e.target.value; renderThemePreview(cfg.template); autoSave(); };
     document.getElementById('tpl-anim-replay').onclick = playPreviewAnim;
     document.querySelectorAll('#anim-chips .chip').forEach(c =>
-      c.onclick = () => { cfg.alertAnimation = c.dataset.anim; applySelections(); });
+      c.onclick = () => { cfg.alertAnimation = c.dataset.anim; applySelections(); autoSave(); });
     document.querySelectorAll('#pos-chips .pos-btn').forEach(c =>
-      c.onclick = () => { cfg.alertPosition = c.dataset.pos; applySelections(); });
+      c.onclick = () => { cfg.alertPosition = c.dataset.pos; applySelections(); autoSave(); });
+    document.getElementById('custom-css-editor').oninput = autoSave;
 
-    // Save — Overlay tab owns Template + Custom CSS (partial POST)
-    document.getElementById('tpl-save-btn').onclick = async () => {
-      const btn = document.getElementById('tpl-save-btn');
-      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
-      cfg.customCss = document.getElementById('custom-css-editor').value;
-      const r = await api('/api/template-config', { template: cfg.template, customCss: cfg.customCss });
-      btn.disabled = false; btn.textContent = '💾 บันทึก Template';
-      if (r?.ok) {
-        // Apply template change to dashboard itself immediately
-        const tpls = ['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'];
-        document.getElementById('tpl-css').href = '/templates/' + (tpls.includes(cfg.template) ? cfg.template : 'classic') + '.css';
-        document.getElementById('tpl-custom').textContent = cfg.customCss || '';
-        toast('บันทึก Template แล้ว ✓ — ทุก widget จะอัปเดตทันที');
-      } else {
-        toast(r?.error || 'บันทึกไม่สำเร็จ', 'error');
-      }
-    };
-
-    // Save — Donations tab owns the Alert's look (animation + position, partial POST)
-    document.getElementById('alert-save-btn').onclick = async () => {
-      const btn = document.getElementById('alert-save-btn');
-      const st  = document.getElementById('alert-save-status');
-      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
-      const r = await api('/api/template-config', { alertAnimation: cfg.alertAnimation, alertPosition: cfg.alertPosition });
-      btn.disabled = false; btn.textContent = '💾 บันทึกหน้าตา Alert';
-      if (r?.ok) {
-        st.textContent = 'บันทึกแล้ว ✓ — alert จะใช้รูปแบบนี้'; st.style.color = 'var(--green)';
-        toast('บันทึกหน้าตา Alert แล้ว ✓');
-      } else {
-        st.textContent = r?.error || 'เกิดข้อผิดพลาด'; st.style.color = 'var(--red)';
-        toast(r?.error || 'บันทึกไม่สำเร็จ', 'error');
-      }
-      setTimeout(() => { st.textContent = ''; }, 3000);
-    };
+    // One save button — persists the whole overlay config immediately
+    document.getElementById('tpl-save-btn').onclick = () => saveAllConfig(true);
   }
 
   // ── Env list (dynamic from /api/health) ─────────────────────────────────────
@@ -1754,8 +1761,8 @@
 
   // ── Chat Settings UI ────────────────────────────────────────────────────────
   async function setupChatSettingsUI() {
-    const saveBtn = document.getElementById('cc-save-btn');
-    if (!saveBtn) return;
+    const guard = document.getElementById('cc-enabled');
+    if (!guard) return;
 
     // Load current config
     try {
@@ -1763,46 +1770,28 @@
       applyChatCfgToForm(cfg.chatConfig || {});
     } catch {}
 
-    // Live update labels next to sliders
+    // Sliders: live label + auto-save
     const onRange = (id, valId, fmt) => {
       const el = document.getElementById(id), val = document.getElementById(valId);
-      el.oninput = () => val.textContent = fmt(el.value);
+      el.oninput = () => { val.textContent = fmt(el.value); autoSave(); };
     };
     onRange('cc-max',   'cc-max-val',   v => v);
     onRange('cc-dur',   'cc-dur-val',   v => Number(v) === 0 ? 'ค้างถาวร' : v + ' วินาที');
     onRange('cc-width', 'cc-width-val', v => v + ' px');
     onRange('cc-fs',    'cc-fs-val',    v => v + ' px');
 
-    // Position grid
+    // Position grid → auto-save
     document.querySelectorAll('#cc-pos-grid .pos-btn').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('#cc-pos-grid .pos-btn').forEach(b => b.classList.toggle('active', b === btn));
+        autoSave();
       };
     });
 
-    // Save
-    saveBtn.onclick = async () => {
-      const pos = document.querySelector('#cc-pos-grid .pos-btn.active')?.dataset.pos || 'bottom-left';
-      const hidden = [...document.querySelectorAll('.cc-plat-toggle input')]
-        .filter(cb => !cb.checked).map(cb => cb.dataset.plat);
-      const r = await api('/api/template-config', {
-        chatConfig: {
-          enabled:         document.getElementById('cc-enabled').checked,
-          maxMessages:     Number(document.getElementById('cc-max').value),
-          messageDuration: Number(document.getElementById('cc-dur').value) * 1000,
-          position:        pos,
-          width:           Number(document.getElementById('cc-width').value),
-          fontSize:        Number(document.getElementById('cc-fs').value),
-          showAvatar:      document.getElementById('cc-avatar').checked,
-          showPill:        document.getElementById('cc-pill').checked,
-          showBadge:       document.getElementById('cc-badge').checked,
-          hiddenPlatforms: hidden,
-        },
-      });
-      const s = document.getElementById('cc-save-status');
-      s.textContent = r?.ok ? '✓ บันทึกแล้ว — overlay อัปเดตเรียลไทม์' : (r?.error || 'เกิดข้อผิดพลาด');
-      s.style.color = r?.ok ? 'var(--green)' : 'var(--red)';
-    };
+    // Checkboxes + platform filter → auto-save
+    ['cc-enabled','cc-avatar','cc-pill','cc-badge'].forEach(id =>
+      document.getElementById(id).onchange = autoSave);
+    document.querySelectorAll('.cc-plat-toggle input').forEach(cb => cb.onchange = autoSave);
   }
 
   function applyChatCfgToForm(c) {

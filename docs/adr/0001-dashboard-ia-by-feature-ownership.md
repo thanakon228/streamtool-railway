@@ -45,5 +45,20 @@ belongs to**, not the place it renders:
   (Donations / Chat / Overlay). No API change is needed — `/api/template-config`
   already accepts partial updates; each tab POSTs only its own fields.
 - This is a **frontend-only** restructure of `public/dashboard.html`.
-- **Not yet implemented** — this ADR records the agreed plan; the dashboard is
-  intentionally left unchanged for now.
+- Implemented in commit `e443901`.
+
+## Revision 2026-05-29 — visual config consolidated into the Overlay tab
+
+The "feature ownership" split (alert look in Donations, chat layout in Chat)
+proved confusing in practice: with the new theme dropdown+preview, users
+couldn't tell which of three save buttons applied what, and changing a theme
+without saving looked like a no-op.
+
+**Revised decision:** the **Overlay** tab now owns *all overlay visual config* —
+Template + preview, **alert animation/position** (moved back from Donations),
+**chat-overlay layout/filter** (moved from Chat), Custom CSS, OBS URLs — behind
+a **single save button + debounced auto-save** (`autoSave()` → full-config POST
+to `/api/template-config`). Donations keeps money + the alert *sound* (TTS);
+Chat keeps sources + test. This reverses the alert-look/chat-config placement
+above but keeps the donation-sound and the per-platform tabs intact. Implemented
+in the dashboard-theme-consolidation commit.

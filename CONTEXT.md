@@ -76,9 +76,10 @@ _Avoid_: "skin", "theme" (pick Template).
 
 **"Overlay"** (was overloaded 3 ways) → resolved: the **surface** is the
 *Overlay*; the identifier is the *overlayId*; the dashboard tab named "Overlay"
-holds only **global** surface settings (Template, Custom CSS, OBS URLs).
-Per-feature rendering (Alert look/sound, Chat layout) lives with its owning
-feature, not in the Overlay tab.
+owns **all overlay visual config** — Template, alert animation/position,
+chat-overlay layout/filter, Custom CSS, OBS URLs — behind one save + auto-save
+(see ADR-0001 revision). Only the alert **sound** (TTS) stays with Donations;
+chat **sources** and **test** stay in Chat.
 
 ## Example dialogue
 
