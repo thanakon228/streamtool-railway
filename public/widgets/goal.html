@@ -76,6 +76,7 @@
     const socket=io({auth:{overlayId}});
     socket.on('goalUpdate',updateGoal);
     socket.on('templateUpdate',applyTemplate);
+    socket.on('connect',async()=>{try{const c=await fetch('/api/template-config').then(r=>r.json());applyTemplate(c);if(c.goal)updateGoal(c.goal);}catch(e){}});
   })();
 
   function applyTemplate(cfg){

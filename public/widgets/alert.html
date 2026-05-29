@@ -90,6 +90,7 @@
     const socket=io({auth:{overlayId}});
     socket.on('templateUpdate',applyTemplate);
     socket.on('alert',d=>{q.push(d);next();});
+    socket.on('connect',async()=>{try{applyTemplate(await fetch('/api/template-config').then(r=>r.json()));}catch(e){}});
   })();
 
   function applyTemplate(cfg){
