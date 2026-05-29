@@ -819,6 +819,13 @@
               <span>เปิดใช้ Spotlight</span>
               <input id="spot-enabled" type="checkbox" />
             </label>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ตำแหน่งแสดง</div>
+              <select id="spot-position" class="input-field">
+                <option value="inplace">ขยายในกล่อง chat (Mac dock)</option>
+                <option value="top">ดึงมากลางจอด้านบน</option>
+              </select>
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <div>
                 <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">สุ่มทุกๆ (วินาที)</div>
@@ -1638,6 +1645,7 @@
         enabled:     document.getElementById('spot-enabled').checked,
         intervalSec: Number(document.getElementById('spot-interval').value) || 60,
         durationSec: Number(document.getElementById('spot-duration').value) || 6,
+        position:    document.getElementById('spot-position').value,
       },
     };
   }
@@ -1832,6 +1840,7 @@
       document.getElementById('spot-enabled').checked  = !!sp.enabled;
       if (sp.intervalSec) document.getElementById('spot-interval').value = sp.intervalSec;
       if (sp.durationSec) document.getElementById('spot-duration').value = sp.durationSec;
+      if (sp.position)    document.getElementById('spot-position').value = sp.position;
     } catch {}
 
     // Sliders: live label + auto-save
@@ -1853,7 +1862,7 @@
     });
 
     // Checkboxes + platform filter + spotlight → auto-save
-    ['cc-enabled','cc-avatar','cc-pill','cc-badge','spot-enabled'].forEach(id =>
+    ['cc-enabled','cc-avatar','cc-pill','cc-badge','spot-enabled','spot-position'].forEach(id =>
       document.getElementById(id).onchange = autoSave);
     ['spot-interval','spot-duration'].forEach(id =>
       document.getElementById(id).oninput = autoSave);

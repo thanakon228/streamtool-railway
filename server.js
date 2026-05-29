@@ -75,7 +75,8 @@ const DEFAULT_CHAT_CONFIG = {
   hiddenPlatforms: [],
 };
 
-const DEFAULT_SPOTLIGHT = { enabled: false, intervalSec: 60, durationSec: 6 };
+const DEFAULT_SPOTLIGHT = { enabled: false, intervalSec: 60, durationSec: 6, position: "inplace" };
+const VALID_SPOT_POS = ["inplace", "top"];
 
 let templateConfig = {
   template:       "classic",
@@ -252,6 +253,7 @@ app.post("/api/template-config", auth, (req, res) => {
     if (typeof spotlight.enabled === "boolean") next.enabled = spotlight.enabled;
     const iv = clamp(spotlight.intervalSec, 10, 600); if (iv !== null) next.intervalSec = Math.round(iv);
     const du = clamp(spotlight.durationSec, 3, 30);   if (du !== null) next.durationSec = Math.round(du);
+    if (VALID_SPOT_POS.includes(spotlight.position)) next.position = spotlight.position;
     templateConfig.spotlight = next;
   }
   const payload = { overlayId: OVERLAY_ID, ...templateConfig };
