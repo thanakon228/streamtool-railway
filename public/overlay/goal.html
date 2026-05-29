@@ -226,7 +226,7 @@
   }
 
   function applyTheme(t) {
-    const themes = ['classic','neon','minimal','gaming','cute'];
+    const themes = ['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'];
     const body = document.body;
     themes.forEach(x => body.classList.remove('theme-'+x));
     body.classList.add('theme-' + (themes.includes(t) ? t : 'classic'));

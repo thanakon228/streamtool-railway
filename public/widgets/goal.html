@@ -79,7 +79,7 @@
   })();
 
   function applyTemplate(cfg){
-    const tpls=['classic','neon','minimal','gaming','cute'];
+    const tpls=['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'];
     document.getElementById('tpl-css').href='/templates/'+(tpls.includes(cfg.template)?cfg.template:'classic')+'.css';
     document.getElementById('tpl-custom').textContent=cfg.customCss||'';
   }

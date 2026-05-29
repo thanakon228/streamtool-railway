@@ -281,7 +281,7 @@
   function applyTemplate(cfg) {
     // Swap stylesheet
     const link = document.getElementById('tpl-css');
-    const name  = ['classic','neon','minimal','gaming','cute'].includes(cfg.template) ? cfg.template : 'classic';
+    const name  = ['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'].includes(cfg.template) ? cfg.template : 'classic';
     if (link.href !== location.origin + '/templates/' + name + '.css') link.href = '/templates/' + name + '.css';
     // Custom CSS
     document.getElementById('tpl-custom').textContent = cfg.customCss || '';

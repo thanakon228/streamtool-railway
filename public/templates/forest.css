@@ -1,0 +1,75 @@
+/* ── StreamTool Template: Forest ──────────────────────────────── */
+:root {
+  /* Core */
+  --t-primary:   #4ade80;
+  --t-secondary: #84cc16;
+  --t-green:     #4ade80;
+
+  /* Alert widget */
+  --t-alert-bg:          linear-gradient(135deg,rgba(8,18,12,.97),rgba(12,28,18,.97));
+  --t-alert-border:      rgba(74,222,128,.5);
+  --t-alert-shadow:      0 12px 50px rgba(132,204,22,.3),0 0 0 1px rgba(74,222,128,.12);
+  --t-alert-radius:      14px;
+  --t-alert-name:        #ecfdf3;
+  --t-alert-amount:      #bef264;
+  --t-alert-amount-glow: rgba(190,242,100,.6);
+  --t-alert-label:       rgba(236,253,243,.42);
+  --t-alert-msg-bg:      rgba(74,222,128,.07);
+  --t-alert-msg-border:  rgba(132,204,22,.7);
+  --t-alert-msg-color:   rgba(236,253,243,.85);
+  --t-alert-bar:         linear-gradient(90deg,#4ade80,#84cc16,#bef264,#4ade80);
+  --t-avatar-bg:         linear-gradient(135deg,#4ade80,#84cc16);
+  --t-avatar-glow:       rgba(74,222,128,.6);
+
+  /* Chat widget */
+  --t-chat-bg:    rgba(8,18,12,.84);
+  --t-chat-border:rgba(74,222,128,.1);
+  --t-chat-radius:10px;
+  --t-chat-text:  rgba(236,253,243,.9);
+  --t-chat-yt:    #ff5555;
+  --t-chat-tt:    #69c9d0;
+  --t-chat-blur:  10px;
+  --t-chat-name-weight: 700;
+
+  /* Goal widget */
+  --t-goal-bg:      rgba(8,18,12,.9);
+  --t-goal-border:  rgba(74,222,128,.35);
+  --t-goal-radius:  14px;
+  --t-goal-bar:     linear-gradient(90deg,#84cc16,#4ade80);
+  --t-goal-bar-glow:rgba(74,222,128,.5);
+  --t-goal-current: #bef264;
+  --t-goal-current-glow: rgba(190,242,100,.6);
+  --t-goal-title:   rgba(236,253,243,.65);
+  --t-goal-target:  rgba(236,253,243,.5);
+  --t-goal-percent: rgba(236,253,243,.4);
+  --t-goal-track:   rgba(74,222,128,.1);
+  --t-goal-blur:    14px;
+
+  /* Donate / public page */
+  --t-page-bg:      #08120c;
+  --t-page-bg-grad: radial-gradient(ellipse at 60% 0%,rgba(74,222,128,.13) 0%,transparent 60%),radial-gradient(ellipse at 10% 100%,rgba(132,204,22,.09) 0%,transparent 50%);
+  --t-page-surface: #0f2014;
+  --t-page-surface2:#16301f;
+  --t-page-border:  #1f4a2c;
+  --t-page-accent:  #4ade80;
+  --t-page-text:    #ecfdf3;
+  --t-page-muted:   #5f8a6e;
+  --t-page-radius:  14px;
+  --t-page-btn:     linear-gradient(135deg,#4ade80,#22c55e);
+  --t-page-btn-shadow: 0 4px 20px rgba(74,222,128,.3);
+  --t-page-icon-bg: linear-gradient(135deg,#4ade80,#84cc16);
+
+  /* Dashboard (overrides existing CSS vars) */
+  --bg:       #08120c;
+  --surface:  #0f2014;
+  --surface2: #16301f;
+  --border:   #1f4a2c;
+  --accent:   #4ade80;
+  --accent-dim:rgba(74,222,128,.15);
+  --green:    #bef264;
+  --red:      #f87171;
+  --yellow:   #facc15;
+  --text:     #ecfdf3;
+  --muted:    #5f8a6e;
+  --radius:   12px;
+}

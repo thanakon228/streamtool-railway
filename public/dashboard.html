@@ -224,6 +224,22 @@
     .mock-name{ height:6px; border-radius:3px; margin-bottom:3px; width:60%; }
     .mock-amt { height:8px; border-radius:4px; width:30%; }
 
+    /* Live theme preview stage — vars are set on #tpl-preview-stage by JS */
+    .tpl-stage { background:var(--t-page-bg,#0f1117); background-image:var(--t-page-bg-grad,none); border:1px solid var(--border); border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:12px; }
+    .tpl-stage-alert { display:flex; align-items:center; gap:11px; background:var(--t-alert-bg,#1a1d27); border:1.5px solid var(--t-alert-border,#333); border-radius:var(--t-alert-radius,14px); box-shadow:var(--t-alert-shadow,none); padding:12px 14px; }
+    .tpl-stage-av { width:40px; height:40px; border-radius:50%; flex-shrink:0; background:var(--t-avatar-bg,#7c5cfc); box-shadow:0 0 14px var(--t-avatar-glow,transparent); }
+    .tpl-stage-txt { flex:1; min-width:0; }
+    .tpl-stage-name { font-size:13px; font-weight:700; color:var(--t-alert-name,#fff); }
+    .tpl-stage-amt { font-size:20px; font-weight:800; color:var(--t-alert-amount,#22c55e); text-shadow:0 0 12px var(--t-alert-amount-glow,transparent); }
+    .tpl-stage-msg { font-size:12px; padding:8px 11px; border-left:3px solid var(--t-alert-msg-border,#7c5cfc); background:var(--t-alert-msg-bg,rgba(255,255,255,.05)); color:var(--t-alert-msg-color,#ccc); border-radius:4px; }
+    .tpl-stage-goal { background:var(--t-goal-bg,#1a1d27); border:1px solid var(--t-goal-border,#333); border-radius:var(--t-goal-radius,12px); padding:11px 13px; }
+    .tpl-stage-goal-head { display:flex; justify-content:space-between; font-size:11px; color:var(--t-goal-title,#aaa); margin-bottom:7px; }
+    .tpl-stage-goal-cur { color:var(--t-goal-current,#22c55e); font-weight:700; }
+    .tpl-stage-goal-track { height:9px; border-radius:99px; background:var(--t-goal-track,rgba(255,255,255,.1)); overflow:hidden; }
+    .tpl-stage-goal-bar { height:100%; width:65%; border-radius:99px; background:var(--t-goal-bar,linear-gradient(90deg,#7c5cfc,#22c55e)); box-shadow:0 0 12px var(--t-goal-bar-glow,transparent); }
+    .tpl-stage-chat { font-size:12px; background:var(--t-chat-bg,rgba(12,14,22,.82)); border:1px solid var(--t-chat-border,rgba(255,255,255,.06)); border-radius:var(--t-chat-radius,10px); padding:8px 11px; color:var(--t-chat-text,#ddd); }
+    .tpl-stage-chat-name { color:var(--t-chat-yt,#ff5555); font-weight:var(--t-chat-name-weight,700); }
+
     .chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
     .chip {
       padding:7px 14px; border:1.5px solid var(--border); border-radius:8px;
@@ -853,92 +869,39 @@
       <div class="tab-panel" id="tab-overlay">
         <div class="page-title">🎨 Overlay</div>
 
-        <!-- Template Gallery -->
+        <!-- Template selector + live preview -->
         <div class="card">
           <div class="card-header"><div class="card-title">🖼️ เลือก Template</div></div>
           <div class="card-body">
             <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Template จะเปลี่ยนรูปแบบทุกหน้าพร้อมกัน — Alert, Chat, Goal, หน้าโดเนท และ Dashboard</div>
-            <div class="tpl-gallery" id="tpl-gallery">
-              <div class="tpl-card" data-tpl="classic">
-                <div class="tpl-preview p-classic">
-                  <div class="mock-alert" style="--mock-bg:rgba(14,11,34,.97);--mock-border:rgba(124,92,252,.5);--mock-radius:10px;width:88%;">
-                    <div class="mock-av" style="background:linear-gradient(135deg,#7c5cfc,#ec4899);"></div>
-                    <div class="mock-txt">
-                      <div class="mock-name" style="background:rgba(255,255,255,.4);"></div>
-                      <div class="mock-amt" style="background:#7c5cfc;"></div>
-                    </div>
-                  </div>
+            <select id="tpl-select" class="input-field" style="margin-bottom:16px;">
+              <option value="classic">🟣 Classic — Dark Purple</option>
+              <option value="neon">🔵 Neon — Cyan / Magenta</option>
+              <option value="minimal">⚪ Minimal — Light / Clean</option>
+              <option value="gaming">🟢 Gaming — Matrix Green</option>
+              <option value="cute">🌸 Cute — Pink / Soft</option>
+              <option value="ocean">🌊 Ocean — Blue / Teal</option>
+              <option value="sunset">🌅 Sunset — Orange / Coral</option>
+              <option value="gold">👑 Gold — Luxury Black/Gold</option>
+              <option value="forest">🌲 Forest — Green / Nature</option>
+              <option value="vapor">🌴 Vapor — Vaporwave</option>
+            </select>
+
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">ตัวอย่าง (ใช้สีจริงของธีมที่เลือก):</div>
+            <div id="tpl-preview-stage" class="tpl-stage">
+              <div class="tpl-stage-alert">
+                <div class="tpl-stage-av"></div>
+                <div class="tpl-stage-txt">
+                  <div class="tpl-stage-name">ชื่อผู้โดเนท</div>
+                  <div class="tpl-stage-amt">฿300</div>
                 </div>
-                <div class="tpl-info">
-                  <div class="tpl-name">Classic</div>
-                  <div style="font-size:11px;color:var(--muted);">Dark Purple</div>
-                </div>
-                <div class="tpl-check">✓</div>
               </div>
-              <div class="tpl-card" data-tpl="neon">
-                <div class="tpl-preview p-neon">
-                  <div class="mock-alert" style="--mock-bg:rgba(0,0,8,.95);--mock-border:rgba(0,255,255,.6);--mock-radius:6px;width:88%;box-shadow:0 0 8px rgba(0,255,255,.2);">
-                    <div class="mock-av" style="background:linear-gradient(135deg,#00ffff,#ff00ff);"></div>
-                    <div class="mock-txt">
-                      <div class="mock-name" style="background:rgba(0,255,255,.4);"></div>
-                      <div class="mock-amt" style="background:#00ffff;"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="tpl-info">
-                  <div class="tpl-name" style="color:#00ffff;">Neon</div>
-                  <div style="font-size:11px;color:var(--muted);">Cyan / Magenta</div>
-                </div>
-                <div class="tpl-check">✓</div>
+              <div class="tpl-stage-msg">ข้อความตัวอย่างจากผู้ชม ขอบคุณครับ 🎉</div>
+              <div class="tpl-stage-goal">
+                <div class="tpl-stage-goal-head"><span>Goal วันนี้</span><span class="tpl-stage-goal-cur">฿650 / ฿1,000</span></div>
+                <div class="tpl-stage-goal-track"><div class="tpl-stage-goal-bar"></div></div>
               </div>
-              <div class="tpl-card" data-tpl="minimal">
-                <div class="tpl-preview p-minimal">
-                  <div class="mock-alert" style="--mock-bg:#ffffff;--mock-border:#e2e8f0;--mock-radius:12px;width:88%;box-shadow:0 2px 8px rgba(0,0,0,.08);">
-                    <div class="mock-av" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);"></div>
-                    <div class="mock-txt">
-                      <div class="mock-name" style="background:#cbd5e1;"></div>
-                      <div class="mock-amt" style="background:#6366f1;"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="tpl-info">
-                  <div class="tpl-name" style="color:#6366f1;">Minimal</div>
-                  <div style="font-size:11px;color:var(--muted);">Light / Clean</div>
-                </div>
-                <div class="tpl-check">✓</div>
-              </div>
-              <div class="tpl-card" data-tpl="gaming">
-                <div class="tpl-preview p-gaming">
-                  <div class="mock-alert" style="--mock-bg:rgba(3,10,3,.95);--mock-border:rgba(0,255,65,.5);--mock-radius:4px;width:88%;box-shadow:0 0 10px rgba(0,255,65,.15);">
-                    <div class="mock-av" style="background:linear-gradient(135deg,#00ff41,#00cc33);"></div>
-                    <div class="mock-txt">
-                      <div class="mock-name" style="background:rgba(0,255,65,.3);"></div>
-                      <div class="mock-amt" style="background:#00ff41;"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="tpl-info">
-                  <div class="tpl-name" style="color:#00ff41;">Gaming</div>
-                  <div style="font-size:11px;color:var(--muted);">Matrix Green</div>
-                </div>
-                <div class="tpl-check">✓</div>
-              </div>
-              <div class="tpl-card" data-tpl="cute">
-                <div class="tpl-preview p-cute">
-                  <div class="mock-alert" style="--mock-bg:rgba(255,240,253,.97);--mock-border:rgba(236,72,153,.35);--mock-radius:16px;width:88%;">
-                    <div class="mock-av" style="background:linear-gradient(135deg,#ec4899,#a855f7);"></div>
-                    <div class="mock-txt">
-                      <div class="mock-name" style="background:rgba(236,72,153,.3);"></div>
-                      <div class="mock-amt" style="background:#ec4899;"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="tpl-info">
-                  <div class="tpl-name" style="color:#be185d;">Cute 🌸</div>
-                  <div style="font-size:11px;color:var(--muted);">Pink / Soft</div>
-                </div>
-                <div class="tpl-check">✓</div>
-              </div>
+              <div class="tpl-stage-chat"><span class="tpl-stage-chat-name">viewer123</span> สวัสดีครับ live สนุกมาก</div>
             </div>
           </div>
         </div>
@@ -1630,19 +1593,38 @@
       applySelections();
     }).catch(() => applySelections());
 
+    // Theme preview — fetch the selected template CSS, extract its custom
+    // properties, and apply them (scoped) to the preview stage so the preview
+    // renders with the theme's real colors.
+    const themeVarCache = {};
+    async function renderThemePreview(name) {
+      const stage = document.getElementById('tpl-preview-stage');
+      if (!stage) return;
+      try {
+        if (!themeVarCache[name]) {
+          const css = await fetch('/templates/' + name + '.css').then(r => r.text());
+          const vars = {};
+          for (const m of css.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) vars[m[1]] = m[2].trim();
+          themeVarCache[name] = vars;
+        }
+        stage.removeAttribute('style');
+        Object.entries(themeVarCache[name]).forEach(([k, v]) => stage.style.setProperty(k, v));
+      } catch { /* keep last preview on fetch error */ }
+    }
+
     function applySelections() {
-      document.querySelectorAll('#tpl-gallery .tpl-card').forEach(c =>
-        c.classList.toggle('selected', c.dataset.tpl === cfg.template));
+      const sel = document.getElementById('tpl-select');
+      if (sel) sel.value = cfg.template;
       document.querySelectorAll('#anim-chips .chip').forEach(c =>
         c.classList.toggle('selected', c.dataset.anim === cfg.alertAnimation));
       document.querySelectorAll('#pos-chips .pos-btn').forEach(c =>
         c.classList.toggle('selected', c.dataset.pos === cfg.alertPosition));
       document.getElementById('custom-css-editor').value = cfg.customCss;
+      renderThemePreview(cfg.template);
     }
 
-    // Click handlers
-    document.querySelectorAll('#tpl-gallery .tpl-card').forEach(c =>
-      c.onclick = () => { cfg.template = c.dataset.tpl; applySelections(); });
+    // Change / click handlers
+    document.getElementById('tpl-select').onchange = (e) => { cfg.template = e.target.value; renderThemePreview(cfg.template); };
     document.querySelectorAll('#anim-chips .chip').forEach(c =>
       c.onclick = () => { cfg.alertAnimation = c.dataset.anim; applySelections(); });
     document.querySelectorAll('#pos-chips .pos-btn').forEach(c =>
@@ -1657,7 +1639,7 @@
       btn.disabled = false; btn.textContent = '💾 บันทึก Template';
       if (r?.ok) {
         // Apply template change to dashboard itself immediately
-        const tpls = ['classic','neon','minimal','gaming','cute'];
+        const tpls = ['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'];
         document.getElementById('tpl-css').href = '/templates/' + (tpls.includes(cfg.template) ? cfg.template : 'classic') + '.css';
         document.getElementById('tpl-custom').textContent = cfg.customCss || '';
         toast('บันทึก Template แล้ว ✓ — ทุก widget จะอัปเดตทันที');

@@ -232,7 +232,7 @@ app.get("/api/template-config", (_, res) => res.json({
 // Template config — save (auth)
 app.post("/api/template-config", auth, (req, res) => {
   const { template, alertAnimation, alertPosition, customCss, chatConfig } = req.body || {};
-  const validTpl   = ["classic","neon","minimal","gaming","cute"];
+  const validTpl   = ["classic","neon","minimal","gaming","cute","ocean","sunset","gold","forest","vapor"];
   const validAnims = ["slide","bounce","zoom","flip","drop"];
   const validPos   = ["top-right","top-left","bottom-right","bottom-left"];
   if (template       && validTpl.includes(template))         templateConfig.template       = template;

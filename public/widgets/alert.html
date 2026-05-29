@@ -93,7 +93,7 @@
   })();
 
   function applyTemplate(cfg){
-    const tpls=['classic','neon','minimal','gaming','cute'],anims=['slide','bounce','zoom','flip','drop'],pos=['top-right','top-left','bottom-right','bottom-left'];
+    const tpls=['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'],anims=['slide','bounce','zoom','flip','drop'],pos=['top-right','top-left','bottom-right','bottom-left'];
     const name=tpls.includes(cfg.template)?cfg.template:'classic';
     document.getElementById('tpl-css').href='/templates/'+name+'.css';
     document.getElementById('tpl-custom').textContent=cfg.customCss||'';
