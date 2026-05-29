@@ -225,7 +225,7 @@
     .mock-amt { height:8px; border-radius:4px; width:30%; }
 
     /* Live theme preview stage — vars are set on #tpl-preview-stage by JS */
-    .tpl-stage { background:var(--t-page-bg,#0f1117); background-image:var(--t-page-bg-grad,none); border:1px solid var(--border); border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:12px; }
+    .tpl-stage { background:var(--t-page-bg,#0f1117); background-image:var(--t-page-bg-grad,none); border:1px solid var(--border); border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:12px; overflow:hidden; perspective:700px; }
     .tpl-stage-alert { display:flex; align-items:center; gap:11px; background:var(--t-alert-bg,#1a1d27); border:1.5px solid var(--t-alert-border,#333); border-radius:var(--t-alert-radius,14px); box-shadow:var(--t-alert-shadow,none); padding:12px 14px; }
     .tpl-stage-av { width:40px; height:40px; border-radius:50%; flex-shrink:0; background:var(--t-avatar-bg,#7c5cfc); box-shadow:0 0 14px var(--t-avatar-glow,transparent); }
     .tpl-stage-txt { flex:1; min-width:0; }
@@ -239,6 +239,18 @@
     .tpl-stage-goal-bar { height:100%; width:65%; border-radius:99px; background:var(--t-goal-bar,linear-gradient(90deg,#7c5cfc,#22c55e)); box-shadow:0 0 12px var(--t-goal-bar-glow,transparent); }
     .tpl-stage-chat { font-size:12px; background:var(--t-chat-bg,rgba(12,14,22,.82)); border:1px solid var(--t-chat-border,rgba(255,255,255,.06)); border-radius:var(--t-chat-radius,10px); padding:8px 11px; color:var(--t-chat-text,#ddd); }
     .tpl-stage-chat-name { color:var(--t-chat-yt,#ff5555); font-weight:var(--t-chat-name-weight,700); }
+    /* Alert enter-animation preview (mirrors the real overlay anim-* classes) */
+    #tpl-preview-stage .tpl-stage-alert { transition:transform .55s cubic-bezier(.22,1.5,.36,1), opacity .35s ease; }
+    #tpl-preview-stage.pa-slide  .tpl-stage-alert      { transform:translateX(420px) scale(.92); opacity:0; }
+    #tpl-preview-stage.pa-slide  .tpl-stage-alert.show { transform:translateX(0) scale(1); opacity:1; }
+    #tpl-preview-stage.pa-bounce .tpl-stage-alert      { transform:translateY(-90px) scale(.85); opacity:0; }
+    #tpl-preview-stage.pa-bounce .tpl-stage-alert.show { transform:translateY(0) scale(1); opacity:1; transition:opacity .35s ease, transform .55s cubic-bezier(.22,1.8,.36,1); }
+    #tpl-preview-stage.pa-zoom   .tpl-stage-alert      { transform:scale(.2) translateY(20px); opacity:0; }
+    #tpl-preview-stage.pa-zoom   .tpl-stage-alert.show { transform:scale(1) translateY(0); opacity:1; transition:opacity .3s ease, transform .45s cubic-bezier(.34,1.56,.64,1); }
+    #tpl-preview-stage.pa-flip   .tpl-stage-alert      { transform:rotateY(90deg) scaleX(.6); opacity:0; }
+    #tpl-preview-stage.pa-flip   .tpl-stage-alert.show { transform:rotateY(0) scaleX(1); opacity:1; transition:opacity .3s ease, transform .5s cubic-bezier(.34,1.2,.64,1); }
+    #tpl-preview-stage.pa-drop   .tpl-stage-alert      { transform:translateY(-120px) rotate(-6deg) scale(.8); opacity:0; }
+    #tpl-preview-stage.pa-drop   .tpl-stage-alert.show { transform:translateY(0) rotate(0) scale(1); opacity:1; transition:opacity .3s ease, transform .6s cubic-bezier(.22,1.5,.36,1); }
 
     .chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
     .chip {
@@ -887,7 +899,10 @@
               <option value="vapor">🌴 Vapor — Vaporwave</option>
             </select>
 
-            <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">ตัวอย่าง (ใช้สีจริงของธีมที่เลือก):</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:11px;color:var(--muted);">ตัวอย่าง (สี + animation จริงของธีม/alert ที่เลือก):</span>
+              <button class="btn btn-sm btn-secondary" id="tpl-anim-replay">▶ เล่น animation</button>
+            </div>
             <div id="tpl-preview-stage" class="tpl-stage">
               <div class="tpl-stage-alert">
                 <div class="tpl-stage-av"></div>
@@ -1597,6 +1612,17 @@
     // properties, and apply them (scoped) to the preview stage so the preview
     // renders with the theme's real colors.
     const themeVarCache = {};
+    // Replay the selected alert enter-animation on the preview mock card.
+    function playPreviewAnim() {
+      const stage = document.getElementById('tpl-preview-stage');
+      const card  = stage && stage.querySelector('.tpl-stage-alert');
+      if (!card) return;
+      stage.classList.remove('pa-slide','pa-bounce','pa-zoom','pa-flip','pa-drop');
+      stage.classList.add('pa-' + (cfg.alertAnimation || 'slide'));
+      card.classList.remove('show');
+      void card.offsetWidth;            // force reflow so re-adding .show re-triggers the transition
+      card.classList.add('show');
+    }
     async function renderThemePreview(name) {
       const stage = document.getElementById('tpl-preview-stage');
       if (!stage) return;
@@ -1607,9 +1633,12 @@
           for (const m of css.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) vars[m[1]] = m[2].trim();
           themeVarCache[name] = vars;
         }
+        const animClass = [...stage.classList].find(c => c.startsWith('pa-')) || '';
         stage.removeAttribute('style');
+        stage.className = 'tpl-stage' + (animClass ? ' ' + animClass : '');
         Object.entries(themeVarCache[name]).forEach(([k, v]) => stage.style.setProperty(k, v));
       } catch { /* keep last preview on fetch error */ }
+      playPreviewAnim();
     }
 
     function applySelections() {
@@ -1625,6 +1654,7 @@
 
     // Change / click handlers
     document.getElementById('tpl-select').onchange = (e) => { cfg.template = e.target.value; renderThemePreview(cfg.template); };
+    document.getElementById('tpl-anim-replay').onclick = playPreviewAnim;
     document.querySelectorAll('#anim-chips .chip').forEach(c =>
       c.onclick = () => { cfg.alertAnimation = c.dataset.anim; applySelections(); });
     document.querySelectorAll('#pos-chips .pos-btn').forEach(c =>
