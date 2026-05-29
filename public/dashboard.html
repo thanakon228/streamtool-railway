@@ -829,6 +829,8 @@
                 <input id="spot-duration" class="input-field" type="number" min="3" max="30" step="1" value="6" />
               </div>
             </div>
+            <button class="btn btn-secondary" id="spot-test-btn">🔍 ทดสอบ Spotlight เดี๋ยวนี้</button>
+            <div id="spot-test-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
           </div>
         </div>
 
@@ -1855,6 +1857,13 @@
       document.getElementById(id).onchange = autoSave);
     ['spot-interval','spot-duration'].forEach(id =>
       document.getElementById(id).oninput = autoSave);
+    document.getElementById('spot-test-btn').onclick = async () => {
+      const r = await api('/api/spotlight/test', {});
+      const s = document.getElementById('spot-test-status');
+      s.textContent = r?.ok ? '✓ สั่งสุ่มแล้ว — ดูที่ overlay (ต้องมีข้อความ chat ค้างอยู่)' : (r?.error || 'เกิดข้อผิดพลาด');
+      s.style.color = r?.ok ? 'var(--green)' : 'var(--red)';
+      setTimeout(() => { s.textContent = ''; }, 4000);
+    };
     document.querySelectorAll('.cc-plat-toggle input').forEach(cb => cb.onchange = autoSave);
   }
 

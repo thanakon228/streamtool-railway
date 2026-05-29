@@ -287,6 +287,7 @@
     socket.on('goalUpdate',     updateGoal);
     socket.on('alert', d => { alertQueue.push(d); processQueue(); });
     socket.on('chat',  appendChatMsg);
+    socket.on('spotlightNow', () => runSpotlight());
     // Self-heal: re-sync theme/goal on every (re)connect — OBS browser sources
     // often drop the socket on scene switch and would otherwise show a stale theme.
     socket.on('connect', async () => {

@@ -483,6 +483,12 @@ app.post("/api/test-tts", auth, async (req, res) => {
   res.json({ ok: true, audio });
 });
 
+// Trigger a spotlight pick on the overlay right now (for testing).
+app.post("/api/spotlight/test", auth, (_, res) => {
+  io.to(`overlay:${OVERLAY_ID}`).emit("spotlightNow");
+  res.json({ ok: true });
+});
+
 // Public TTS for the overlay's chat-spotlight (no auth — overlay is public).
 app.post("/api/tts/speak", async (req, res) => {
   const text = String(req.body?.text || "").trim().slice(0, 200);
