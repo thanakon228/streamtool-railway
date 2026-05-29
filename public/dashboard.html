@@ -307,10 +307,6 @@
       </button>
 
       <div class="nav-section">จัดการ</div>
-      <button class="nav-item" data-tab="platform">
-        <span class="nav-icon">📡</span>
-        <span>Platforms</span>
-      </button>
       <button class="nav-item" data-tab="chat">
         <span class="nav-icon">💬</span>
         <span>Chat</span>
@@ -381,17 +377,6 @@
         <div class="overview-grid">
           <!-- Left column -->
           <div class="overview-left">
-            <div class="card">
-              <div class="card-header"><div class="card-title">🔗 Overlay URL สำหรับ OBS</div></div>
-              <div class="card-body">
-                <div class="url-box" style="margin-bottom:10px;">
-                  <span class="url-text" id="overlay-url">กำลังโหลด...</span>
-                  <button class="copy-btn" id="copy-url-btn">คัดลอก</button>
-                </div>
-                <p style="font-size:12px;color:var(--muted);">วาง URL นี้ใน OBS → Sources → Browser Source — ดูธีมได้ที่ <button onclick="switchTab('overlay')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">🎨 Overlay</button></p>
-              </div>
-            </div>
-
             <div class="card">
               <div class="card-header">
                 <div class="card-title"><div class="live-dot"></div>Donations ล่าสุด</div>
@@ -495,12 +480,144 @@
             <div id="goal-save-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
           </div>
         </div>
+
+        <!-- Donation sources / Tip providers (moved from old Platforms tab) -->
+        <div class="page-title" style="margin-top:24px;display:none;">แหล่งรับโดเนท (Tip Providers)</div>
+
+        <div class="card" style="display:none;">
+          <div class="card-header"><div class="card-title">💜 Streamlabs</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="sl-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;">รับ tip events จาก Streamlabs Socket API · ต้องตั้ง <code>STREAMLABS_SOCKET_TOKEN</code> ใน env</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="sl-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="sl-toggle">เริ่มฟัง</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="display:none;">
+          <div class="card-header"><div class="card-title">💚 StreamElements</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="se-status-text">ไม่ได้เชื่อมต่อ</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:3px;">รับ tip events จาก SE realtime · ต้องตั้ง <code>STREAMELEMENTS_JWT</code> ใน env</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge" id="se-badge">ปิดอยู่</span>
+                <button class="btn btn-secondary btn-sm" id="se-toggle">เริ่มฟัง</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alert appearance + sound (moved from Overlay tab) -->
+        <div class="page-title" style="margin-top:24px;">🔔 หน้าตา &amp; เสียงของ Alert</div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">✨ Animation</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">แอนิเมชั่นตอน alert โผล่ขึ้นบน overlay</div>
+            <div class="chip-row" id="anim-chips">
+              <button class="chip" data-anim="slide">⟶ Slide</button>
+              <button class="chip" data-anim="bounce">⬆ Bounce</button>
+              <button class="chip" data-anim="zoom">⊕ Zoom</button>
+              <button class="chip" data-anim="flip">↻ Flip</button>
+              <button class="chip" data-anim="drop">⬇ Drop</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">📌 ตำแหน่ง Alert</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">มุมที่ alert จะโผล่บน overlay</div>
+            <div class="pos-grid" id="pos-chips">
+              <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
+              <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
+              <button class="pos-btn" data-pos="bottom-left">↙ ล่างซ้าย</button>
+              <button class="pos-btn" data-pos="bottom-right">↘ ล่างขวา</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="alert-save-btn" style="width:100%;padding:14px;font-size:15px;">
+          💾 บันทึกหน้าตา Alert
+        </button>
+        <div id="alert-save-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-top:8px;text-align:center;"></div>
+
+        <!-- TTS Test -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔊 ทดสอบ TTS</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ข้อความที่ต้องการให้อ่าน</div>
+              <textarea id="tts-text" class="input-field" rows="3" placeholder="พิมพ์ข้อความภาษาไทย..." style="resize:vertical;"></textarea>
+            </div>
+            <button class="btn btn-primary" id="tts-test-btn">▶ เล่นเสียง TTS</button>
+            <div id="tts-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <!-- Tier voice config (hidden — เผื่ออนาคต) -->
+        <div class="card" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">🎚️ Voice Tier per Amount</div>
+            <div style="font-size:11px;color:var(--muted);">เลือก provider+voice ตามยอดโดเนท — provider ต่างกันต้องตั้ง env key ต่างกัน</div>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div id="tts-tiers" style="display:flex;flex-direction:column;gap:10px;"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+              <div style="font-size:12px;color:var(--muted);">Style</div>
+              <select id="tts-style" class="input-field" style="max-width:200px;">
+                <option value="random">🎲 Random</option>
+                <option value="neutral">— Neutral</option>
+                <option value="happy">😊 Happy</option>
+                <option value="sad">😢 Sad</option>
+                <option value="angry">😡 Angry</option>
+                <option value="excited">🤩 Excited</option>
+                <option value="whisper">🤫 Whisper</option>
+                <option value="evil">😈 Evil</option>
+                <option value="shy">🥺 Shy</option>
+                <option value="laughing">😂 Laughing</option>
+                <option value="serious">😐 Serious</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="tts-save-cfg">💾 บันทึก voice config</button>
+            <div id="tts-cfg-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <!-- TTS status / env (hidden — เผื่ออนาคต) -->
+        <div class="card" style="display:none;">
+          <div class="card-header"><div class="card-title">ℹ️ สถานะ TTS Providers</div></div>
+          <div class="card-body" style="padding:0 18px;">
+            <div class="tts-info-row">
+              <span class="tts-info-label">Google Neural2 (<code>GOOGLE_TTS_KEY</code>)</span>
+              <span id="tts-status-google">—</span>
+            </div>
+            <div class="tts-info-row">
+              <span class="tts-info-label">Gemini TTS (<code>GEMINI_API_KEY</code>)</span>
+              <span id="tts-status-gemini">—</span>
+            </div>
+            <div class="tts-info-row" style="border-bottom:none;">
+              <span class="tts-info-label">ElevenLabs (<code>ELEVENLABS_API_KEY</code>)</span>
+              <span id="tts-status-elevenlabs">—</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- ── Tab: Platform ── -->
-      <div class="tab-panel" id="tab-platform">
-        <div class="page-title">เชื่อมต่อ Platform</div>
+      <!-- ── Tab: Chat ── -->
+      <div class="tab-panel" id="tab-chat">
+        <div class="page-title">💬 Chat</div>
 
+        <!-- 0. Chat sources (moved from old Platforms tab) -->
         <div class="card">
           <div class="card-header"><div class="card-title">▶️ YouTube Live</div></div>
           <div class="card-body">
@@ -615,45 +732,6 @@
             </div>
           </div>
         </div>
-
-        <div class="page-title" style="margin-top:24px;display:none;">เชื่อมต่อ Tip Providers</div>
-
-        <div class="card" style="display:none;">
-          <div class="card-header"><div class="card-title">💜 Streamlabs</div></div>
-          <div class="card-body">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-              <div>
-                <div style="font-size:14px;font-weight:600;" id="sl-status-text">ไม่ได้เชื่อมต่อ</div>
-                <div style="font-size:12px;color:var(--muted);margin-top:3px;">รับ tip events จาก Streamlabs Socket API · ต้องตั้ง <code>STREAMLABS_SOCKET_TOKEN</code> ใน env</div>
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <span class="badge" id="sl-badge">ปิดอยู่</span>
-                <button class="btn btn-secondary btn-sm" id="sl-toggle">เริ่มฟัง</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="display:none;">
-          <div class="card-header"><div class="card-title">💚 StreamElements</div></div>
-          <div class="card-body">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-              <div>
-                <div style="font-size:14px;font-weight:600;" id="se-status-text">ไม่ได้เชื่อมต่อ</div>
-                <div style="font-size:12px;color:var(--muted);margin-top:3px;">รับ tip events จาก SE realtime · ต้องตั้ง <code>STREAMELEMENTS_JWT</code> ใน env</div>
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <span class="badge" id="se-badge">ปิดอยู่</span>
-                <button class="btn btn-secondary btn-sm" id="se-toggle">เริ่มฟัง</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Tab: Chat ── -->
-      <div class="tab-panel" id="tab-chat">
-        <div class="page-title">💬 Chat Overlay</div>
 
         <!-- 1. Test Chat -->
         <div class="card">
@@ -775,68 +853,6 @@
       <div class="tab-panel" id="tab-overlay">
         <div class="page-title">🎨 Overlay</div>
 
-        <!-- TTS Test (moved from tab-tts) -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">🔊 ทดสอบ TTS</div></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-            <div>
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">ข้อความที่ต้องการให้อ่าน</div>
-              <textarea id="tts-text" class="input-field" rows="3" placeholder="พิมพ์ข้อความภาษาไทย..." style="resize:vertical;"></textarea>
-            </div>
-            <button class="btn btn-primary" id="tts-test-btn">▶ เล่นเสียง TTS</button>
-            <div id="tts-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
-          </div>
-        </div>
-
-        <!-- Tier voice config (hidden — เผื่ออนาคต) -->
-        <div class="card" style="display:none;">
-          <div class="card-header">
-            <div class="card-title">🎚️ Voice Tier per Amount</div>
-            <div style="font-size:11px;color:var(--muted);">เลือก provider+voice ตามยอดโดเนท — provider ต่างกันต้องตั้ง env key ต่างกัน</div>
-          </div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-            <div id="tts-tiers" style="display:flex;flex-direction:column;gap:10px;"></div>
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-              <div style="font-size:12px;color:var(--muted);">Style</div>
-              <select id="tts-style" class="input-field" style="max-width:200px;">
-                <option value="random">🎲 Random</option>
-                <option value="neutral">— Neutral</option>
-                <option value="happy">😊 Happy</option>
-                <option value="sad">😢 Sad</option>
-                <option value="angry">😡 Angry</option>
-                <option value="excited">🤩 Excited</option>
-                <option value="whisper">🤫 Whisper</option>
-                <option value="evil">😈 Evil</option>
-                <option value="shy">🥺 Shy</option>
-                <option value="laughing">😂 Laughing</option>
-                <option value="serious">😐 Serious</option>
-              </select>
-            </div>
-            <button class="btn btn-primary" id="tts-save-cfg">💾 บันทึก voice config</button>
-            <div id="tts-cfg-status" style="font-size:12px;color:var(--muted);min-height:16px;"></div>
-          </div>
-        </div>
-
-        <!-- TTS status / env (hidden — เผื่ออนาคต) -->
-        <div class="card" style="display:none;">
-          <div class="card-header"><div class="card-title">ℹ️ สถานะ TTS Providers</div></div>
-          <div class="card-body" style="padding:0 18px;">
-            <div class="tts-info-row">
-              <span class="tts-info-label">Google Neural2 (<code>GOOGLE_TTS_KEY</code>)</span>
-              <span id="tts-status-google">—</span>
-            </div>
-            <div class="tts-info-row">
-              <span class="tts-info-label">Gemini TTS (<code>GEMINI_API_KEY</code>)</span>
-              <span id="tts-status-gemini">—</span>
-            </div>
-            <div class="tts-info-row" style="border-bottom:none;">
-              <span class="tts-info-label">ElevenLabs (<code>ELEVENLABS_API_KEY</code>)</span>
-              <span id="tts-status-elevenlabs">—</span>
-            </div>
-          </div>
-        </div>
-
-
         <!-- Template Gallery -->
         <div class="card">
           <div class="card-header"><div class="card-title">🖼️ เลือก Template</div></div>
@@ -923,35 +939,6 @@
                 </div>
                 <div class="tpl-check">✓</div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Alert Animation -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">✨ Animation</div></div>
-          <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">แอนิเมชั่นตอน alert โผล่ขึ้นบน overlay</div>
-            <div class="chip-row" id="anim-chips">
-              <button class="chip" data-anim="slide">⟶ Slide</button>
-              <button class="chip" data-anim="bounce">⬆ Bounce</button>
-              <button class="chip" data-anim="zoom">⊕ Zoom</button>
-              <button class="chip" data-anim="flip">↻ Flip</button>
-              <button class="chip" data-anim="drop">⬇ Drop</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Alert Position -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">📌 ตำแหน่ง Alert</div></div>
-          <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">มุมที่ alert จะโผล่บน overlay</div>
-            <div class="pos-grid" id="pos-chips">
-              <button class="pos-btn" data-pos="top-left">↖ บนซ้าย</button>
-              <button class="pos-btn" data-pos="top-right">↗ บนขวา</button>
-              <button class="pos-btn" data-pos="bottom-left">↙ ล่างซ้าย</button>
-              <button class="pos-btn" data-pos="bottom-right">↘ ล่างขวา</button>
             </div>
           </div>
         </div>
@@ -1182,10 +1169,6 @@
 
     const origin = location.origin;
     const overlayUrl = `${origin}/overlay/${overlayId}`;
-
-    // Overview
-    document.getElementById('overlay-url').textContent = overlayUrl;
-    document.getElementById('copy-url-btn').onclick = () => copyText(overlayUrl, 'copy-url-btn');
 
     // Settings
     document.getElementById('cfg-overlay-id').textContent  = overlayId;
@@ -1665,12 +1648,12 @@
     document.querySelectorAll('#pos-chips .pos-btn').forEach(c =>
       c.onclick = () => { cfg.alertPosition = c.dataset.pos; applySelections(); });
 
-    // Save
+    // Save — Overlay tab owns Template + Custom CSS (partial POST)
     document.getElementById('tpl-save-btn').onclick = async () => {
       const btn = document.getElementById('tpl-save-btn');
       btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
       cfg.customCss = document.getElementById('custom-css-editor').value;
-      const r = await api('/api/template-config', cfg);
+      const r = await api('/api/template-config', { template: cfg.template, customCss: cfg.customCss });
       btn.disabled = false; btn.textContent = '💾 บันทึก Template';
       if (r?.ok) {
         // Apply template change to dashboard itself immediately
@@ -1681,6 +1664,23 @@
       } else {
         toast(r?.error || 'บันทึกไม่สำเร็จ', 'error');
       }
+    };
+
+    // Save — Donations tab owns the Alert's look (animation + position, partial POST)
+    document.getElementById('alert-save-btn').onclick = async () => {
+      const btn = document.getElementById('alert-save-btn');
+      const st  = document.getElementById('alert-save-status');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      const r = await api('/api/template-config', { alertAnimation: cfg.alertAnimation, alertPosition: cfg.alertPosition });
+      btn.disabled = false; btn.textContent = '💾 บันทึกหน้าตา Alert';
+      if (r?.ok) {
+        st.textContent = 'บันทึกแล้ว ✓ — alert จะใช้รูปแบบนี้'; st.style.color = 'var(--green)';
+        toast('บันทึกหน้าตา Alert แล้ว ✓');
+      } else {
+        st.textContent = r?.error || 'เกิดข้อผิดพลาด'; st.style.color = 'var(--red)';
+        toast(r?.error || 'บันทึกไม่สำเร็จ', 'error');
+      }
+      setTimeout(() => { st.textContent = ''; }, 3000);
     };
   }
 
