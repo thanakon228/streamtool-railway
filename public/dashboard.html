@@ -809,6 +809,29 @@
           </div>
         </div>
 
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔍 สุ่มข้อความขึ้นมาอ่าน (Spotlight)</div>
+            <div style="font-size:11px;color:var(--muted);">สุ่มข้อความ chat ที่โชว์อยู่ มาขยายแบบ Mac + อ่านด้วย TTS (ไม่ซ้ำข้อความเดิม)</div>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;">
+              <span>เปิดใช้ Spotlight</span>
+              <input id="spot-enabled" type="checkbox" />
+            </label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">สุ่มทุกๆ (วินาที)</div>
+                <input id="spot-interval" class="input-field" type="number" min="10" max="600" step="5" value="60" />
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">ขยายค้างไว้ (วินาที)</div>
+                <input id="spot-duration" class="input-field" type="number" min="3" max="30" step="1" value="6" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         </div><!-- /subtab แชท -->
 
         <!-- ทดสอบ Overlay: tests + advanced -->
@@ -1609,6 +1632,11 @@
         showBadge:       document.getElementById('cc-badge').checked,
         hiddenPlatforms: hidden,
       },
+      spotlight: {
+        enabled:     document.getElementById('spot-enabled').checked,
+        intervalSec: Number(document.getElementById('spot-interval').value) || 60,
+        durationSec: Number(document.getElementById('spot-duration').value) || 6,
+      },
     };
   }
   function setOvStatus(msg, color) {
@@ -1798,6 +1826,10 @@
     try {
       const cfg = await fetch('/api/template-config').then(r => r.json());
       applyChatCfgToForm(cfg.chatConfig || {});
+      const sp = cfg.spotlight || {};
+      document.getElementById('spot-enabled').checked  = !!sp.enabled;
+      if (sp.intervalSec) document.getElementById('spot-interval').value = sp.intervalSec;
+      if (sp.durationSec) document.getElementById('spot-duration').value = sp.durationSec;
     } catch {}
 
     // Sliders: live label + auto-save
@@ -1818,9 +1850,11 @@
       };
     });
 
-    // Checkboxes + platform filter → auto-save
-    ['cc-enabled','cc-avatar','cc-pill','cc-badge'].forEach(id =>
+    // Checkboxes + platform filter + spotlight → auto-save
+    ['cc-enabled','cc-avatar','cc-pill','cc-badge','spot-enabled'].forEach(id =>
       document.getElementById(id).onchange = autoSave);
+    ['spot-interval','spot-duration'].forEach(id =>
+      document.getElementById(id).oninput = autoSave);
     document.querySelectorAll('.cc-plat-toggle input').forEach(cb => cb.onchange = autoSave);
   }
 

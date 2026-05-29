@@ -136,6 +136,17 @@
       box-shadow:0 0 24px rgba(245,158,11,.18);
     }
     .chat-msg.fade-out { opacity:0; transform:translateX(-28px) scale(.95); }
+    /* Random spotlight — Mac-dock style magnify */
+    .chat-msg.spotlight {
+      transform:scale(1.65); transform-origin:left center; z-index:20;
+      background:rgba(0,0,0,.6); backdrop-filter:blur(6px);
+      border-radius:14px; padding:12px 16px;
+      box-shadow:0 0 0 2px var(--t-primary,#7c5cfc), 0 14px 50px rgba(0,0,0,.65);
+      transition:transform .5s cubic-bezier(.22,1.4,.36,1), box-shadow .4s ease, background .4s ease;
+    }
+    body.chat-pos-top-right .chat-msg.spotlight,
+    body.chat-pos-bottom-right .chat-msg.spotlight { transform-origin:right center; }
+    .chat-msg.spotlight .chat-text { color:#fff; }
     @keyframes chatIn { from{opacity:0;transform:translateX(-18px)} to{opacity:1;transform:translateX(0)} }
 
     .chat-avatar {
@@ -304,6 +315,7 @@
     body.classList.add('anim-' + (anims.includes(cfg.alertAnimation) ? cfg.alertAnimation : 'slide'));
     body.classList.add('pos-'  + (pos  .includes(cfg.alertPosition)  ? cfg.alertPosition  : 'top-right'));
     applyChatConfig(cfg.chatConfig);
+    applySpotlightConfig(cfg.spotlight);
   }
 
   /* ── Chat config apply (live updates) ────────────────────────── */
@@ -389,6 +401,55 @@
     if (el._fadeTimer) { clearTimeout(el._fadeTimer); el._fadeTimer = null; }
     el.classList.add('fade-out');
     setTimeout(() => el.remove(), CHAT_FADE_DURATION);
+  }
+
+  /* ── Random chat spotlight (magnify + TTS) ─────────────────────── */
+  let spotTimer = null, spotBusy = false, spotDuration = 6;
+  function applySpotlightConfig(sp) {
+    if (spotTimer) { clearInterval(spotTimer); spotTimer = null; }
+    if (!sp || !sp.enabled) return;
+    spotDuration = Math.max(3, Number(sp.durationSec) || 6);
+    const everyMs = Math.max(10, Number(sp.intervalSec) || 60) * 1000;
+    spotTimer = setInterval(runSpotlight, everyMs);
+  }
+  async function runSpotlight() {
+    if (spotBusy) return;
+    const zone = document.getElementById('chat-zone');
+    if (!zone) return;
+    // pool = currently-shown messages not yet spotlighted
+    const pool = [...zone.children].filter(c =>
+      c.classList.contains('chat-msg') && !c.classList.contains('fade-out') && !c.dataset.spot);
+    if (!pool.length) return;
+    const el = pool[Math.floor(Math.random() * pool.length)];
+    el.dataset.spot = '1';
+    spotBusy = true;
+
+    // hold it on screen during the spotlight
+    if (el._fadeTimer) { clearTimeout(el._fadeTimer); el._fadeTimer = null; }
+    el.classList.add('spotlight');
+
+    // read it aloud (server TTS)
+    const text = (el.querySelector('.chat-text')?.textContent || '').trim();
+    if (text) {
+      try {
+        const r = await fetch('/api/tts/speak', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        }).then(r => r.json());
+        if (r?.audio) {
+          const isWav = r.audio.startsWith('UklGR');
+          new Audio(`data:${isWav ? 'audio/wav' : 'audio/mp3'};base64,${r.audio}`).play().catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    setTimeout(() => {
+      el.classList.remove('spotlight');
+      spotBusy = false;
+      // give it a fresh fade-out window after shrinking back
+      if (el.isConnected && !el.classList.contains('fade-out'))
+        el._fadeTimer = setTimeout(() => removeChatMsg(el), CHAT_MESSAGE_DURATION);
+    }, spotDuration * 1000);
   }
 
   /* ── Alert queue (FIFO — visual + audio both complete before next) ── */

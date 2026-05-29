@@ -75,12 +75,15 @@ const DEFAULT_CHAT_CONFIG = {
   hiddenPlatforms: [],
 };
 
+const DEFAULT_SPOTLIGHT = { enabled: false, intervalSec: 60, durationSec: 6 };
+
 let templateConfig = {
   template:       "classic",
   alertAnimation: "slide",
   alertPosition:  "top-right",
   customCss:      "",
   chatConfig:     { ...DEFAULT_CHAT_CONFIG },
+  spotlight:      { ...DEFAULT_SPOTLIGHT },
 };
 
 const VALID_CHAT_POSITIONS = ["top-left","top-right","bottom-left","bottom-right"];
@@ -231,7 +234,7 @@ app.get("/api/template-config", (_, res) => res.json({
 
 // Template config — save (auth)
 app.post("/api/template-config", auth, (req, res) => {
-  const { template, alertAnimation, alertPosition, customCss, chatConfig } = req.body || {};
+  const { template, alertAnimation, alertPosition, customCss, chatConfig, spotlight } = req.body || {};
   const validTpl   = ["classic","neon","minimal","gaming","cute","ocean","sunset","gold","forest","vapor"];
   const validAnims = ["slide","bounce","zoom","flip","drop"];
   const validPos   = ["top-right","top-left","bottom-right","bottom-left"];
@@ -242,6 +245,14 @@ app.post("/api/template-config", auth, (req, res) => {
   if (chatConfig !== undefined) {
     const next = sanitizeChatConfig(chatConfig);
     if (next) templateConfig.chatConfig = next;
+  }
+  if (spotlight && typeof spotlight === "object") {
+    const cur = templateConfig.spotlight || { ...DEFAULT_SPOTLIGHT };
+    const next = { ...cur };
+    if (typeof spotlight.enabled === "boolean") next.enabled = spotlight.enabled;
+    const iv = clamp(spotlight.intervalSec, 10, 600); if (iv !== null) next.intervalSec = Math.round(iv);
+    const du = clamp(spotlight.durationSec, 3, 30);   if (du !== null) next.durationSec = Math.round(du);
+    templateConfig.spotlight = next;
   }
   const payload = { overlayId: OVERLAY_ID, ...templateConfig };
   io.to(`overlay:${OVERLAY_ID}`).emit("templateUpdate", payload);
@@ -470,6 +481,17 @@ app.post("/api/test-tts", auth, async (req, res) => {
     : await tts.generate(text, { amount, style });
   if (!audio) return res.status(500).json({ error: "TTS generation failed (check API keys)" });
   res.json({ ok: true, audio });
+});
+
+// Public TTS for the overlay's chat-spotlight (no auth — overlay is public).
+app.post("/api/tts/speak", async (req, res) => {
+  const text = String(req.body?.text || "").trim().slice(0, 200);
+  if (!text) return res.status(400).json({ error: "text required" });
+  try {
+    const audio = await tts.generate(text, { amount: 0 });
+    if (!audio) return res.status(503).json({ error: "TTS unavailable" });
+    res.json({ ok: true, audio });
+  } catch (e) { res.status(500).json({ error: "TTS error" }); }
 });
 
 app.get("/api/tts/config", auth, (_, res) => res.json({
