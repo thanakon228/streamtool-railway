@@ -21,15 +21,16 @@
   --t-avatar-bg:         linear-gradient(135deg,#7c5cfc,#ec4899);
   --t-avatar-glow:       rgba(124,92,252,.65);
 
-  /* Chat widget */
-  --t-chat-bg:    rgba(12,14,22,.82);
-  --t-chat-border:rgba(255,255,255,.06);
+  /* Chat widget — text-only (no background box) */
+  --t-chat-bg:    transparent;
+  --t-chat-border:transparent;
   --t-chat-radius:10px;
-  --t-chat-text:  rgba(255,255,255,.88);
+  --t-chat-text:  rgba(255,255,255,.96);
   --t-chat-yt:    #ff5555;
   --t-chat-tt:    #69c9d0;
-  --t-chat-blur:  10px;
+  --t-chat-blur:  0px;
   --t-chat-name-weight: 700;
+  --t-chat-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 10px rgba(0,0,0,.7);
 
   /* Goal widget */
   --t-goal-bg:      rgba(12,14,22,.88);
