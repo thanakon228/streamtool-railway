@@ -58,6 +58,19 @@
     const ducked = duckCount > 0;
     fadeTo(ducked ? Math.round(baseVolume() * 0.18) : baseVolume(), ducked ? 250 : 900);
   }
+  // Duck for the length of a donation TTS clip (we only measure its duration, the overlay plays it).
+  function duckForTts(b64) {
+    duckMusic(true);
+    let released = false;
+    const release = () => { if (released) return; released = true; duckMusic(false); };
+    try {
+      const isWav = b64.startsWith('UklGR');
+      const a = new Audio(`data:${isWav ? 'audio/wav' : 'audio/mp3'};base64,${b64}`);
+      a.onloadedmetadata = () => { const d = (isFinite(a.duration) && a.duration > 0) ? a.duration : 6; setTimeout(release, (d + 0.6) * 1000); };
+      a.onerror = () => setTimeout(release, 6000);
+    } catch { setTimeout(release, 6000); }
+    setTimeout(release, 60000);
+  }
 
   (async () => {
     try { const cfg = await fetch('/api/template-config').then(r => r.json()); overlayId = cfg.overlayId || 'default-overlay'; applyTemplate(cfg); } catch {}
@@ -65,6 +78,7 @@
     socket.on('nowPlaying', applyNow);
     socket.on('templateUpdate', applyTemplate);
     socket.on('duckMusic', d => duckMusic(!!(d && d.on)));
+    socket.on('alert', d => { if (d && d.ttsAudio) duckForTts(d.ttsAudio); });
     socket.on('connect', async () => { try { applyTemplate(await fetch('/api/template-config').then(r => r.json())); } catch (e) {} });
     const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
     try { applyNow(await fetch('/api/songreq/nowplaying').then(r => r.json())); } catch {}

@@ -425,14 +425,16 @@
   function duckEmit(on) { if (socket) socket.emit('duck', { on: !!on }); }
   // Play a base64 TTS clip; ducks the music on start, restores on end.
   // Returns a Promise that resolves when playback finishes.
-  function playTts(b64, delayMs = 0) {
+  // doDuck=false for donation alerts — the music players self-duck on the 'alert'
+  // event directly (works no matter which page plays the voice).
+  function playTts(b64, delayMs = 0, doDuck = true) {
     return new Promise(resolve => {
       if (!b64) { resolve(); return; }
       const isWav = b64.startsWith('UklGR');
       const a = new Audio(`data:${isWav ? 'audio/wav' : 'audio/mp3'};base64,${b64}`);
       let done = false;
-      const finish = () => { if (done) return; done = true; duckEmit(false); resolve(); };
-      a.onplay  = () => duckEmit(true);
+      const finish = () => { if (done) return; done = true; if (doDuck) duckEmit(false); resolve(); };
+      a.onplay  = () => { if (doDuck) duckEmit(true); };
       a.onended = finish; a.onerror = finish;
       setTimeout(() => a.play().catch(finish), delayMs);
       setTimeout(finish, 60000);   // hard safety cap
@@ -752,7 +754,7 @@
       }, visualDur);
     });
 
-    const audioEnd = playTts(data.ttsAudio, 600);   // also ducks music while speaking
+    const audioEnd = playTts(data.ttsAudio, 600, false);   // players self-duck on the 'alert' event
 
     Promise.all([visualEnd, audioEnd]).then(()=>{ alertBusy=false; processQueue(); });
   }
