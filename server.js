@@ -67,6 +67,7 @@ app.get("/widget/chat",   (_, res) => res.sendFile(path.join(__dirname, "public/
 app.get("/widget/alert",  (_, res) => res.sendFile(path.join(__dirname, "public/widgets/alert.html")));
 app.get("/widget/goal",   (_, res) => res.sendFile(path.join(__dirname, "public/widgets/goal.html")));
 app.get("/widget/nowplaying", (_, res) => res.sendFile(path.join(__dirname, "public/widgets/nowplaying.html")));
+app.get("/widget/player",     (_, res) => res.sendFile(path.join(__dirname, "public/widgets/player.html")));
 app.get("/widget/donate", (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
 
 // ── Goal + template ──────────────────────────────────────────────────────────

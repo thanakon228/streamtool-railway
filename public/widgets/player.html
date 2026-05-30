@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Audio Player Widget — StreamTool</title>
+  <link id="tpl-css" rel="stylesheet" href="/templates/classic.css">
+  <style id="tpl-custom"></style>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI','Noto Sans Thai',system-ui,sans-serif;}
+    html,body{background:transparent;overflow:hidden;}
+    #np-card{
+      position:fixed; bottom:18px; left:18px;
+      display:flex; align-items:center; gap:14px; max-width:480px;
+      padding:12px 18px 12px 12px;
+      background:var(--t-goal-bg, rgba(12,14,22,.9));
+      border:1px solid var(--t-goal-border, rgba(124,92,252,.35));
+      border-radius:14px; backdrop-filter:blur(var(--t-goal-blur,12px));
+      box-shadow:0 10px 40px rgba(0,0,0,.5);
+      opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease;
+    }
+    #np-card.show{ opacity:1; transform:translateY(0); }
+    .np-thumb{ position:relative; width:160px; height:90px; border-radius:8px; overflow:hidden; flex-shrink:0; background:#000; }
+    #yt{ width:100%; height:100%; border:0; }
+    .np-eq{ position:absolute; left:7px; bottom:6px; display:flex; align-items:flex-end; gap:2px; height:16px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)); z-index:2; pointer-events:none; }
+    .np-eq span{ width:3px; height:5px; background:var(--t-primary,#7c5cfc); border-radius:2px; animation:npEq .9s ease-in-out infinite; }
+    .np-eq span:nth-child(2){ animation-delay:.18s; } .np-eq span:nth-child(3){ animation-delay:.36s; } .np-eq span:nth-child(4){ animation-delay:.54s; }
+    @keyframes npEq{ 0%,100%{height:4px} 50%{height:15px} }
+    .np-info{ min-width:0; }
+    .np-label{ font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--t-goal-title,rgba(255,255,255,.6)); margin-bottom:3px; }
+    .np-title{ font-size:15px; font-weight:700; color:var(--t-alert-name,#fff); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:280px; text-shadow:var(--t-chat-shadow,0 1px 3px rgba(0,0,0,.6)); }
+    .np-sub{ font-size:11px; color:var(--t-goal-percent,rgba(255,255,255,.55)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:280px; margin-top:2px; }
+  </style>
+</head>
+<body>
+<div id="np-card">
+  <div class="np-thumb"><div id="yt"></div><div class="np-eq"><span></span><span></span><span></span><span></span></div></div>
+  <div class="np-info">
+    <div class="np-label">🎵 กำลังเล่น</div>
+    <div class="np-title" id="np-title"></div>
+    <div class="np-sub" id="np-sub"></div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  // token (from URL) lets this widget advance the queue; without it, it only plays the current song.
+  const token = new URLSearchParams(location.search).get('token') || '';
+  let overlayId = '', player, ytReady = false, currentVid = null, pending = null, advancing = false, queueLen = 0;
+
+  (async () => {
+    try { const cfg = await fetch('/api/template-config').then(r => r.json()); overlayId = cfg.overlayId || 'default-overlay'; applyTemplate(cfg); } catch {}
+    const socket = io({ auth: { overlayId } });
+    socket.on('nowPlaying', applyNow);
+    socket.on('templateUpdate', applyTemplate);
+    socket.on('connect', async () => { try { applyTemplate(await fetch('/api/template-config').then(r => r.json())); } catch (e) {} });
+    const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
+    try { applyNow(await fetch('/api/songreq/nowplaying').then(r => r.json())); } catch {}
+    refreshQueue();
+    setInterval(refreshQueue, 5000);   // auto-start newly-requested songs while idle
+  })();
+
+  window.onYouTubeIframeAPIReady = function () {
+    player = new YT.Player('yt', {
+      height: '100%', width: '100%',
+      playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, fs: 0 },
+      events: {
+        onReady: () => { ytReady = true; ensureAudible(); if (pending) loadVideo(pending); },
+        onStateChange: e => { if (e.data === YT.PlayerState.PLAYING) ensureAudible(); if (e.data === YT.PlayerState.ENDED) advanceNext(); },
+        onError: () => advanceNext(),   // embed/region/removed → skip
+      },
+    });
+  };
+  function ensureAudible() { if (player && ytReady) { try { player.unMute(); player.setVolume(100); } catch {} } }
+  function loadVideo(id) {
+    if (!ytReady) { pending = id; return; }
+    pending = null; currentVid = id;
+    player.loadVideoById(id); ensureAudible();
+  }
+  async function advanceNext() {
+    if (advancing || !token) return; advancing = true;
+    await fetch('/api/songreq/next', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+    setTimeout(() => { advancing = false; }, 1500);
+  }
+  function applyNow(np) {
+    const card = document.getElementById('np-card');
+    if (!np || !np.videoId) { currentVid = null; card.classList.remove('show'); refreshQueue(); return; }
+    document.getElementById('np-title').textContent = np.title || '';
+    document.getElementById('np-sub').textContent = 'ขอโดย ' + (np.requester || '') + (np.channel ? ' · ' + np.channel : '');
+    card.classList.add('show');
+    if (np.videoId !== currentVid) loadVideo(np.videoId);
+  }
+  async function refreshQueue() {
+    if (token) { try { const s = await fetch('/api/songreq/state', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json()); queueLen = (s.queue || []).length; } catch {} }
+    if (!currentVid && queueLen > 0 && !advancing) advanceNext();
+  }
+  function applyTemplate(cfg) {
+    const tpls = ['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'];
+    document.getElementById('tpl-css').href = '/templates/' + (tpls.includes(cfg.template) ? cfg.template : 'classic') + '.css';
+    document.getElementById('tpl-custom').textContent = cfg.customCss || '';
+  }
+</script>
+</body>
+</html>
