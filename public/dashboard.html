@@ -448,6 +448,29 @@
               </div>
             </div>
 
+            <!-- Music control (mirrors Music tab state via socket) -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🎵 เพลง</div>
+                <button class="btn btn-sm btn-secondary" onclick="switchTab('music')">จัดการ →</button>
+              </div>
+              <div class="card-body">
+                <div id="ovm-empty" class="empty-state" style="padding:14px;"><div class="empty-icon">🎵</div>ไม่มีเพลงเล่นอยู่</div>
+                <div id="ovm-now" style="display:none;align-items:center;gap:12px;">
+                  <img id="ovm-thumb" alt="" style="width:84px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--surface2);">
+                  <div style="flex:1;min-width:0;">
+                    <div id="ovm-title" style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+                    <div id="ovm-sub" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                  <button class="btn btn-primary btn-sm" id="ovm-pause" style="flex:1;">⏸ หยุดชั่วคราว</button>
+                  <button class="btn btn-secondary btn-sm" id="ovm-skip">⏭ ข้าม</button>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:8px;">คิว: <b id="ovm-queue">0</b> เพลง</div>
+              </div>
+            </div>
+
             <div class="card">
               <div class="card-header">
                 <div class="card-title"><div class="live-dot"></div>Donations ล่าสุด</div>
@@ -769,7 +792,8 @@
               <div style="flex:1;min-width:0;">
                 <div id="sr-now-title" style="font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
                 <div id="sr-now-meta" style="font-size:12px;color:var(--muted);margin-top:3px;"></div>
-                <div style="display:flex;gap:8px;margin-top:10px;">
+                <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                  <button class="btn btn-secondary btn-sm" id="sr-pause">⏸ หยุดชั่วคราว</button>
                   <button class="btn btn-primary btn-sm" id="sr-open-ytm">🎵 เปิดใน YT Music</button>
                   <button class="btn btn-secondary btn-sm" id="sr-stop">⏹ หยุด</button>
                 </div>
@@ -1801,6 +1825,24 @@
     renderNowPlaying(s.nowPlaying);
     renderSrQueue(s.queue || []);
     renderSrHistory(s.history || []);
+    renderMusicControl(s);
+  }
+  // Pause buttons + Overview music card (both driven by songreqState)
+  function renderMusicControl(s) {
+    const np = s.nowPlaying, paused = !!s.paused;
+    const label = paused ? '▶ เล่นต่อ' : '⏸ หยุดชั่วคราว';
+    ['sr-pause', 'ovm-pause'].forEach(id => { const b = document.getElementById(id); if (b) { b.textContent = label; b.disabled = !np; } });
+    const empty = document.getElementById('ovm-empty'), now = document.getElementById('ovm-now');
+    if (empty && now) {
+      if (np && np.videoId) {
+        empty.style.display = 'none'; now.style.display = 'flex';
+        document.getElementById('ovm-thumb').src = np.thumb || '';
+        document.getElementById('ovm-title').textContent = (paused ? '⏸ ' : '') + (np.title || '');
+        document.getElementById('ovm-sub').textContent = 'ขอโดย ' + (np.requester || '');
+      } else { now.style.display = 'none'; empty.style.display = ''; }
+    }
+    const qc = document.getElementById('ovm-queue'); if (qc) qc.textContent = (s.queue || []).length;
+    const sk = document.getElementById('ovm-skip'); if (sk) sk.disabled = !np && !(s.queue || []).length;
   }
   function renderNowPlaying(n) {
     const empty = document.getElementById('sr-now-empty'), box = document.getElementById('sr-now');
@@ -1862,6 +1904,9 @@
     document.getElementById('sr-close').onclick = async () => renderSongreq(await api('/api/songreq/close', {}));
     document.getElementById('sr-next').onclick  = () => api('/api/songreq/next', {});
     document.getElementById('sr-stop').onclick  = () => api('/api/songreq/stop', {});
+    const togglePause = () => api((_srState && _srState.paused) ? '/api/songreq/resume' : '/api/songreq/pause', {});
+    ['sr-pause', 'ovm-pause'].forEach(id => { const b = document.getElementById(id); if (b) b.onclick = togglePause; });
+    const ovmSkip = document.getElementById('ovm-skip'); if (ovmSkip) ovmSkip.onclick = () => api('/api/songreq/next', {});
     document.getElementById('sr-clear').onclick = () => { if (confirm('ล้างคิวทั้งหมด?')) api('/api/songreq/clear', {}); };
     document.getElementById('sr-open-ytm').onclick = () => {
       const n = _srState && _srState.nowPlaying;

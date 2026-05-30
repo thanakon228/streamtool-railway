@@ -81,6 +81,11 @@
     socket.on('templateUpdate', applyTemplate);
     socket.on('duckMusic', d => duckMusic(!!(d && d.on)));
     socket.on('alert', d => { if (d && d.ttsAudio) duckForTts(d.ttsAudio); });
+    socket.on('playerControl', d => {
+      if (!player || !ytReady) return;
+      if (d && d.action === 'pause') player.pauseVideo();
+      else if (d && d.action === 'resume') { ensureAudible(); player.playVideo(); }
+    });
     socket.on('connect', async () => { try { applyTemplate(await fetch('/api/template-config').then(r => r.json())); } catch (e) {} });
     const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
     try { applyNow(await fetch('/api/songreq/nowplaying').then(r => r.json())); } catch {}

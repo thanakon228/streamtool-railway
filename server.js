@@ -667,6 +667,8 @@ app.post("/api/songreq/remove/:id",  auth, (req, res) => res.json(songreq.remove
 app.post("/api/songreq/move/:id",    auth, (req, res) => res.json(songreq.move(req.params.id, req.body?.dir)));
 app.post("/api/songreq/resolve/:id", auth, (req, res) => res.json(songreq.reresolve(req.params.id)));
 app.post("/api/songreq/clear",       auth, (_, res)  => res.json(songreq.clearQueue()));
+app.post("/api/songreq/pause",  auth, (_, res) => { songreq.setPaused(true);  io.to(`overlay:${OVERLAY_ID}`).emit("playerControl", { action: "pause"  }); res.json({ ok: true }); });
+app.post("/api/songreq/resume", auth, (_, res) => { songreq.setPaused(false); io.to(`overlay:${OVERLAY_ID}`).emit("playerControl", { action: "resume" }); res.json({ ok: true }); });
 
 // Public TTS for the overlay's chat-spotlight (no auth — overlay is public).
 app.post("/api/tts/speak", ttsLimiter, async (req, res) => {
