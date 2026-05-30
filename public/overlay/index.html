@@ -447,7 +447,7 @@
       applyTemplate(cfg);
     } catch(e) {}
 
-    socket = io({ auth: { overlayId } });
+    socket = io({ auth: { overlayId, clientType: 'overlay' } });
     socket.on('templateUpdate', applyTemplate);
     socket.on('goalUpdate',     updateGoal);
     socket.on('alert', d => { alertQueue.push(d); processQueue(); });

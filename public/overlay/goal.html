@@ -220,7 +220,7 @@
   })();
 
   function connect() {
-    const socket = io({ auth: { overlayId } });
+    const socket = io({ auth: { overlayId, clientType: 'overlay-goal' } });
     socket.on('goalUpdate',  updateGoal);
     socket.on('themeUpdate', (cfg) => applyTheme(cfg.goalTheme || 'classic'));
   }

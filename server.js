@@ -292,6 +292,21 @@ app.get("/api/health", (_, res) => res.json({
   facebookEnv:    !!FB_PAGE_TOKEN,
 }));
 
+// Diagnostics: who is connected (find duplicate music players causing audio clash)
+app.get("/api/debug/clients", auth, (_, res) => {
+  const room = io.sockets.adapter.rooms.get(`overlay:${OVERLAY_ID}`);
+  const clients = [...(room || [])].map(id => io.sockets.sockets.get(id)?.data?.clientType || "unknown");
+  const tally = clients.reduce((m, t) => (m[t] = (m[t] || 0) + 1, m), {});
+  const dash = io.sockets.adapter.rooms.get("dashboard");
+  res.json({
+    overlayRoom:    `overlay:${OVERLAY_ID}`,
+    overlayCount:   clients.length,
+    tally,
+    audioPlayers:   clients.filter(t => t === "player" || t === "audio-widget").length,
+    dashboardCount: dash ? dash.size : 0,
+  });
+});
+
 // Login
 app.post("/api/login", (req, res) => {
   if (req.body.password !== PASSWORD)
@@ -751,6 +766,7 @@ io.on("connection", (socket) => {
 
   if (overlayId) {
     socket.join(`overlay:${overlayId}`);
+    socket.data.clientType = socket.handshake.auth.clientType || "unknown";
     socket.emit("goalUpdate",     { ...goal, current: goalCurrent() });
     socket.emit("templateUpdate", { overlayId: OVERLAY_ID, ...templateConfig });
     if (featured) socket.emit("feature", featured);

@@ -122,7 +122,7 @@
     async function boot() {
       document.getElementById('app').style.display = 'flex';
       try { const cfg = await fetch('/api/template-config').then(r => r.json()); overlayId = cfg.overlayId || 'default-overlay'; } catch {}
-      const socket = io({ auth: { overlayId } });
+      const socket = io({ auth: { overlayId, clientType: 'player' } });
       socket.on('nowPlaying', applyNow);
       socket.on('duckMusic', d => duckMusic(!!(d && d.on)));
       socket.on('alert', d => { if (d && d.ttsAudio) duckForTts(d.ttsAudio); });

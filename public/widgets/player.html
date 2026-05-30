@@ -76,7 +76,7 @@
 
   (async () => {
     try { const cfg = await fetch('/api/template-config').then(r => r.json()); overlayId = cfg.overlayId || 'default-overlay'; applyTemplate(cfg); } catch {}
-    const socket = io({ auth: { overlayId } });
+    const socket = io({ auth: { overlayId, clientType: 'audio-widget' } });
     socket.on('nowPlaying', applyNow);
     socket.on('templateUpdate', applyTemplate);
     socket.on('duckMusic', d => duckMusic(!!(d && d.on)));
