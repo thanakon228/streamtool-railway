@@ -65,6 +65,7 @@
     <div class="controls">
       <button id="btn-pause" class="btn">⏯ เล่น/หยุด</button>
       <button id="btn-skip" class="btn">⏭ ข้าม</button>
+      <button id="btn-mute" class="btn" title="ปิดเสียงหน้านี้ (กันเสียงตีกับ OBS widget)">🔊 เสียงเปิด</button>
       <div class="vol">🔊 <input id="vol" type="range" min="0" max="100" value="100" style="width:120px;"></div>
       <div class="status" id="status"></div>
       <div class="qinfo" id="q-next">— ไม่มีเพลงถัดไป —</div>
@@ -76,7 +77,7 @@
     const TLS = 'st_token';
     let token = localStorage.getItem(TLS) || '';
     let overlayId = '', player, ytReady = false, started = false, currentVid = null, pending = null, advancing = false, queueLen = 0;
-    let duckCount = 0, fadeTimer = null;
+    let duckCount = 0, fadeTimer = null, muted = localStorage.getItem('st_player_muted') === '1';
     function baseVolume() { return Number(document.getElementById('vol').value) || 100; }
     function fadeTo(target, ms) {
       if (!player || !ytReady) return;
@@ -91,6 +92,7 @@
     }
     // Play the donation TTS voice (full volume) here and duck the music while it speaks.
     function duckForTts(b64) {
+      if (muted) return;   // page muted → let the OBS widget handle voice + music
       duckMusic(true);
       let released = false;
       const release = () => { if (released) return; released = true; duckMusic(false); };
@@ -140,7 +142,7 @@
         height: '100%', width: '100%',
         playerVars: { autoplay: 0, controls: 1, rel: 0, modestbranding: 1, playsinline: 1 },
         events: {
-          onReady: () => { ytReady = true; player.setVolume(Number(document.getElementById('vol').value) || 100); if (pending) loadVideo(pending); },
+          onReady: () => { ytReady = true; applyMute(); if (pending) loadVideo(pending); },
           onStateChange: e => {
             if (e.data === YT.PlayerState.PLAYING) ensureAudible();   // unmute auto-advanced songs
             if (e.data === YT.PlayerState.ENDED)   advance();
@@ -156,7 +158,17 @@
       if (started) { player.loadVideoById(id); ensureAudible(); } else player.cueVideoById(id);
     }
     function ensureAudible() {
-      if (player && ytReady) { try { player.unMute(); player.setVolume(duckCount > 0 ? Math.round(baseVolume() * 0.18) : baseVolume()); } catch {} }
+      if (!player || !ytReady) return;
+      try {
+        if (muted) { player.mute(); return; }   // page muted → keep silent (OBS widget is the audio)
+        player.unMute();
+        player.setVolume(duckCount > 0 ? Math.round(baseVolume() * 0.18) : baseVolume());
+      } catch {}
+    }
+    function applyMute() {
+      const b = document.getElementById('btn-mute');
+      if (b) b.textContent = muted ? '🔇 เสียงปิด' : '🔊 เสียงเปิด';
+      ensureAudible();
     }
     function applyNow(np) {
       if (!np || !np.videoId) {
@@ -188,6 +200,7 @@
       if (started && !currentVid && queueLen > 0 && !advancing) { status('▶ เริ่มคิวอัตโนมัติ…'); advance(); }
     }
     document.getElementById('btn-skip').onclick = () => advance();
+    document.getElementById('btn-mute').onclick = () => { muted = !muted; localStorage.setItem('st_player_muted', muted ? '1' : '0'); applyMute(); };
     document.getElementById('btn-pause').onclick = () => {
       if (!player || !ytReady) return;
       const st = player.getPlayerState();
