@@ -114,10 +114,15 @@ let templateConfig = {
   nowPlaying:     { ...DEFAULT_NOWPLAYING },
 };
 
+// Bank/PromptPay info shown on the public /donate page so viewers know where to
+// transfer. Streamer-editable any time via POST /api/payment.
+let payment = { bankName: "", accountNumber: "", accountName: "", promptpay: "", qrImage: "" };
+
 // Rehydrate overlay theme + goal from disk (survives Railway redeploys/restarts).
 if (persistence.state.overlay) {
   const saved = persistence.state.overlay;
   if (saved.goal && typeof saved.goal === "object") goal = { ...goal, ...saved.goal };
+  if (saved.payment && typeof saved.payment === "object") payment = { ...payment, ...saved.payment };
   if (saved.templateConfig && typeof saved.templateConfig === "object") {
     const st = saved.templateConfig;
     templateConfig = {
@@ -132,7 +137,24 @@ if (persistence.state.overlay) {
 
 // Persist current overlay theme + goal so a redeploy restores them.
 function persistOverlay() {
-  persistence.saveOverlay({ goal, templateConfig });
+  persistence.saveOverlay({ goal, templateConfig, payment });
+}
+
+// Keep only known fields, length-capped. A missing field keeps its current value;
+// an empty string clears it. qrImage must be a data:image/ URL (or "" to remove).
+function sanitizePayment(input) {
+  const str = (v, cur, max) => (v === undefined ? cur : String(v).trim().slice(0, max));
+  const out = {
+    bankName:      str(input?.bankName,      payment.bankName,      40),
+    accountNumber: str(input?.accountNumber, payment.accountNumber, 40),
+    accountName:   str(input?.accountName,   payment.accountName,   60),
+    promptpay:     str(input?.promptpay,     payment.promptpay,     40),
+    qrImage:       payment.qrImage,
+  };
+  if (input?.qrImage === "") out.qrImage = "";
+  else if (typeof input?.qrImage === "string" && input.qrImage.startsWith("data:image/"))
+    out.qrImage = input.qrImage.slice(0, 1_500_000);   // ~1.1 MB image, well under the 10mb body limit
+  return out;
 }
 
 // ── Featured message (manual spotlight / pin) ────────────────────────────────
@@ -424,11 +446,20 @@ app.post("/api/test-chat", auth, (req, res) => {
   res.json({ ok: true });
 });
 
-// Public donate info (no auth)
+// Public donate info (no auth) — includes where to transfer
 app.get("/api/donate/info", (_, res) => res.json({
   enabled: !!EASYSLIP_KEY,
   overlayId: OVERLAY_ID,
+  payment,
 }));
+
+// Payment account — get/set (auth). Shown on the public /donate page.
+app.get("/api/payment", auth, (_, res) => res.json(payment));
+app.post("/api/payment", auth, (req, res) => {
+  payment = sanitizePayment(req.body || {});
+  persistOverlay();
+  res.json({ ok: true, payment });
+});
 
 async function verifySlipAndBuildDonation({ base64, url, payload, message, displayName, isPublic }) {
   const body = { checkDuplicate: true };
