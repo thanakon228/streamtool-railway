@@ -75,7 +75,7 @@
   <script>
     const TLS = 'st_token';
     let token = localStorage.getItem(TLS) || '';
-    let overlayId = '', player, ytReady = false, started = false, currentVid = null, pending = null, advancing = false;
+    let overlayId = '', player, ytReady = false, started = false, currentVid = null, pending = null, advancing = false, queueLen = 0;
 
     if (!token) document.getElementById('login').style.display = 'flex';
     else boot();
@@ -98,6 +98,7 @@
       const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
       try { applyNow(await fetch('/api/songreq/nowplaying').then(r => r.json())); } catch {}
       refreshQueue();
+      setInterval(refreshQueue, 5000);   // pick up newly-requested songs while idle
     }
 
     window.onYouTubeIframeAPIReady = function () {
@@ -140,7 +141,12 @@
       started = true;
       document.getElementById('start-overlay').style.display = 'none';
       if (currentVid && player) { player.loadVideoById(currentVid); player.playVideo(); }
+      else maybeAutoStart();          // nothing playing yet → grab the first queued song
     };
+    // If we're started, idle (no current video), and the queue has songs → promote the next one.
+    function maybeAutoStart() {
+      if (started && !currentVid && queueLen > 0 && !advancing) { status('▶ เริ่มคิวอัตโนมัติ…'); advance(); }
+    }
     document.getElementById('btn-skip').onclick = () => advance();
     document.getElementById('btn-pause').onclick = () => {
       if (!player || !ytReady) return;
@@ -153,9 +159,11 @@
       try {
         const s = await fetch('/api/songreq/state', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json());
         const q = s.queue || [];
+        queueLen = q.length;
         document.getElementById('q-count').textContent = q.length;
         document.getElementById('q-next').textContent = q.length ? ('ถัดไป: ' + String(q[0].title || q[0].raw || '').slice(0, 50)) : '— ไม่มีเพลงถัดไป —';
       } catch {}
+      maybeAutoStart();
     }
     function status(msg, warn) {
       const el = document.getElementById('status');
