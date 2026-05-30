@@ -1831,7 +1831,7 @@
   function renderMusicControl(s) {
     const np = s.nowPlaying, paused = !!s.paused;
     const label = paused ? '▶ เล่นต่อ' : '⏸ หยุดชั่วคราว';
-    ['sr-pause', 'ovm-pause'].forEach(id => { const b = document.getElementById(id); if (b) { b.textContent = label; b.disabled = !np; } });
+    ['sr-pause', 'ovm-pause'].forEach(id => { const b = document.getElementById(id); if (b) b.textContent = label; });
     const empty = document.getElementById('ovm-empty'), now = document.getElementById('ovm-now');
     if (empty && now) {
       if (np && np.videoId) {
