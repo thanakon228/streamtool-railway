@@ -275,6 +275,7 @@ const tts = createTtsRouter({
 
 app.get("/api/health", (_, res) => res.json({
   status:         "ok",
+  persistent:     !!process.env.DATA_DIR,   // true = settings survive redeploy (Railway Volume)
   youtube:        yt.isActive(),
   tiktok:         tt.connCount(),
   twitch:         twitch.isActive(),
