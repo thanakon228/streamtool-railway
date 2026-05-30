@@ -14,6 +14,7 @@ const { Server } = require("socket.io");
 const cors     = require("cors");
 const jwt      = require("jsonwebtoken");
 const path     = require("path");
+const crypto   = require("crypto");
 
 const persistence          = require("./lib/persistence");
 const { rateLimit }        = require("./lib/rateLimit");
@@ -27,8 +28,20 @@ const { createTipManager } = require("./lib/tips");
 const { createSongRequest } = require("./lib/songreq");
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const PASSWORD       = process.env.DASHBOARD_PASSWORD || "admin123";
-const JWT_SECRET     = process.env.JWT_SECRET         || "change-this-secret";
+// This repo is public, so the old hard-coded fallbacks ("admin123" /
+// "change-this-secret") let anyone log in and forge tokens on a deploy that
+// forgot to set env. Keep a usable default password (single-user tool) but warn
+// loudly, and never ship a known JWT secret — generate a random one per boot.
+const INSECURE_PASSWORD = !process.env.DASHBOARD_PASSWORD;
+const EPHEMERAL_SECRET  = !process.env.JWT_SECRET;
+const PASSWORD   = process.env.DASHBOARD_PASSWORD || "admin123";
+// No JWT_SECRET in env → reuse a secret persisted to DATA_DIR (survives redeploys
+// when a volume is mounted); fall back to in-memory random if it can't be written.
+const JWT_SECRET = process.env.JWT_SECRET || persistence.getOrCreateSecret() || crypto.randomBytes(32).toString("hex");
+if (INSECURE_PASSWORD) console.warn("⚠️  DASHBOARD_PASSWORD not set — using default 'admin123'. Set it in env before going live!");
+if (EPHEMERAL_SECRET)  console.warn(process.env.DATA_DIR
+  ? "⚠️  JWT_SECRET not set — using a secret persisted to DATA_DIR (survives redeploys). Set JWT_SECRET in env to manage it yourself."
+  : "⚠️  JWT_SECRET not set & no DATA_DIR volume — logins reset on each restart. Set JWT_SECRET or mount a volume to persist sessions.");
 const OVERLAY_ID     = process.env.OVERLAY_ID         || "default-overlay";
 const YT_KEY         = process.env.YOUTUBE_API_KEY    || "";
 const EASYSLIP_KEY   = process.env.EASYSLIP_API_KEY   || "";
@@ -197,10 +210,18 @@ function sanitizeChatConfig(input) {
   return out;
 }
 
+// Day boundary in Thailand time (Asia/Bangkok = UTC+7), independent of the
+// server's timezone. Railway runs in UTC, so `setHours(0,...)` would reset the
+// daily goal at 07:00 ICT and miscount donations made between midnight and 7am.
+const ICT_OFFSET_MS = 7 * 60 * 60 * 1000;
+function startOfTodayICT() {
+  const nowICT = Date.now() + ICT_OFFSET_MS;
+  return Math.floor(nowICT / 86_400_000) * 86_400_000 - ICT_OFFSET_MS;
+}
 function goalCurrent() {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = startOfTodayICT();
   return persistence.state.donations
-    .filter(d => d.createdAt && new Date(d.createdAt) >= today && !d.isTest)
+    .filter(d => d.createdAt && new Date(d.createdAt).getTime() >= start && !d.isTest)
     .reduce((s, d) => s + (d.amount || 0), 0);
 }
 function emitGoal() {
@@ -229,6 +250,12 @@ const yt = createYouTubeChat({
   sessionStore:    persistence.state.sessions,
   emit:            emitChat,
   onSessionChange: persistence.saveSessions,
+  // Chat ended or quota gone → reflect it on the dashboard so the streamer knows
+  // YouTube stopped (otherwise the toggle stays "connected" forever).
+  onStatus: (s) => {
+    io.to("dashboard").emit("session", { youtube: { active: !!s.active, videoId: "" } });
+    if (!s.active) io.to("dashboard").emit("platformError", { platform: "youtube", message: s.reason || "YouTube chat stopped" });
+  },
 });
 
 const tt = createTikTokChat({
@@ -281,6 +308,7 @@ app.get("/api/health", (_, res) => res.json({
   twitch:         twitch.isActive(),
   kick:           kick.isActive(),
   facebook:       facebook.isActive(),
+  insecureDefaults: INSECURE_PASSWORD,   // dashboard shows a warning banner when true
   youtubeKey:     !!YT_KEY,
   easyslipKey:    !!EASYSLIP_KEY,
   googleTtsKey:   !!GOOGLE_TTS_KEY,
@@ -591,11 +619,16 @@ app.post("/api/stopFacebookChat", auth, (_, res) => {
 app.post("/api/test-tts", auth, async (req, res) => {
   const { text, amount = 0, tier, style } = req.body || {};
   if (!text) return res.status(400).json({ error: "text required" });
-  const audio = tier
-    ? await tts.test(text, tier, style)
-    : await tts.generate(text, { amount, style });
-  if (!audio) return res.status(500).json({ error: "TTS generation failed (check API keys)" });
-  res.json({ ok: true, audio });
+  try {
+    const audio = tier
+      ? await tts.test(text, tier, style)
+      : await tts.generate(text, { amount, style });
+    if (!audio) return res.status(500).json({ error: "TTS generation failed (check API keys)" });
+    res.json({ ok: true, audio });
+  } catch (e) {
+    console.error("test-tts:", e.message);
+    res.status(500).json({ error: "TTS error — ตรวจสอบ API key / เครือข่าย" });
+  }
 });
 
 // Trigger a spotlight pick on the overlay right now (for testing).
@@ -740,7 +773,9 @@ app.post("/api/test-alert", auth, async (req, res) => {
     source:      "test",
   };
   const ttsText  = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
-  const ttsAudio = await tts.generate(ttsText, { amount: donation.amount });
+  let ttsAudio = null;
+  try { ttsAudio = await tts.generate(ttsText, { amount: donation.amount }); }
+  catch (e) { console.error("test-alert tts:", e.message); }   // still show the alert even if TTS fails
   io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
   songreq.captureDonation(donation);   // test alert w/ "!sr ..." → paid (priority) song request
   res.json({ ok: true });

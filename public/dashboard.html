@@ -180,6 +180,13 @@
     #toast.success { border-color: var(--green); color: var(--green); }
     #toast.error   { border-color: var(--red);   color: var(--red); }
 
+    /* ── Top banners (reconnect / insecure-defaults) ── */
+    .topbanner { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 9px 16px;
+                 text-align: center; font-size: 13px; font-weight: 600; display: none; }
+    .topbanner.show { display: block; }
+    #reconnect-banner { background: #b45309; color: #fff; }
+    #insecure-banner  { background: var(--red); color: #fff; top: auto; bottom: 0; }
+
     /* ── Overview grid ── */
     .overview-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; min-height: 420px; }
     .overview-left { display: flex; flex-direction: column; gap: 16px; }
@@ -1326,6 +1333,8 @@
 </div><!-- /app -->
 
 <div id="toast"></div>
+<div id="reconnect-banner" class="topbanner">⚠️ การเชื่อมต่อหลุด — กำลังเชื่อมต่อใหม่…</div>
+<div id="insecure-banner" class="topbanner">🔓 ยังไม่ได้ตั้ง DASHBOARD_PASSWORD — ใครก็เข้า dashboard นี้ได้ ตั้งค่าใน env ก่อนไลฟ์!</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -1335,6 +1344,7 @@
   let socket     = null;
   let chatFilter = 'all';
   let chatCount  = 0;
+  let healthTimer = null;
   const PLATFORMS = {
     yt: { name: 'YouTube',  subDefault: 'ดึง chat ผ่าน YouTube Data API v3',         detailLabel: v => `Video ID: ${v}`,
           startUrl: '/api/startYouTubeChat',  stopUrl: '/api/stopYouTubeChat',  inputId: 'yt-video-id', field: 'videoId' },
@@ -1348,6 +1358,7 @@
           startUrl: '/api/startFacebookChat', stopUrl: '/api/stopFacebookChat', inputId: 'fb-channel',  field: 'liveVideoId' },
   };
   const platformActive = { yt: false, tt: false, tw: false, kk: false, fb: false };
+  const platformDetail = {};   // last-known detail (videoId/channel) per platform, for health-driven re-sync
   const tipActive      = { streamlabs: false, streamelements: false };
   const donationList = [];
 
@@ -1363,12 +1374,25 @@
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  function logout() {
+    localStorage.removeItem('st_token');
+    localStorage.removeItem('st_overlay');
+    token = '';
+    clearInterval(healthTimer);   // don't leave a stray poller running after logout
+    if (socket) socket.disconnect();
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+
   async function api(path, body) {
     const res = await fetch(path, {
       method: body !== undefined ? 'POST' : 'GET',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
+    // Real auth failure (token expired/invalid) → back to login. Transient
+    // socket drops are handled separately and must NOT clear the token.
+    if (res.status === 401) { logout(); return null; }
     return res.json();
   }
 
@@ -1404,13 +1428,7 @@
   document.getElementById('login-btn').onclick  = () => login(document.getElementById('pw-input').value);
   document.getElementById('pw-input').onkeydown = e => { if (e.key === 'Enter') login(e.target.value); };
 
-  document.getElementById('logout-btn').onclick = () => {
-    localStorage.removeItem('st_token');
-    localStorage.removeItem('st_overlay');
-    if (socket) socket.disconnect();
-    document.getElementById('app').classList.remove('visible');
-    document.getElementById('login-screen').style.display = 'flex';
-  };
+  document.getElementById('logout-btn').onclick = () => logout();
 
   // ── Show app ─────────────────────────────────────────────────────────────────
   async function showApp() {
@@ -1426,14 +1444,11 @@
     document.getElementById('cfg-server').textContent      = origin;
     document.getElementById('cfg-copy-btn').onclick = () => copyText(overlayUrl, 'cfg-copy-btn');
 
-    // Health check
-    fetch('/api/health').then(r => r.json()).then(d => {
-      document.getElementById('cfg-health').textContent = d.status === 'ok' ? '✓ ออนไลน์' : '✗ ออฟไลน์';
-      document.getElementById('cfg-health').style.color = d.status === 'ok' ? 'var(--green)' : 'var(--red)';
-    }).catch(() => {
-      document.getElementById('cfg-health').textContent = '✗ ไม่สามารถเชื่อมต่อ';
-      document.getElementById('cfg-health').style.color = 'var(--red)';
-    });
+    // Health check — re-polled so the "online" dot + insecure-defaults warning
+    // stay live instead of reflecting only the moment the page loaded.
+    refreshHealth();
+    clearInterval(healthTimer);   // guard against stacking a 2nd timer on re-login
+    healthTimer = setInterval(refreshHealth, 25000);
 
     // Load donations
     const donations = await api('/api/donations');
@@ -1483,6 +1498,22 @@
     });
   }
 
+  function refreshHealth() {
+    const el = document.getElementById('cfg-health');
+    fetch('/api/health').then(r => r.json()).then(d => {
+      el.textContent = d.status === 'ok' ? '✓ ออนไลน์' : '✗ ออฟไลน์';
+      el.style.color = d.status === 'ok' ? 'var(--green)' : 'var(--red)';
+      document.getElementById('insecure-banner').classList.toggle('show', !!d.insecureDefaults);
+      // Re-sync platform buttons from the server's real connection state — catches
+      // a connector that dropped silently (Kick/Twitch/TikTok/FB) with no session event.
+      const live = { yt: !!d.youtube, tt: (d.tiktok || 0) > 0, tw: !!d.twitch, kk: !!d.kick, fb: !!d.facebook };
+      for (const p in live) if (live[p] !== platformActive[p]) applyPlatformState(p, live[p], platformDetail[p] || '');
+    }).catch(() => {
+      el.textContent = '✗ ไม่สามารถเชื่อมต่อ';
+      el.style.color = 'var(--red)';
+    });
+  }
+
   // ── Socket.IO ────────────────────────────────────────────────────────────────
   function connectSocket() {
     socket = io({ auth: { token } });
@@ -1520,10 +1551,19 @@
     socket.on('giveawayWinner', (w) => showGiveawayWinner(w?.displayName || ''));
     socket.on('featuredStatus', renderFeatured);
     socket.on('songreqState',   renderSongreq);
+    socket.on('platformError', (e) => toast(`${(e?.platform || '').toUpperCase()}: ${e?.message || 'หยุดทำงาน'}`, 'error'));
 
-    socket.on('connect_error', () => {
-      localStorage.removeItem('st_token');
-      location.reload();
+    // A transient drop (wifi blip, Railway redeploy) must NOT log the streamer
+    // out mid-stream. socket.io auto-reconnects; just show a banner meanwhile.
+    // Token validity is enforced by REST 401s (see api()), not by the socket.
+    const banner = document.getElementById('reconnect-banner');
+    socket.on('connect',       () => banner.classList.remove('show'));
+    socket.on('connect_error', () => banner.classList.add('show'));
+    socket.on('disconnect', (reason) => {
+      banner.classList.add('show');
+      // A server-initiated disconnect won't auto-reconnect — nudge it. (Real auth
+      // failures still get cleared by the REST 401 path, not here.)
+      if (reason === 'io server disconnect') socket.connect();
     });
   }
 
@@ -1531,6 +1571,7 @@
   function applyPlatformState(p, active, detail) {
     const cfg = PLATFORMS[p];
     if (!cfg) return;
+    if (detail) platformDetail[p] = detail;   // remember it so health re-sync can restore the label
     const badge      = document.getElementById(`${p}-badge`);
     const toggle     = document.getElementById(`${p}-toggle`);
     const sub        = document.getElementById(`${p}-sub`);

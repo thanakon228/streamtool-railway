@@ -8,3 +8,4 @@ sessions.json
 voice-config.json
 overlay-config.json
 songreq.json
+jwt-secret
