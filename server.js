@@ -563,15 +563,24 @@ app.post("/api/spotlight/test", auth, (_, res) => {
 
 // ── Featured message (manual) ────────────────────────────────────────────────
 // Push a streamer-chosen chat message big onto the overlay; pin to keep it.
+function featuredPinned() {
+  return featured ? { displayName: featured.displayName, message: featured.message, platform: featured.platform } : null;
+}
+function emitFeaturedStatus() {
+  io.to("dashboard").emit("featuredStatus", { pinned: featuredPinned() });
+}
+app.get("/api/feature/status", auth, (_, res) => res.json({ pinned: featuredPinned() }));
 app.post("/api/feature", auth, (req, res) => {
   const f = buildFeatured(req.body);
   featured = f.pin ? f : null;       // only pinned cards survive reconnect
   io.to(`overlay:${OVERLAY_ID}`).emit("feature", f);
+  emitFeaturedStatus();
   res.json({ ok: true, featured: f });
 });
 app.post("/api/feature/clear", auth, (_, res) => {
   featured = null;
   io.to(`overlay:${OVERLAY_ID}`).emit("featureClear");
+  emitFeaturedStatus();
   res.json({ ok: true });
 });
 

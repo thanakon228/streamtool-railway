@@ -421,6 +421,29 @@
         <div class="overview-grid">
           <!-- Left column -->
           <div class="overview-left">
+            <!-- Giveaway quick-draw (shares state with Giveaway tab via socket) -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🎁 Giveaway</div>
+                <button class="btn btn-sm btn-secondary" onclick="switchTab('giveaway')">ตั้งค่า →</button>
+              </div>
+              <div class="card-body">
+                <div class="connect-row" style="margin-bottom:10px;">
+                  <input id="ov-gw-keyword" class="input-field" type="text" value="!join" placeholder="!join" />
+                  <button class="btn btn-primary btn-sm" id="ov-gw-open">เปิดรับ</button>
+                  <button class="btn btn-secondary btn-sm" id="ov-gw-close" disabled>ปิด</button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+                  <span class="badge" id="ov-gw-state-badge">ปิดอยู่</span>
+                  <div style="font-size:13px;">ผู้เข้าร่วม: <b id="ov-gw-count" style="font-size:20px;color:var(--accent);">0</b> คน</div>
+                </div>
+                <button class="btn btn-primary" id="ov-gw-draw" style="width:100%;">🎲 สุ่มผู้โชคดี</button>
+                <div id="ov-gw-winner" style="display:none;text-align:center;margin-top:10px;padding:10px;border-radius:10px;background:var(--accent-dim);border:1px solid var(--accent);">
+                  🏆 <b id="ov-gw-winner-name" style="color:var(--accent);font-size:18px;"></b>
+                </div>
+              </div>
+            </div>
+
             <div class="card">
               <div class="card-header">
                 <div class="card-title"><div class="live-dot"></div>Donations ล่าสุด</div>
@@ -448,6 +471,12 @@
                   <button class="filter-btn" data-filter="facebook" style="display:none;">🔵 FB</button>
                   <button class="feat-btn" id="clear-feature-btn" style="opacity:1;" title="ลบข้อความที่ปักหมุดบนจอ">🧹 ล้าง</button>
                 </div>
+              </div>
+              <!-- Featured (pinned) status — visible only when a message is pinned on the overlay -->
+              <div id="ov-featured" style="display:none;align-items:center;gap:8px;padding:8px 18px;background:var(--accent-dim);border-bottom:1px solid var(--border);font-size:12px;">
+                <span>📌</span>
+                <span id="ov-featured-text" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+                <button class="feat-btn" id="ov-featured-clear" style="opacity:1;" title="ลบที่ปักหมุด">✕</button>
               </div>
               <div class="card-body" style="padding:0 18px;flex:1;overflow:hidden;">
                 <div id="chat-feed" class="chat-feed" style="max-height:100%;height:100%;">
@@ -1344,6 +1373,7 @@
 
     socket.on('giveawayStatus', renderGiveaway);
     socket.on('giveawayWinner', (w) => showGiveawayWinner(w?.displayName || ''));
+    socket.on('featuredStatus', renderFeatured);
 
     socket.on('connect_error', () => {
       localStorage.removeItem('st_token');
@@ -1532,6 +1562,9 @@
   function setupChatFilters() {
     const clearBtn = document.getElementById('clear-feature-btn');
     if (clearBtn) clearBtn.onclick = () => api('/api/feature/clear', {});
+    const ovClear = document.getElementById('ov-featured-clear');
+    if (ovClear) ovClear.onclick = () => api('/api/feature/clear', {});
+    api('/api/feature/status').then(renderFeatured).catch(() => {});
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.onclick = () => {
         chatFilter = btn.dataset.filter;
@@ -1543,49 +1576,74 @@
     });
   }
 
-  // ── Giveaway ──────────────────────────────────────────────────────────────────
+  // ── Giveaway (drives both the Giveaway tab AND the Overview quick-draw card) ──
   function renderGiveaway(s) {
     if (!s) return;
-    const badge = document.getElementById('gw-state-badge');
-    document.getElementById('gw-count').textContent = s.count ?? 0;
-    if (badge) {
-      badge.textContent = s.open ? `เปิดรับ · "${s.keyword}"` : 'ปิดอยู่';
-      badge.className   = 'badge' + (s.open ? ' green' : '');
-    }
-    const openBtn = document.getElementById('gw-open');
-    const closeBtn = document.getElementById('gw-close');
-    if (openBtn)  openBtn.disabled  = s.open;
-    if (closeBtn) closeBtn.disabled = !s.open;
-    const kw = document.getElementById('gw-keyword');
-    if (kw && s.keyword && document.activeElement !== kw) kw.value = s.keyword;
+    ['', 'ov-'].forEach(p => {
+      const id = x => document.getElementById(p + x);
+      const count = id('gw-count'); if (count) count.textContent = s.count ?? 0;
+      const badge = id('gw-state-badge');
+      if (badge && s.open !== undefined) {
+        badge.textContent = s.open ? (p ? 'เปิดรับ' : `เปิดรับ · "${s.keyword}"`) : 'ปิดอยู่';
+        badge.className   = 'badge' + (s.open ? ' green' : '');
+      }
+      const openBtn = id('gw-open'), closeBtn = id('gw-close');
+      if (openBtn  && s.open !== undefined) openBtn.disabled  = s.open;
+      if (closeBtn && s.open !== undefined) closeBtn.disabled = !s.open;
+      const kw = id('gw-keyword');
+      if (kw && s.keyword && document.activeElement !== kw) kw.value = s.keyword;
+    });
   }
 
   function showGiveawayWinner(name) {
     if (!name) return;
     const box = document.getElementById('gw-winner-box');
-    document.getElementById('gw-winner-name').textContent = name;
-    box.style.display = 'block';
+    if (box) { document.getElementById('gw-winner-name').textContent = name; box.style.display = 'block'; }
+    const ov = document.getElementById('ov-gw-winner');
+    if (ov)  { document.getElementById('ov-gw-winner-name').textContent = name; ov.style.display = 'block'; }
   }
 
   function setupGiveawayUI() {
-    document.getElementById('gw-open').onclick = async () => {
-      const keyword = document.getElementById('gw-keyword').value.trim() || '!join';
+    const openWith = async (kwId) => {
+      const keyword = (document.getElementById(kwId)?.value || '').trim() || '!join';
       renderGiveaway(await api('/api/giveaway/open', { keyword }));
     };
-    document.getElementById('gw-close').onclick = async () =>
-      renderGiveaway(await api('/api/giveaway/close', {}));
-    document.getElementById('gw-reset').onclick = async () => {
-      document.getElementById('gw-winner-box').style.display = 'none';
-      renderGiveaway(await api('/api/giveaway/reset', {}));
-    };
-    document.getElementById('gw-draw').onclick = async () => {
+    const closeGw = async () => renderGiveaway(await api('/api/giveaway/close', {}));
+    const drawGw  = async () => {
       const r = await api('/api/giveaway/draw', {});
       if (r?.error) { alert(r.error); return; }
       if (r?.winner) showGiveawayWinner(r.winner.displayName);
       // count/badge refresh arrives via the 'giveawayStatus' socket event
     };
+    const wire = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+    // Giveaway tab
+    wire('gw-open',  () => openWith('gw-keyword'));
+    wire('gw-close', closeGw);
+    wire('gw-draw',  drawGw);
+    wire('gw-reset', async () => {
+      ['gw-winner-box', 'ov-gw-winner'].forEach(i => { const e = document.getElementById(i); if (e) e.style.display = 'none'; });
+      renderGiveaway(await api('/api/giveaway/reset', {}));
+    });
+    // Overview quick-draw card
+    wire('ov-gw-open',  () => openWith('ov-gw-keyword'));
+    wire('ov-gw-close', closeGw);
+    wire('ov-gw-draw',  drawGw);
     // initial state
     api('/api/giveaway/status').then(renderGiveaway).catch(() => {});
+  }
+
+  // ── Featured (pinned) status strip ───────────────────────────────────────────
+  function renderFeatured(s) {
+    const strip = document.getElementById('ov-featured');
+    if (!strip) return;
+    const p = s && s.pinned;
+    if (p) {
+      document.getElementById('ov-featured-text').textContent =
+        `กำลังปักหมุด: ${p.displayName}${p.message ? ' — ' + p.message : ''}`;
+      strip.style.display = 'flex';
+    } else {
+      strip.style.display = 'none';
+    }
   }
 
   // ── Donations ────────────────────────────────────────────────────────────────
