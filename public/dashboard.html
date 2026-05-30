@@ -723,6 +723,15 @@
               <option value="vapor">🌴 Vapor — Vaporwave</option>
             </select>
 
+            <div style="margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>🪟 ความทึบพื้นหลังการ์ด <span style="opacity:.7;">(0% = โปร่งแสงสุด โชว์เฉพาะข้อความ)</span></span>
+                <span id="cc-bgopacity-val">100%</span>
+              </div>
+              <input id="cc-bgopacity" type="range" min="0" max="100" step="5" value="100" style="width:100%;" />
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">มีผลกับ Alert · Chat · Goal ทุกธีม</div>
+            </div>
+
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
               <span style="font-size:11px;color:var(--muted);">ตัวอย่าง (สี + animation จริงของธีม/alert ที่เลือก):</span>
               <button class="btn btn-sm btn-secondary" id="tpl-anim-replay">▶ เล่น animation</button>
@@ -1737,6 +1746,7 @@
       alertAnimation: document.querySelector('#anim-chips .chip.selected')?.dataset.anim || 'slide',
       alertPosition:  document.querySelector('#pos-chips .pos-btn.selected')?.dataset.pos || 'top-right',
       customCss:      document.getElementById('custom-css-editor').value,
+      bgOpacity:      Number(document.getElementById('cc-bgopacity')?.value ?? 100),
       chatConfig: {
         enabled:         document.getElementById('cc-enabled').checked,
         maxMessages:     Number(document.getElementById('cc-max').value),
@@ -1949,6 +1959,9 @@
       if (sp.intervalSec) document.getElementById('spot-interval').value = sp.intervalSec;
       if (sp.durationSec) document.getElementById('spot-duration').value = sp.durationSec;
       if (sp.position)    document.getElementById('spot-position').value = sp.position;
+      const bo = (typeof cfg.bgOpacity === 'number') ? cfg.bgOpacity : 100;
+      document.getElementById('cc-bgopacity').value = bo;
+      document.getElementById('cc-bgopacity-val').textContent = bo + '%';
     } catch {}
 
     // Sliders: live label + auto-save
@@ -1960,6 +1973,7 @@
     onRange('cc-dur',   'cc-dur-val',   v => Number(v) === 0 ? 'ค้างถาวร' : v + ' วินาที');
     onRange('cc-width', 'cc-width-val', v => v + ' px');
     onRange('cc-fs',    'cc-fs-val',    v => v + ' px');
+    onRange('cc-bgopacity', 'cc-bgopacity-val', v => v + '%');
 
     // Position grid → auto-save
     document.querySelectorAll('#cc-pos-grid .pos-btn').forEach(btn => {

@@ -23,7 +23,7 @@
 
     /* ── Alert card — uses template vars ───────────────────────── */
     #alert-card {
-      background:    var(--t-alert-bg);
+      background:    transparent;
       border:        1.5px solid var(--t-alert-border);
       border-radius: var(--t-alert-radius, 18px);
       box-shadow:    var(--t-alert-shadow);
@@ -121,8 +121,8 @@
     body.chat-no-pill   .chat-pill   { display:none; }
     body.chat-no-badge  .chat-bits, body.chat-no-badge .chat-dono { display:none; }
     .chat-msg {
-      display:flex; align-items:flex-start; gap:10px;
-      background:var(--t-chat-bg); border:1px solid var(--t-chat-border);
+      display:flex; align-items:flex-start; gap:10px; position:relative;
+      background:transparent; border:1px solid var(--t-chat-border);
       border-radius:var(--t-chat-radius); padding:9px 13px;
       backdrop-filter:blur(var(--t-chat-blur, 10px));
       animation:chatIn .35s cubic-bezier(.22,1.5,.36,1);
@@ -276,11 +276,21 @@
     }
     #goal-zone.visible { opacity:1; }
     .goal-card {
-      background:var(--t-goal-bg); border:1px solid var(--t-goal-border);
+      background:transparent; border:1px solid var(--t-goal-border);
       border-radius:var(--t-goal-radius); padding:14px 18px;
       backdrop-filter:blur(var(--t-goal-blur));
       box-shadow:0 8px 32px rgba(0,0,0,.4);
+      position:relative;
     }
+    /* Background layers — opacity controlled by --ov-bg-alpha (theme bg-opacity setting).
+       Kept on ::before so opacity scales solid AND gradient backgrounds without dimming text. */
+    #alert-card::before, .chat-msg::before, .goal-card::before {
+      content:''; position:absolute; inset:0; z-index:-1; border-radius:inherit;
+      opacity:var(--ov-bg-alpha, 1); pointer-events:none;
+    }
+    #alert-card::before { background:var(--t-alert-bg); }
+    .chat-msg::before   { background:var(--t-chat-bg); }
+    .goal-card::before  { background:var(--t-goal-bg); }
     .goal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
     .goal-title  { font-size:12px; font-weight:700; color:var(--t-goal-title); display:flex; align-items:center; gap:6px; }
     .goal-amounts{ font-size:13px; font-weight:700; }
@@ -408,6 +418,9 @@
     if (link.href !== location.origin + '/templates/' + name + '.css') link.href = '/templates/' + name + '.css';
     // Custom CSS
     document.getElementById('tpl-custom').textContent = cfg.customCss || '';
+    // Background opacity (0–100 → 0–1) for card backgrounds
+    const bgo = (typeof cfg.bgOpacity === 'number') ? cfg.bgOpacity : 100;
+    document.body.style.setProperty('--ov-bg-alpha', Math.max(0, Math.min(100, bgo)) / 100);
     // Animation + position classes
     const anims = ['slide','bounce','zoom','flip','drop'];
     const pos   = ['top-right','top-left','bottom-right','bottom-left'];

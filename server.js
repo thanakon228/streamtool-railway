@@ -89,6 +89,7 @@ let templateConfig = {
   alertAnimation: "slide",
   alertPosition:  "top-right",
   customCss:      "",
+  bgOpacity:      100,   // พื้นหลังการ์ด (alert/chat/goal) ความทึบ 0–100%
   chatConfig:     { ...DEFAULT_CHAT_CONFIG },
   spotlight:      { ...DEFAULT_SPOTLIGHT },
 };
@@ -301,7 +302,7 @@ app.get("/api/template-config", (_, res) => res.json({
 
 // Template config — save (auth)
 app.post("/api/template-config", auth, (req, res) => {
-  const { template, alertAnimation, alertPosition, customCss, chatConfig, spotlight } = req.body || {};
+  const { template, alertAnimation, alertPosition, customCss, bgOpacity, chatConfig, spotlight } = req.body || {};
   const validTpl   = ["classic","neon","minimal","gaming","cute","ocean","sunset","gold","forest","vapor"];
   const validAnims = ["slide","bounce","zoom","flip","drop"];
   const validPos   = ["top-right","top-left","bottom-right","bottom-left"];
@@ -309,6 +310,7 @@ app.post("/api/template-config", auth, (req, res) => {
   if (alertAnimation && validAnims.includes(alertAnimation)) templateConfig.alertAnimation = alertAnimation;
   if (alertPosition  && validPos.includes(alertPosition))    templateConfig.alertPosition  = alertPosition;
   if (customCss !== undefined) templateConfig.customCss = String(customCss).slice(0, 20000);
+  const bgo = clamp(bgOpacity, 0, 100); if (bgo !== null) templateConfig.bgOpacity = Math.round(bgo);
   if (chatConfig !== undefined) {
     const next = sanitizeChatConfig(chatConfig);
     if (next) templateConfig.chatConfig = next;
