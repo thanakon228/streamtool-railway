@@ -16,6 +16,7 @@ const jwt      = require("jsonwebtoken");
 const path     = require("path");
 
 const persistence          = require("./lib/persistence");
+const { rateLimit }        = require("./lib/rateLimit");
 const { createYouTubeChat } = require("./lib/chat/youtube");
 const { createTikTokChat }  = require("./lib/chat/tiktok");
 const { createTwitchChat }  = require("./lib/chat/twitch");
@@ -47,8 +48,13 @@ const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: "*" } });
 
+app.set("trust proxy", 1);   // Railway runs behind a proxy → real client IP in X-Forwarded-For
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
+
+// Rate limiters for public, cost-incurring endpoints (no auth in front of them).
+const ttsLimiter    = rateLimit({ windowMs: 60_000,      max: 20, message: "อ่านข้อความถี่เกินไป" });
+const donateLimiter = rateLimit({ windowMs: 5 * 60_000,  max: 10, message: "ส่งสลิปถี่เกินไป กรุณารอสักครู่" });
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/dashboard",     (_, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
 app.get("/donate",        (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
@@ -86,6 +92,65 @@ let templateConfig = {
   chatConfig:     { ...DEFAULT_CHAT_CONFIG },
   spotlight:      { ...DEFAULT_SPOTLIGHT },
 };
+
+// Rehydrate overlay theme + goal from disk (survives Railway redeploys/restarts).
+if (persistence.state.overlay) {
+  const saved = persistence.state.overlay;
+  if (saved.goal && typeof saved.goal === "object") goal = { ...goal, ...saved.goal };
+  if (saved.templateConfig && typeof saved.templateConfig === "object") {
+    const st = saved.templateConfig;
+    templateConfig = {
+      ...templateConfig,
+      ...st,
+      chatConfig: { ...DEFAULT_CHAT_CONFIG, ...(st.chatConfig || {}) },
+      spotlight:  { ...DEFAULT_SPOTLIGHT,   ...(st.spotlight  || {}) },
+    };
+  }
+}
+
+// Persist current overlay theme + goal so a redeploy restores them.
+function persistOverlay() {
+  persistence.saveOverlay({ goal, templateConfig });
+}
+
+// ── Featured message (manual spotlight / pin) ────────────────────────────────
+// A streamer-picked chat message shown big on the overlay. When pinned it stays
+// until cleared and is re-sent to any overlay that (re)connects.
+let featured = null;
+
+function buildFeatured(input) {
+  const platform = VALID_PLATFORMS.includes(input?.platform) ? input.platform : "youtube";
+  return {
+    platform,
+    displayName: String(input?.displayName || "viewer").slice(0, 50),
+    message:     String(input?.message || "").slice(0, 300),
+    chatimg:     String(input?.chatimg || "").slice(0, 500),
+    pin:         !!input?.pin,
+    tts:         input?.tts !== false,   // default: read aloud
+    at:          Date.now(),
+  };
+}
+
+// ── Giveaway (collect entrants from chat by keyword, draw a winner) ──────────
+const giveaway = { open: false, keyword: "", entries: new Map() };
+
+function giveawayStatus() {
+  return { open: giveaway.open, keyword: giveaway.keyword, count: giveaway.entries.size };
+}
+function emitGiveawayStatus() {
+  io.to("dashboard").emit("giveawayStatus", giveawayStatus());
+}
+function captureGiveawayEntry(msg) {
+  if (!giveaway.open || !giveaway.keyword) return;
+  const text = String(msg?.message || "").toLowerCase();
+  if (!text.includes(giveaway.keyword.toLowerCase())) return;
+  const name = String(msg?.displayName || "").trim();
+  if (!name) return;
+  const key = `${msg.platform || "?"}:${name.toLowerCase()}`;
+  if (giveaway.entries.has(key)) return;
+  giveaway.entries.set(key, { displayName: name.slice(0, 50), platform: msg.platform || "unknown" });
+  emitGiveawayStatus();
+}
 
 const VALID_CHAT_POSITIONS = ["top-left","top-right","bottom-left","bottom-right"];
 const VALID_PLATFORMS      = ["youtube","tiktok","twitch","kick","facebook"];
@@ -135,6 +200,7 @@ function auth(req, res, next) {
 function emitChat(event, data) {
   io.to("dashboard").emit(event, data);
   io.to(`overlay:${OVERLAY_ID}`).emit(event, data);
+  if (event === "chat") captureGiveawayEntry(data);
 }
 
 // ── Chat module instances ─────────────────────────────────────────────────────
@@ -256,6 +322,7 @@ app.post("/api/template-config", auth, (req, res) => {
     if (VALID_SPOT_POS.includes(spotlight.position)) next.position = spotlight.position;
     templateConfig.spotlight = next;
   }
+  persistOverlay();
   const payload = { overlayId: OVERLAY_ID, ...templateConfig };
   io.to(`overlay:${OVERLAY_ID}`).emit("templateUpdate", payload);
   io.to("dashboard").emit("templateUpdate", payload);
@@ -281,6 +348,7 @@ app.post("/api/test-chat", auth, (req, res) => {
   };
   io.to("dashboard").emit("chat", msg);
   io.to(`overlay:${OVERLAY_ID}`).emit("chat", msg);
+  captureGiveawayEntry(msg);
   res.json({ ok: true });
 });
 
@@ -363,7 +431,7 @@ app.post("/api/tips/:provider/stop", auth, (req, res) => {
 });
 
 // Public donate endpoint (ผู้ชมใช้ — ไม่ต้อง auth)
-app.post("/api/donate/public", async (req, res) => {
+app.post("/api/donate/public", donateLimiter, async (req, res) => {
   if (!EASYSLIP_KEY) return res.status(503).json({ error: "ระบบโดเนทยังไม่เปิดใช้งาน" });
   const { base64, url, payload } = req.body || {};
   if ([base64, url, payload].filter(Boolean).length !== 1)
@@ -491,8 +559,58 @@ app.post("/api/spotlight/test", auth, (_, res) => {
   res.json({ ok: true });
 });
 
+// ── Featured message (manual) ────────────────────────────────────────────────
+// Push a streamer-chosen chat message big onto the overlay; pin to keep it.
+app.post("/api/feature", auth, (req, res) => {
+  const f = buildFeatured(req.body);
+  featured = f.pin ? f : null;       // only pinned cards survive reconnect
+  io.to(`overlay:${OVERLAY_ID}`).emit("feature", f);
+  res.json({ ok: true, featured: f });
+});
+app.post("/api/feature/clear", auth, (_, res) => {
+  featured = null;
+  io.to(`overlay:${OVERLAY_ID}`).emit("featureClear");
+  res.json({ ok: true });
+});
+
+// ── Giveaway ─────────────────────────────────────────────────────────────────
+app.get("/api/giveaway/status", auth, (_, res) => res.json(giveawayStatus()));
+
+app.post("/api/giveaway/open", auth, (req, res) => {
+  const kw = String(req.body?.keyword || "!join").trim().slice(0, 30) || "!join";
+  giveaway.keyword = kw;
+  giveaway.open = true;
+  giveaway.entries.clear();
+  emitGiveawayStatus();
+  res.json({ ok: true, ...giveawayStatus() });
+});
+
+app.post("/api/giveaway/close", auth, (_, res) => {
+  giveaway.open = false;
+  emitGiveawayStatus();
+  res.json({ ok: true, ...giveawayStatus() });
+});
+
+app.post("/api/giveaway/reset", auth, (_, res) => {
+  giveaway.open = false;
+  giveaway.entries.clear();
+  emitGiveawayStatus();
+  res.json({ ok: true, ...giveawayStatus() });
+});
+
+app.post("/api/giveaway/draw", auth, (_, res) => {
+  if (!giveaway.entries.size) return res.status(400).json({ error: "ยังไม่มีผู้เข้าร่วม" });
+  const keys   = [...giveaway.entries.keys()];
+  const key    = keys[Math.floor(Math.random() * keys.length)];
+  const winner = giveaway.entries.get(key);
+  giveaway.entries.delete(key);      // so a re-draw picks someone else
+  io.to(`overlay:${OVERLAY_ID}`).emit("giveawayWinner", winner);
+  emitGiveawayStatus();
+  res.json({ ok: true, winner, remaining: giveaway.entries.size });
+});
+
 // Public TTS for the overlay's chat-spotlight (no auth — overlay is public).
-app.post("/api/tts/speak", async (req, res) => {
+app.post("/api/tts/speak", ttsLimiter, async (req, res) => {
   const text = String(req.body?.text || "").trim().slice(0, 200);
   if (!text) return res.status(400).json({ error: "text required" });
   try {
@@ -558,6 +676,7 @@ app.post("/api/goal", auth, (req, res) => {
   const { target, title } = req.body || {};
   if (target !== undefined) goal.target = Math.max(0, Number(target) || 0);
   if (title  !== undefined) goal.title  = String(title).trim().slice(0, 60) || "Goal วันนี้";
+  persistOverlay();
   emitGoal();
   res.json({ ok: true, goal: { ...goal, current: goalCurrent() } });
 });
@@ -572,6 +691,7 @@ io.on("connection", (socket) => {
     socket.join(`overlay:${overlayId}`);
     socket.emit("goalUpdate",     { ...goal, current: goalCurrent() });
     socket.emit("templateUpdate", { overlayId: OVERLAY_ID, ...templateConfig });
+    if (featured) socket.emit("feature", featured);
     console.log(`Overlay connected: ${overlayId}`);
     return;
   }

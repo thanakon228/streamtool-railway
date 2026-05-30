@@ -171,6 +171,51 @@
     #spotlight-card .sl-body { min-width:0; }
     #spotlight-card .sl-name { font-size:18px; font-weight:800; color:var(--t-alert-name,#fff); margin-bottom:4px; }
     #spotlight-card .sl-text { font-size:24px; font-weight:600; color:#fff; line-height:1.3; word-break:break-word; }
+
+    /* ── Featured message (manual / pinned) — reuses spotlight look ───── */
+    #feature-zone {
+      position:fixed; top:48px; left:50%; transform:translateX(-50%);
+      width:min(680px,86vw); display:flex; justify-content:center;
+      pointer-events:none; opacity:0; z-index:55; transition:opacity .4s ease;
+    }
+    #feature-zone.show { opacity:1; }
+    #feature-card {
+      display:flex; align-items:center; gap:16px;
+      background:rgba(8,8,16,.85); backdrop-filter:blur(10px);
+      border:2px solid var(--t-primary,#7c5cfc); border-radius:18px; padding:18px 24px;
+      box-shadow:0 18px 60px rgba(0,0,0,.6), 0 0 40px var(--t-avatar-glow,rgba(124,92,252,.4));
+      transform:scale(.55); transition:transform .55s cubic-bezier(.22,1.6,.36,1); max-width:100%;
+    }
+    #feature-zone.show #feature-card { transform:scale(1); }
+    #feature-card .ft-av {
+      width:54px; height:54px; border-radius:50%; flex-shrink:0;
+      background:var(--t-avatar-bg,linear-gradient(135deg,#7c5cfc,#ec4899)); background-size:cover; background-position:center;
+      display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:22px;
+    }
+    #feature-card .ft-pin { position:absolute; top:-10px; left:-10px; font-size:20px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+    #feature-card { position:relative; }
+    #feature-card .ft-body { min-width:0; }
+    #feature-card .ft-name { font-size:18px; font-weight:800; color:var(--t-alert-name,#fff); margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+    #feature-card .ft-pill { font-size:11px; padding:1px 8px; border-radius:8px; background:var(--t-primary,#7c5cfc); color:#fff; font-weight:700; }
+    #feature-card .ft-text { font-size:24px; font-weight:600; color:#fff; line-height:1.3; word-break:break-word; }
+
+    /* ── Giveaway winner ──────────────────────────────────────────────── */
+    #giveaway-zone {
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      pointer-events:none; opacity:0; z-index:60; transition:opacity .4s ease;
+    }
+    #giveaway-zone.show { opacity:1; }
+    #giveaway-card {
+      text-align:center; padding:34px 56px; border-radius:24px;
+      background:linear-gradient(135deg,rgba(124,92,252,.92),rgba(236,72,153,.92));
+      box-shadow:0 24px 80px rgba(0,0,0,.6), 0 0 60px rgba(236,72,153,.5);
+      transform:scale(.4) rotate(-4deg); transition:transform .6s cubic-bezier(.22,1.7,.36,1);
+    }
+    #giveaway-zone.show #giveaway-card { transform:scale(1) rotate(0); }
+    #giveaway-card .gw-label { font-size:16px; font-weight:700; color:rgba(255,255,255,.85); letter-spacing:.18em; text-transform:uppercase; margin-bottom:10px; }
+    #giveaway-card .gw-name  { font-size:46px; font-weight:900; color:#fff; text-shadow:0 4px 24px rgba(0,0,0,.4); word-break:break-word; max-width:80vw; }
+    #giveaway-card .gw-emoji { font-size:40px; margin-bottom:6px; animation:gwBounce 1s ease infinite; }
+    @keyframes gwBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
     @keyframes chatIn { from{opacity:0;transform:translateX(-18px)} to{opacity:1;transform:translateX(0)} }
 
     .chat-avatar {
@@ -283,6 +328,23 @@
   <div class="sl-body"><div class="sl-name" id="sl-name"></div><div class="sl-text" id="sl-text"></div></div>
 </div></div>
 
+<!-- Featured message (manual / pinned) -->
+<div id="feature-zone"><div id="feature-card">
+  <span class="ft-pin" id="ft-pin" style="display:none;">📌</span>
+  <div class="ft-av" id="ft-av"></div>
+  <div class="ft-body">
+    <div class="ft-name"><span id="ft-name"></span><span class="ft-pill" id="ft-pill"></span></div>
+    <div class="ft-text" id="ft-text"></div>
+  </div>
+</div></div>
+
+<!-- Giveaway winner -->
+<div id="giveaway-zone"><div id="giveaway-card">
+  <div class="gw-emoji">🎉</div>
+  <div class="gw-label">ผู้โชคดีคือ</div>
+  <div class="gw-name" id="gw-name"></div>
+</div></div>
+
 <!-- Goal -->
 <div id="goal-zone">
   <div class="goal-card">
@@ -318,6 +380,9 @@
     socket.on('alert', d => { alertQueue.push(d); processQueue(); });
     socket.on('chat',  appendChatMsg);
     socket.on('spotlightNow', () => runSpotlight());
+    socket.on('feature',        showFeature);
+    socket.on('featureClear',   hideFeature);
+    socket.on('giveawayWinner', showGiveawayWinner);
     // Self-heal: re-sync theme/goal on every (re)connect — OBS browser sources
     // often drop the socket on scene switch and would otherwise show a stale theme.
     socket.on('connect', async () => {
@@ -499,6 +564,55 @@
       }
       spotBusy = false;
     }, spotDuration * 1000);
+  }
+
+  /* ── Featured message (manual / pinned) ──────────────────────────── */
+  const PLAT_LABEL = { youtube:'YouTube', tiktok:'TikTok', twitch:'Twitch', kick:'Kick', facebook:'Facebook' };
+  let featureTimer = null;
+  function showFeature(f) {
+    if (!f) return;
+    if (featureTimer) { clearTimeout(featureTimer); featureTimer = null; }
+    const name = String(f.displayName || 'viewer');
+    const av   = document.getElementById('ft-av');
+    const safeImg = String(f.chatimg || '').replace(/['"\\)(]/g, '');
+    av.style.backgroundImage = safeImg ? `url('${safeImg}')` : '';
+    av.textContent = safeImg ? '' : (name.charAt(0).toUpperCase() || '?');
+    document.getElementById('ft-name').textContent = name;
+    const pill = document.getElementById('ft-pill');
+    pill.textContent = PLAT_LABEL[f.platform] || '';
+    pill.style.display = PLAT_LABEL[f.platform] ? '' : 'none';
+    document.getElementById('ft-text').textContent = String(f.message || '');
+    document.getElementById('ft-pin').style.display = f.pin ? '' : 'none';
+    document.getElementById('feature-zone').classList.add('show');
+
+    if (f.tts !== false && f.message) {
+      fetch('/api/tts/speak', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: String(f.message).slice(0,200) }),
+      }).then(r => r.json()).then(r => {
+        if (r?.audio) {
+          const isWav = r.audio.startsWith('UklGR');
+          new Audio(`data:${isWav?'audio/wav':'audio/mp3'};base64,${r.audio}`).play().catch(()=>{});
+        }
+      }).catch(()=>{});
+    }
+    // Non-pinned cards auto-dismiss; pinned ones wait for an explicit clear.
+    if (!f.pin) featureTimer = setTimeout(hideFeature, 10000);
+  }
+  function hideFeature() {
+    if (featureTimer) { clearTimeout(featureTimer); featureTimer = null; }
+    document.getElementById('feature-zone').classList.remove('show');
+  }
+
+  /* ── Giveaway winner ──────────────────────────────────────────────── */
+  let gwTimer = null;
+  function showGiveawayWinner(w) {
+    if (!w) return;
+    if (gwTimer) { clearTimeout(gwTimer); gwTimer = null; }
+    document.getElementById('gw-name').textContent = String(w.displayName || 'ผู้โชคดี');
+    document.getElementById('giveaway-zone').classList.add('show');
+    spawnConfetti(500);
+    gwTimer = setTimeout(() => document.getElementById('giveaway-zone').classList.remove('show'), 12000);
   }
 
   /* ── Alert queue (FIFO — visual + audio both complete before next) ── */

@@ -1,3 +1,9 @@
 node_modules/
 .env
 test/
+
+# Runtime state (generated on Railway, ephemeral)
+donations.json
+sessions.json
+voice-config.json
+overlay-config.json

@@ -116,9 +116,14 @@
     .chat-feed { max-height: 520px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
     .chat-feed::-webkit-scrollbar { width: 4px; }
     .chat-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    .chat-feed-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.2s ease; }
+    .chat-feed-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.2s ease; align-items: flex-start; }
     .chat-feed-item:last-child { border-bottom: none; }
     .chat-feed-item.hidden { display: none; }
+    .chat-feed-item .chat-content { flex: 1; min-width: 0; }
+    .chat-feed-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+    .chat-feed-item:hover .chat-feed-actions { opacity: 1; }
+    .feat-btn { border: 1px solid var(--border); background: var(--surface2); border-radius: 7px; cursor: pointer; font-size: 13px; line-height: 1; padding: 5px 7px; transition: all 0.15s; }
+    .feat-btn:hover { background: var(--accent-dim); border-color: var(--accent); transform: scale(1.08); }
     .chat-platform-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
     .chat-platform-icon.youtube  { background: rgba(255,0,0,0.15);     color: #ff6666; }
     .chat-platform-icon.tiktok   { background: rgba(105,201,208,0.15); color: #69c9d0; }
@@ -350,6 +355,10 @@
         <span class="nav-icon">🎨</span>
         <span>Overlay</span>
       </button>
+      <button class="nav-item" data-tab="giveaway">
+        <span class="nav-icon">🎁</span>
+        <span>Giveaway</span>
+      </button>
 
       <div class="nav-section">ระบบ</div>
       <button class="nav-item" data-tab="settings">
@@ -437,6 +446,7 @@
                   <button class="filter-btn" data-filter="twitch"  style="display:none;">🟣 Tw</button>
                   <button class="filter-btn" data-filter="kick"    style="display:none;">🟢 Kick</button>
                   <button class="filter-btn" data-filter="facebook" style="display:none;">🔵 FB</button>
+                  <button class="feat-btn" id="clear-feature-btn" style="opacity:1;" title="ลบข้อความที่ปักหมุดบนจอ">🧹 ล้าง</button>
                 </div>
               </div>
               <div class="card-body" style="padding:0 18px;flex:1;overflow:hidden;">
@@ -650,6 +660,45 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- ── Tab: Giveaway ── -->
+      <div class="tab-panel" id="tab-giveaway">
+        <div class="page-title">🎁 Giveaway — สุ่มผู้โชคดีจากแชท</div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚙️ ตั้งค่ากิจกรรม</div></div>
+          <div class="card-body">
+            <div class="connect-label">คีย์เวิร์ดเข้าร่วม (ผู้ชมพิมพ์คำนี้ในแชทเพื่อร่วม)</div>
+            <div class="connect-row" style="margin-bottom:14px;">
+              <input id="gw-keyword" class="input-field" type="text" value="!join" placeholder="เช่น !join หรือ ร่วม" />
+              <button class="btn btn-primary btn-sm" id="gw-open">เปิดรับ</button>
+              <button class="btn btn-secondary btn-sm" id="gw-close" disabled>ปิดรับ</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <span class="badge" id="gw-state-badge">ปิดอยู่</span>
+              <div style="font-size:14px;">ผู้เข้าร่วม: <b id="gw-count" style="font-size:20px;color:var(--accent);">0</b> คน</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎲 สุ่มรางวัล</div></div>
+          <div class="card-body">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+              <button class="btn btn-primary" id="gw-draw">🎲 สุ่มผู้โชคดี</button>
+              <button class="btn btn-secondary btn-sm" id="gw-reset">ล้างรายชื่อ</button>
+            </div>
+            <div id="gw-winner-box" style="display:none;text-align:center;padding:22px;border-radius:14px;
+                 background:linear-gradient(135deg,var(--accent-dim),rgba(236,72,153,.12));border:1px solid var(--accent);">
+              <div style="font-size:13px;color:var(--muted);letter-spacing:.1em;">🎉 ผู้โชคดี</div>
+              <div id="gw-winner-name" style="font-size:32px;font-weight:900;color:var(--accent);margin-top:6px;"></div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:12px;">
+              💡 ผู้โชคดีที่สุ่มได้จะถูกเอาออกจากรายชื่อ กดสุ่มซ้ำเพื่อหาคนถัดไปได้ · ชื่อผู้ชนะจะเด้งขึ้น overlay พร้อม confetti
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ── Tab: Overlay (was Templates + TTS test moved in) ── -->
@@ -1238,6 +1287,7 @@
     setupTemplatesUI();
     setupTestChatUI();
     setupChatSettingsUI();
+    setupGiveawayUI();
   }
 
   function copyText(text, btnId) {
@@ -1282,6 +1332,9 @@
       if (s.provider === 'streamlabs')     refreshTip('sl', s.status === 'connected');
       if (s.provider === 'streamelements') refreshTip('se', s.status === 'authenticated' || s.status === 'connected');
     });
+
+    socket.on('giveawayStatus', renderGiveaway);
+    socket.on('giveawayWinner', (w) => showGiveawayWinner(w?.displayName || ''));
 
     socket.on('connect_error', () => {
       localStorage.removeItem('st_token');
@@ -1452,7 +1505,15 @@
         <div class="chat-name ${platform}">${esc(displayName)}</div>
         <div class="chat-text">${esc(message)}</div>
         ${timeStr ? `<div class="chat-time">${timeStr}</div>` : ''}
+      </div>
+      <div class="chat-feed-actions">
+        <button class="feat-btn" title="ดึงขึ้นจอ (10 วิ)">⭐</button>
+        <button class="feat-btn pin" title="ปักหมุดบนจอ">📌</button>
       </div>`;
+    const { chatimg = '' } = msg;
+    const payload = { platform, displayName, message, chatimg };
+    el.querySelector('.feat-btn:not(.pin)').onclick = () => api('/api/feature', { ...payload, pin: false });
+    el.querySelector('.feat-btn.pin').onclick      = () => api('/api/feature', { ...payload, pin: true  });
     feed.appendChild(el);
     while (feed.children.length > 100) feed.children[0].remove();
     const near = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80;
@@ -1460,6 +1521,8 @@
   }
 
   function setupChatFilters() {
+    const clearBtn = document.getElementById('clear-feature-btn');
+    if (clearBtn) clearBtn.onclick = () => api('/api/feature/clear', {});
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.onclick = () => {
         chatFilter = btn.dataset.filter;
@@ -1469,6 +1532,51 @@
         );
       };
     });
+  }
+
+  // ── Giveaway ──────────────────────────────────────────────────────────────────
+  function renderGiveaway(s) {
+    if (!s) return;
+    const badge = document.getElementById('gw-state-badge');
+    document.getElementById('gw-count').textContent = s.count ?? 0;
+    if (badge) {
+      badge.textContent = s.open ? `เปิดรับ · "${s.keyword}"` : 'ปิดอยู่';
+      badge.className   = 'badge' + (s.open ? ' green' : '');
+    }
+    const openBtn = document.getElementById('gw-open');
+    const closeBtn = document.getElementById('gw-close');
+    if (openBtn)  openBtn.disabled  = s.open;
+    if (closeBtn) closeBtn.disabled = !s.open;
+    const kw = document.getElementById('gw-keyword');
+    if (kw && s.keyword && document.activeElement !== kw) kw.value = s.keyword;
+  }
+
+  function showGiveawayWinner(name) {
+    if (!name) return;
+    const box = document.getElementById('gw-winner-box');
+    document.getElementById('gw-winner-name').textContent = name;
+    box.style.display = 'block';
+  }
+
+  function setupGiveawayUI() {
+    document.getElementById('gw-open').onclick = async () => {
+      const keyword = document.getElementById('gw-keyword').value.trim() || '!join';
+      renderGiveaway(await api('/api/giveaway/open', { keyword }));
+    };
+    document.getElementById('gw-close').onclick = async () =>
+      renderGiveaway(await api('/api/giveaway/close', {}));
+    document.getElementById('gw-reset').onclick = async () => {
+      document.getElementById('gw-winner-box').style.display = 'none';
+      renderGiveaway(await api('/api/giveaway/reset', {}));
+    };
+    document.getElementById('gw-draw').onclick = async () => {
+      const r = await api('/api/giveaway/draw', {});
+      if (r?.error) { alert(r.error); return; }
+      if (r?.winner) showGiveawayWinner(r.winner.displayName);
+      // count/badge refresh arrives via the 'giveawayStatus' socket event
+    };
+    // initial state
+    api('/api/giveaway/status').then(renderGiveaway).catch(() => {});
   }
 
   // ── Donations ────────────────────────────────────────────────────────────────
