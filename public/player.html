@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auto Player — StreamTool</title>
+  <style>
+    :root{ --bg:#0c0e14; --surface:#161922; --border:#262a36; --accent:#7c5cfc; --text:#e6e8ef; --muted:#888fa0; }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI','Noto Sans Thai',system-ui,sans-serif;}
+    html,body{height:100%;background:var(--bg);color:var(--text);}
+    #app{display:none;flex-direction:column;height:100%;}
+    .topbar{display:flex;align-items:center;gap:14px;padding:12px 18px;background:var(--surface);border-bottom:1px solid var(--border);}
+    .np-title{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .np-sub{font-size:12px;color:var(--muted);}
+    .stage{position:relative;flex:1;background:#000;min-height:0;}
+    #yt{width:100%;height:100%;}
+    #start-overlay{position:absolute;inset:0;background:rgba(8,10,16,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;}
+    .controls{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--surface);border-top:1px solid var(--border);flex-wrap:wrap;}
+    .btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 16px;cursor:pointer;font-size:14px;font-weight:600;}
+    .btn:hover{border-color:var(--accent);}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+    .btn.big{padding:14px 28px;font-size:16px;}
+    .status{font-size:13px;color:var(--muted);flex:1;min-width:120px;}
+    .qinfo{font-size:13px;color:var(--muted);}
+    .vol{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+    /* login */
+    #login{display:none;align-items:center;justify-content:center;height:100%;}
+    .login-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px;width:320px;text-align:center;}
+    .login-card h1{font-size:18px;margin-bottom:6px;}
+    .login-card p{font-size:12px;color:var(--muted);margin-bottom:18px;}
+    .input{width:100%;padding:11px 14px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;margin-bottom:12px;}
+    .err{color:#f87171;font-size:12px;min-height:16px;margin-top:8px;}
+    .hint{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5;}
+  </style>
+</head>
+<body>
+  <!-- Login gate -->
+  <div id="login">
+    <div class="login-card">
+      <h1>🎬 Auto Player</h1>
+      <p>เข้าสู่ระบบเพื่อควบคุมคิวเพลง</p>
+      <input id="login-pass" class="input" type="password" placeholder="รหัสผ่าน dashboard" />
+      <button id="login-btn" class="btn primary" style="width:100%;">เข้าสู่ระบบ</button>
+      <div id="login-err" class="err"></div>
+      <div class="hint">💡 เปิดหน้านี้ในเบราว์เซอร์ที่ล็อกอิน <b>YouTube Music Premium</b> เพื่อเล่นแบบ ad-free แล้วจับเสียงเข้าสตรีม</div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app">
+    <div class="topbar">
+      <div style="flex:1;min-width:0;">
+        <div class="np-title" id="np-title">— ไม่มีเพลง —</div>
+        <div class="np-sub" id="np-sub"></div>
+      </div>
+      <div class="qinfo">คิว: <b id="q-count">0</b></div>
+    </div>
+    <div class="stage">
+      <div id="yt"></div>
+      <div id="start-overlay">
+        <div style="font-size:15px;color:var(--muted);">กดเริ่มเพื่อเปิดเสียง (นโยบาย autoplay ของเบราว์เซอร์)</div>
+        <button id="start-btn" class="btn primary big">▶ เริ่มเล่น</button>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="btn-pause" class="btn">⏯ เล่น/หยุด</button>
+      <button id="btn-skip" class="btn">⏭ ข้าม</button>
+      <div class="vol">🔊 <input id="vol" type="range" min="0" max="100" value="100" style="width:120px;"></div>
+      <div class="status" id="status"></div>
+      <div class="qinfo" id="q-next">— ไม่มีเพลงถัดไป —</div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const TLS = 'st_token';
+    let token = localStorage.getItem(TLS) || '';
+    let overlayId = '', player, ytReady = false, started = false, currentVid = null, pending = null, advancing = false;
+
+    if (!token) document.getElementById('login').style.display = 'flex';
+    else boot();
+
+    document.getElementById('login-btn').onclick = login;
+    document.getElementById('login-pass').onkeydown = e => { if (e.key === 'Enter') login(); };
+    async function login() {
+      const password = document.getElementById('login-pass').value;
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) }).then(r => r.json()).catch(() => null);
+      if (r && r.token) { token = r.token; localStorage.setItem(TLS, token); document.getElementById('login').style.display = 'none'; boot(); }
+      else document.getElementById('login-err').textContent = 'รหัสผ่านไม่ถูกต้อง';
+    }
+    function authPost(path) { return fetch(path, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: '{}' }).then(r => r.json()).catch(() => null); }
+
+    async function boot() {
+      document.getElementById('app').style.display = 'flex';
+      try { const cfg = await fetch('/api/template-config').then(r => r.json()); overlayId = cfg.overlayId || 'default-overlay'; } catch {}
+      const socket = io({ auth: { overlayId } });
+      socket.on('nowPlaying', applyNow);
+      const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
+      try { applyNow(await fetch('/api/songreq/nowplaying').then(r => r.json())); } catch {}
+      refreshQueue();
+    }
+
+    window.onYouTubeIframeAPIReady = function () {
+      player = new YT.Player('yt', {
+        height: '100%', width: '100%',
+        playerVars: { autoplay: 0, controls: 1, rel: 0, modestbranding: 1, playsinline: 1 },
+        events: {
+          onReady: () => { ytReady = true; if (pending) loadVideo(pending); },
+          onStateChange: e => { if (e.data === YT.PlayerState.ENDED) advance(); },
+          onError: () => { status('⚠️ เพลงนี้เล่นไม่ได้ (embed/region/ลบแล้ว) — ข้ามให้', true); advance(); },
+        },
+      });
+    };
+
+    function loadVideo(id) {
+      if (!ytReady) { pending = id; return; }
+      pending = null; currentVid = id;
+      if (started) player.loadVideoById(id); else player.cueVideoById(id);
+    }
+    function applyNow(np) {
+      if (!np || !np.videoId) {
+        currentVid = null;
+        document.getElementById('np-title').textContent = '— คิวว่าง —';
+        document.getElementById('np-sub').textContent = '';
+        if (player && started) { try { player.stopVideo(); } catch {} }
+        refreshQueue(); return;
+      }
+      document.getElementById('np-title').textContent = np.title || '';
+      document.getElementById('np-sub').textContent = 'ขอโดย ' + (np.requester || '') + (np.channel ? ' · ' + np.channel : '');
+      if (np.videoId !== currentVid) loadVideo(np.videoId);
+      refreshQueue();
+    }
+    async function advance() {
+      if (advancing) return; advancing = true;
+      await authPost('/api/songreq/next');   // server picks next → emits nowPlaying → applyNow loads it
+      setTimeout(() => { advancing = false; }, 1500);
+    }
+
+    document.getElementById('start-btn').onclick = () => {
+      started = true;
+      document.getElementById('start-overlay').style.display = 'none';
+      if (currentVid && player) { player.loadVideoById(currentVid); player.playVideo(); }
+    };
+    document.getElementById('btn-skip').onclick = () => advance();
+    document.getElementById('btn-pause').onclick = () => {
+      if (!player || !ytReady) return;
+      const st = player.getPlayerState();
+      if (st === YT.PlayerState.PLAYING) player.pauseVideo(); else player.playVideo();
+    };
+    document.getElementById('vol').oninput = e => { if (player && ytReady) player.setVolume(Number(e.target.value)); };
+
+    async function refreshQueue() {
+      try {
+        const s = await fetch('/api/songreq/state', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json());
+        const q = s.queue || [];
+        document.getElementById('q-count').textContent = q.length;
+        document.getElementById('q-next').textContent = q.length ? ('ถัดไป: ' + String(q[0].title || q[0].raw || '').slice(0, 50)) : '— ไม่มีเพลงถัดไป —';
+      } catch {}
+    }
+    function status(msg, warn) {
+      const el = document.getElementById('status');
+      el.textContent = msg; el.style.color = warn ? '#fbbf24' : 'var(--muted)';
+      if (msg) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 5000);
+    }
+  </script>
+</body>
+</html>

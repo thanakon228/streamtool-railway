@@ -58,6 +58,7 @@ const ttsLimiter    = rateLimit({ windowMs: 60_000,      max: 20, message: "อ�
 const donateLimiter = rateLimit({ windowMs: 5 * 60_000,  max: 10, message: "ส่งสลิปถี่เกินไป กรุณารอสักครู่" });
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/dashboard",     (_, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
+app.get("/player",        (_, res) => res.sendFile(path.join(__dirname, "public/player.html")));
 app.get("/donate",        (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
 app.get("/overlay/goal",  (_, res) => res.sendFile(path.join(__dirname, "public/overlay/goal.html")));
 app.get("/overlay/:id",   (_, res) => res.sendFile(path.join(__dirname, "public/overlay/index.html")));

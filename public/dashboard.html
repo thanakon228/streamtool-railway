@@ -751,6 +751,10 @@
               <span style="font-size:12px;color:var(--muted);" id="sr-quota">—</span>
             </div>
             <div style="font-size:12px;color:var(--muted);margin-top:8px;">ผู้ชมพิมพ์ <code id="sr-cmd-hint">!sr ชื่อเพลง</code> ในแชท · โดเนทพร้อม !sr = ดันคิวขึ้นก่อน 💜</div>
+            <div style="margin-top:12px;">
+              <button class="btn btn-secondary btn-sm" id="sr-open-player">🎬 เปิดหน้าเล่นอัตโนมัติ (auto-player)</button>
+              <span style="font-size:11px;color:var(--muted);margin-left:8px;">เปิดในเบราว์เซอร์ที่ล็อกอิน YT Music Premium</span>
+            </div>
           </div>
         </div>
 
@@ -1845,6 +1849,7 @@
   }
   function setupMusicUI() {
     if (!document.getElementById('sr-open')) return;
+    document.getElementById('sr-open-player').onclick = () => window.open('/player', '_blank');
     document.getElementById('sr-open').onclick  = async () => renderSongreq(await api('/api/songreq/open', { keyword: document.getElementById('sr-keyword').value.trim() || '!sr' }));
     document.getElementById('sr-close').onclick = async () => renderSongreq(await api('/api/songreq/close', {}));
     document.getElementById('sr-next').onclick  = () => api('/api/songreq/next', {});
