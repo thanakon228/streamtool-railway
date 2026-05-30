@@ -24,6 +24,7 @@ const { createKickChat }    = require("./lib/chat/kick");
 const { createFacebookChat } = require("./lib/chat/facebook");
 const { createTtsRouter, DEFAULT_TIERS, STYLE_KEYS } = require("./lib/tts");
 const { createTipManager } = require("./lib/tips");
+const { createSongRequest } = require("./lib/songreq");
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const PASSWORD       = process.env.DASHBOARD_PASSWORD || "admin123";
@@ -153,6 +154,17 @@ function captureGiveawayEntry(msg) {
   emitGiveawayStatus();
 }
 
+// ── Song requests (viewers request songs via chat → streamer plays via YT Music) ─
+const songreq = createSongRequest({
+  apiKey: YT_KEY,
+  persistence,
+  emitState:      (s)  => io.to("dashboard").emit("songreqState", s),
+  emitNowPlaying: (np) => {
+    io.to(`overlay:${OVERLAY_ID}`).emit("nowPlaying", np);
+    io.to("dashboard").emit("nowPlaying", np);
+  },
+});
+
 const VALID_CHAT_POSITIONS = ["top-left","top-right","bottom-left","bottom-right"];
 const VALID_PLATFORMS      = ["youtube","tiktok","twitch","kick","facebook"];
 
@@ -201,7 +213,7 @@ function auth(req, res, next) {
 function emitChat(event, data) {
   io.to("dashboard").emit(event, data);
   io.to(`overlay:${OVERLAY_ID}`).emit(event, data);
-  if (event === "chat") captureGiveawayEntry(data);
+  if (event === "chat") { captureGiveawayEntry(data); songreq.captureChat(data); }
 }
 
 // ── Chat module instances ─────────────────────────────────────────────────────
@@ -351,6 +363,7 @@ app.post("/api/test-chat", auth, (req, res) => {
   io.to("dashboard").emit("chat", msg);
   io.to(`overlay:${OVERLAY_ID}`).emit("chat", msg);
   captureGiveawayEntry(msg);
+  songreq.captureChat(msg);
   res.json({ ok: true });
 });
 
@@ -398,6 +411,7 @@ async function dispatchDonation(donation) {
   const ttsAudio = await tts.generate(ttsText, { amount: donation.amount });
   io.to("dashboard").emit("donation", donation);
   io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
+  songreq.captureDonation(donation);
   emitGoal();
 }
 
@@ -621,6 +635,25 @@ app.post("/api/giveaway/draw", auth, (_, res) => {
   res.json({ ok: true, winner, remaining: giveaway.entries.size });
 });
 
+// ── Song requests ────────────────────────────────────────────────────────────
+app.get("/api/songreq/state",      auth, (_, res) => res.json(songreq.state()));
+app.get("/api/songreq/nowplaying", (_, res) => res.json(songreq.state().nowPlaying || null));
+app.post("/api/songreq/open",   auth, (req, res) => { songreq.setOpen(true,  req.body?.keyword); res.json({ ok: true, ...songreq.state() }); });
+app.post("/api/songreq/close",  auth, (_, res)  => { songreq.setOpen(false); res.json({ ok: true, ...songreq.state() }); });
+app.post("/api/songreq/config", auth, (req, res) => { songreq.setConfig(req.body || {}); res.json({ ok: true, config: songreq.state().config }); });
+app.post("/api/songreq/add",    auth, (req, res) => {
+  const r = songreq.add({ raw: req.body?.query, requester: req.body?.requester || "streamer", platform: "manual" });
+  res.status(r.ok ? 200 : 400).json(r);
+});
+app.post("/api/songreq/play/:id",    auth, (req, res) => res.json(songreq.play(req.params.id)));
+app.post("/api/songreq/next",        auth, (_, res)  => res.json(songreq.next()));
+app.post("/api/songreq/stop",        auth, (_, res)  => res.json(songreq.stop()));
+app.post("/api/songreq/skip/:id",    auth, (req, res) => res.json(songreq.skip(req.params.id)));
+app.post("/api/songreq/remove/:id",  auth, (req, res) => res.json(songreq.remove(req.params.id)));
+app.post("/api/songreq/move/:id",    auth, (req, res) => res.json(songreq.move(req.params.id, req.body?.dir)));
+app.post("/api/songreq/resolve/:id", auth, (req, res) => res.json(songreq.reresolve(req.params.id)));
+app.post("/api/songreq/clear",       auth, (_, res)  => res.json(songreq.clearQueue()));
+
 // Public TTS for the overlay's chat-spotlight (no auth — overlay is public).
 app.post("/api/tts/speak", ttsLimiter, async (req, res) => {
   const text = String(req.body?.text || "").trim().slice(0, 200);
@@ -704,6 +737,8 @@ io.on("connection", (socket) => {
     socket.emit("goalUpdate",     { ...goal, current: goalCurrent() });
     socket.emit("templateUpdate", { overlayId: OVERLAY_ID, ...templateConfig });
     if (featured) socket.emit("feature", featured);
+    const np = songreq.state().nowPlaying;
+    if (np) socket.emit("nowPlaying", np);
     console.log(`Overlay connected: ${overlayId}`);
     return;
   }
