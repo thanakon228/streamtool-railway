@@ -106,8 +106,11 @@
         height: '100%', width: '100%',
         playerVars: { autoplay: 0, controls: 1, rel: 0, modestbranding: 1, playsinline: 1 },
         events: {
-          onReady: () => { ytReady = true; if (pending) loadVideo(pending); },
-          onStateChange: e => { if (e.data === YT.PlayerState.ENDED) advance(); },
+          onReady: () => { ytReady = true; player.setVolume(Number(document.getElementById('vol').value) || 100); if (pending) loadVideo(pending); },
+          onStateChange: e => {
+            if (e.data === YT.PlayerState.PLAYING) ensureAudible();   // unmute auto-advanced songs
+            if (e.data === YT.PlayerState.ENDED)   advance();
+          },
           onError: () => { status('⚠️ เพลงนี้เล่นไม่ได้ (embed/region/ลบแล้ว) — ข้ามให้', true); advance(); },
         },
       });
@@ -116,7 +119,10 @@
     function loadVideo(id) {
       if (!ytReady) { pending = id; return; }
       pending = null; currentVid = id;
-      if (started) player.loadVideoById(id); else player.cueVideoById(id);
+      if (started) { player.loadVideoById(id); ensureAudible(); } else player.cueVideoById(id);
+    }
+    function ensureAudible() {
+      if (player && ytReady) { try { player.unMute(); player.setVolume(Number(document.getElementById('vol').value) || 100); } catch {} }
     }
     function applyNow(np) {
       if (!np || !np.videoId) {
@@ -140,7 +146,7 @@
     document.getElementById('start-btn').onclick = () => {
       started = true;
       document.getElementById('start-overlay').style.display = 'none';
-      if (currentVid && player) { player.loadVideoById(currentVid); player.playVideo(); }
+      if (currentVid && player) { player.loadVideoById(currentVid); ensureAudible(); player.playVideo(); }
       else maybeAutoStart();          // nothing playing yet → grab the first queued song
     };
     // If we're started, idle (no current video), and the queue has songs → promote the next one.
