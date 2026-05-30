@@ -600,11 +600,12 @@ app.post("/api/giveaway/reset", auth, (_, res) => {
 
 app.post("/api/giveaway/draw", auth, (_, res) => {
   if (!giveaway.entries.size) return res.status(400).json({ error: "ยังไม่มีผู้เข้าร่วม" });
+  const roll   = [...giveaway.entries.values()].map(e => e.displayName).slice(0, 40); // names to spin
   const keys   = [...giveaway.entries.keys()];
   const key    = keys[Math.floor(Math.random() * keys.length)];
   const winner = giveaway.entries.get(key);
   giveaway.entries.delete(key);      // so a re-draw picks someone else
-  io.to(`overlay:${OVERLAY_ID}`).emit("giveawayWinner", winner);
+  io.to(`overlay:${OVERLAY_ID}`).emit("giveawayWinner", { ...winner, roll });
   emitGiveawayStatus();
   res.json({ ok: true, winner, remaining: giveaway.entries.size });
 });

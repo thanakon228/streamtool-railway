@@ -215,7 +215,13 @@
     #giveaway-card .gw-label { font-size:16px; font-weight:700; color:rgba(255,255,255,.85); letter-spacing:.18em; text-transform:uppercase; margin-bottom:10px; }
     #giveaway-card .gw-name  { font-size:46px; font-weight:900; color:#fff; text-shadow:0 4px 24px rgba(0,0,0,.4); word-break:break-word; max-width:80vw; }
     #giveaway-card .gw-emoji { font-size:40px; margin-bottom:6px; animation:gwBounce 1s ease infinite; }
+    #giveaway-card .gw-emoji.spin { animation:gwSpin .55s linear infinite; }
     @keyframes gwBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    @keyframes gwSpin { to { transform:rotate(360deg); } }
+    /* name-roll states */
+    #giveaway-card .gw-name.rolling { opacity:.82; filter:blur(.4px); }
+    #giveaway-card .gw-name.reveal  { animation:gwReveal .5s cubic-bezier(.22,1.7,.36,1); }
+    @keyframes gwReveal { 0%{transform:scale(1.35)} 55%{transform:scale(.93)} 100%{transform:scale(1)} }
     @keyframes chatIn { from{opacity:0;transform:translateX(-18px)} to{opacity:1;transform:translateX(0)} }
 
     .chat-avatar {
@@ -340,8 +346,8 @@
 
 <!-- Giveaway winner -->
 <div id="giveaway-zone"><div id="giveaway-card">
-  <div class="gw-emoji">🎉</div>
-  <div class="gw-label">ผู้โชคดีคือ</div>
+  <div class="gw-emoji" id="gw-emoji">🎲</div>
+  <div class="gw-label" id="gw-label">กำลังสุ่ม...</div>
   <div class="gw-name" id="gw-name"></div>
 </div></div>
 
@@ -604,15 +610,41 @@
     document.getElementById('feature-zone').classList.remove('show');
   }
 
-  /* ── Giveaway winner ──────────────────────────────────────────────── */
+  /* ── Giveaway winner (name-roll suspense → reveal) ────────────────── */
   let gwTimer = null;
   function showGiveawayWinner(w) {
     if (!w) return;
     if (gwTimer) { clearTimeout(gwTimer); gwTimer = null; }
-    document.getElementById('gw-name').textContent = String(w.displayName || 'ผู้โชคดี');
-    document.getElementById('giveaway-zone').classList.add('show');
-    spawnConfetti(500);
-    gwTimer = setTimeout(() => document.getElementById('giveaway-zone').classList.remove('show'), 12000);
+    const zone   = document.getElementById('giveaway-zone');
+    const nameEl = document.getElementById('gw-name');
+    const labelEl= document.getElementById('gw-label');
+    const emojiEl= document.getElementById('gw-emoji');
+    const winner = String(w.displayName || 'ผู้โชคดี');
+    const roll   = (Array.isArray(w.roll) && w.roll.length) ? w.roll : [winner];
+    zone.classList.add('show');
+
+    // ── roll phase: cycle names fast→slow ──
+    labelEl.textContent = 'กำลังสุ่ม...';
+    emojiEl.textContent = '🎲'; emojiEl.classList.add('spin');
+    nameEl.classList.remove('reveal'); nameEl.classList.add('rolling');
+
+    let delay = 60; const grow = 1.13, maxDelay = 430;
+    function tick() {
+      nameEl.textContent = roll[Math.floor(Math.random() * roll.length)];
+      delay *= grow;
+      if (delay < maxDelay) gwTimer = setTimeout(tick, delay);
+      else reveal();
+    }
+    function reveal() {
+      nameEl.textContent = winner;
+      nameEl.classList.remove('rolling');
+      void nameEl.offsetWidth; nameEl.classList.add('reveal');   // restart pop animation
+      labelEl.textContent = 'ผู้โชคดีคือ';
+      emojiEl.textContent = '🎉'; emojiEl.classList.remove('spin');
+      spawnConfetti(500);
+      gwTimer = setTimeout(() => zone.classList.remove('show'), 12000);
+    }
+    tick();
   }
 
   /* ── Alert queue (FIFO — visual + audio both complete before next) ── */
