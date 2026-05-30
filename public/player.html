@@ -89,6 +89,7 @@
       const ducked = duckCount > 0;
       fadeTo(ducked ? Math.round(baseVolume() * 0.18) : baseVolume(), ducked ? 250 : 900);
     }
+    // Play the donation TTS voice (full volume) here and duck the music while it speaks.
     function duckForTts(b64) {
       duckMusic(true);
       let released = false;
@@ -96,8 +97,9 @@
       try {
         const isWav = b64.startsWith('UklGR');
         const a = new Audio(`data:${isWav ? 'audio/wav' : 'audio/mp3'};base64,${b64}`);
-        a.onloadedmetadata = () => { const d = (isFinite(a.duration) && a.duration > 0) ? a.duration : 6; setTimeout(release, (d + 0.6) * 1000); };
-        a.onerror = () => setTimeout(release, 6000);
+        a.volume = 1;
+        a.onended = release; a.onerror = release;
+        a.play().catch(release);
       } catch { setTimeout(release, 6000); }
       setTimeout(release, 60000);
     }
