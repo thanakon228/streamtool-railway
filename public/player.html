@@ -76,6 +76,19 @@
     const TLS = 'st_token';
     let token = localStorage.getItem(TLS) || '';
     let overlayId = '', player, ytReady = false, started = false, currentVid = null, pending = null, advancing = false, queueLen = 0;
+    let duckCount = 0, fadeTimer = null;
+    function baseVolume() { return Number(document.getElementById('vol').value) || 100; }
+    function fadeTo(target, ms) {
+      if (!player || !ytReady) return;
+      clearInterval(fadeTimer);
+      let cur = player.getVolume(); const steps = Math.max(1, Math.round(ms / 40)); let i = 0;
+      fadeTimer = setInterval(() => { i++; try { player.setVolume(Math.round(cur + (target - cur) * (i / steps))); } catch {} if (i >= steps) clearInterval(fadeTimer); }, 40);
+    }
+    function duckMusic(on) {
+      duckCount = Math.max(0, duckCount + (on ? 1 : -1));
+      const ducked = duckCount > 0;
+      fadeTo(ducked ? Math.round(baseVolume() * 0.18) : baseVolume(), ducked ? 250 : 900);
+    }
 
     if (!token) document.getElementById('login').style.display = 'flex';
     else boot();
@@ -95,6 +108,7 @@
       try { const cfg = await fetch('/api/template-config').then(r => r.json()); overlayId = cfg.overlayId || 'default-overlay'; } catch {}
       const socket = io({ auth: { overlayId } });
       socket.on('nowPlaying', applyNow);
+      socket.on('duckMusic', d => duckMusic(!!(d && d.on)));
       const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
       try { applyNow(await fetch('/api/songreq/nowplaying').then(r => r.json())); } catch {}
       refreshQueue();
@@ -122,7 +136,7 @@
       if (started) { player.loadVideoById(id); ensureAudible(); } else player.cueVideoById(id);
     }
     function ensureAudible() {
-      if (player && ytReady) { try { player.unMute(); player.setVolume(Number(document.getElementById('vol').value) || 100); } catch {} }
+      if (player && ytReady) { try { player.unMute(); player.setVolume(duckCount > 0 ? Math.round(baseVolume() * 0.18) : baseVolume()); } catch {} }
     }
     function applyNow(np) {
       if (!np || !np.videoId) {

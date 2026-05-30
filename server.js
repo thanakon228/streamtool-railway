@@ -753,6 +753,9 @@ io.on("connection", (socket) => {
     if (featured) socket.emit("feature", featured);
     const np = songreq.state().nowPlaying;
     if (np) socket.emit("nowPlaying", np);
+    // Audio ducking: an overlay playing TTS (alert/spotlight) asks to lower the
+    // music; relay to everyone in the room (the music players duck their volume).
+    socket.on("duck", (d) => io.to(`overlay:${overlayId}`).emit("duckMusic", { on: !!(d && d.on) }));
     console.log(`Overlay connected: ${overlayId}`);
     return;
   }

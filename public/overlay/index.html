@@ -420,13 +420,32 @@
     document.body.innerHTML = '<div style="color:red;padding:20px;font-size:18px;">ไม่พบ Overlay ID — ตรวจสอบ URL</div>';
   } else { init(); }
 
+  // ── Audio ducking: tell the music players to lower volume while TTS speaks ──
+  let socket;
+  function duckEmit(on) { if (socket) socket.emit('duck', { on: !!on }); }
+  // Play a base64 TTS clip; ducks the music on start, restores on end.
+  // Returns a Promise that resolves when playback finishes.
+  function playTts(b64, delayMs = 0) {
+    return new Promise(resolve => {
+      if (!b64) { resolve(); return; }
+      const isWav = b64.startsWith('UklGR');
+      const a = new Audio(`data:${isWav ? 'audio/wav' : 'audio/mp3'};base64,${b64}`);
+      let done = false;
+      const finish = () => { if (done) return; done = true; duckEmit(false); resolve(); };
+      a.onplay  = () => duckEmit(true);
+      a.onended = finish; a.onerror = finish;
+      setTimeout(() => a.play().catch(finish), delayMs);
+      setTimeout(finish, 60000);   // hard safety cap
+    });
+  }
+
   async function init() {
     try {
       const cfg = await fetch('/api/template-config').then(r => r.json());
       applyTemplate(cfg);
     } catch(e) {}
 
-    const socket = io({ auth: { overlayId } });
+    socket = io({ auth: { overlayId } });
     socket.on('templateUpdate', applyTemplate);
     socket.on('goalUpdate',     updateGoal);
     socket.on('alert', d => { alertQueue.push(d); processQueue(); });
@@ -620,10 +639,7 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text }),
         }).then(r => r.json());
-        if (r?.audio) {
-          const isWav = r.audio.startsWith('UklGR');
-          new Audio(`data:${isWav ? 'audio/wav' : 'audio/mp3'};base64,${r.audio}`).play().catch(() => {});
-        }
+        if (r?.audio) playTts(r.audio);
       } catch (e) {}
     }
 
@@ -664,10 +680,7 @@
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ text: String(f.message).slice(0,200) }),
       }).then(r => r.json()).then(r => {
-        if (r?.audio) {
-          const isWav = r.audio.startsWith('UklGR');
-          new Audio(`data:${isWav?'audio/wav':'audio/mp3'};base64,${r.audio}`).play().catch(()=>{});
-        }
+        if (r?.audio) playTts(r.audio);
       }).catch(()=>{});
     }
     // Non-pinned cards auto-dismiss; pinned ones wait for an explicit clear.
@@ -739,17 +752,7 @@
       }, visualDur);
     });
 
-    const audioEnd = data.ttsAudio
-      ? new Promise(resolve=>{
-          const isWav=data.ttsAudio.startsWith('UklGR'),mime=isWav?'audio/wav':'audio/mp3';
-          const a=new Audio(`data:${mime};base64,${data.ttsAudio}`);
-          let done=false; const finish=()=>{ if(done)return; done=true; resolve(); };
-          a.onended=finish; a.onerror=finish;
-          setTimeout(()=>a.play().catch(finish),600);
-          // hard safety cap — 60s
-          setTimeout(finish, 60000);
-        })
-      : Promise.resolve();
+    const audioEnd = playTts(data.ttsAudio, 600);   // also ducks music while speaking
 
     Promise.all([visualEnd, audioEnd]).then(()=>{ alertBusy=false; processQueue(); });
   }
