@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Now Playing Widget — StreamTool</title>
+  <link id="tpl-css" rel="stylesheet" href="/templates/classic.css">
+  <style id="tpl-custom"></style>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{background:transparent;overflow:hidden;
+      font-family:'Segoe UI','Noto Sans Thai',system-ui,sans-serif;}
+    #np-card{
+      position:fixed; bottom:18px; left:18px;
+      display:flex; align-items:center; gap:14px;
+      max-width:440px; padding:12px 18px 12px 12px;
+      background:var(--t-goal-bg, rgba(12,14,22,.9));
+      border:1px solid var(--t-goal-border, rgba(124,92,252,.35));
+      border-radius:14px; backdrop-filter:blur(var(--t-goal-blur,12px));
+      box-shadow:0 10px 40px rgba(0,0,0,.5);
+      opacity:0; transform:translateY(14px); pointer-events:none;
+      transition:opacity .45s ease, transform .45s ease;
+    }
+    #np-card.show{ opacity:1; transform:translateY(0); }
+    .np-thumb{ position:relative; width:84px; height:48px; border-radius:8px; overflow:hidden;
+      flex-shrink:0; background:var(--surface2,#222); }
+    .np-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .np-eq{ position:absolute; left:6px; bottom:5px; display:flex; align-items:flex-end; gap:2px; height:16px;
+      filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+    .np-eq span{ width:3px; height:5px; background:var(--t-primary,#7c5cfc); border-radius:2px; animation:npEq .9s ease-in-out infinite; }
+    .np-eq span:nth-child(2){ animation-delay:.18s; }
+    .np-eq span:nth-child(3){ animation-delay:.36s; }
+    .np-eq span:nth-child(4){ animation-delay:.54s; }
+    @keyframes npEq{ 0%,100%{height:4px} 50%{height:15px} }
+    .np-info{ min-width:0; }
+    .np-label{ font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+      color:var(--t-goal-title,rgba(255,255,255,.6)); margin-bottom:3px; display:flex; align-items:center; gap:5px; }
+    .np-title{ font-size:15px; font-weight:700; color:var(--t-alert-name,#fff);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:320px;
+      text-shadow:var(--t-chat-shadow, 0 1px 3px rgba(0,0,0,.6)); }
+    .np-sub{ font-size:11px; color:var(--t-goal-percent,rgba(255,255,255,.55));
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:320px; margin-top:2px; }
+  </style>
+</head>
+<body>
+<div id="np-card">
+  <div class="np-thumb"><img id="np-img" alt=""><div class="np-eq"><span></span><span></span><span></span><span></span></div></div>
+  <div class="np-info">
+    <div class="np-label">🎵 กำลังเล่น</div>
+    <div class="np-title" id="np-title"></div>
+    <div class="np-sub" id="np-sub"></div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  let overlayId = '';
+  (async () => {
+    try {
+      const cfg = await fetch('/api/template-config').then(r => r.json());
+      overlayId = cfg.overlayId || 'default-overlay';
+      applyTemplate(cfg);
+    } catch {}
+    const socket = io({ auth: { overlayId } });
+    socket.on('nowPlaying', render);
+    socket.on('templateUpdate', applyTemplate);
+    socket.on('connect', async () => { try { applyTemplate(await fetch('/api/template-config').then(r => r.json())); } catch (e) {} });
+    try { render(await fetch('/api/songreq/nowplaying').then(r => r.json())); } catch {}
+  })();
+
+  function applyTemplate(cfg) {
+    const tpls = ['classic','neon','minimal','gaming','cute','ocean','sunset','gold','forest','vapor'];
+    document.getElementById('tpl-css').href = '/templates/' + (tpls.includes(cfg.template) ? cfg.template : 'classic') + '.css';
+    document.getElementById('tpl-custom').textContent = cfg.customCss || '';
+  }
+  function render(n) {
+    const card = document.getElementById('np-card');
+    if (!n || !n.videoId) { card.classList.remove('show'); return; }
+    document.getElementById('np-img').src = n.thumb || '';
+    document.getElementById('np-title').textContent = n.title || '';
+    document.getElementById('np-sub').textContent = 'ขอโดย ' + (n.requester || '') + (n.channel ? ' · ' + n.channel : '');
+    card.classList.add('show');
+  }
+</script>
+</body>
+</html>

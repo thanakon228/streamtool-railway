@@ -812,6 +812,27 @@
         </div>
 
         <div class="card">
+          <div class="card-header"><div class="card-title">🖥️ Now Playing บนจอ (overlay)</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" id="np-enabled" checked /> แสดงการ์ดเพลงที่กำลังเล่นบน overlay หลัก</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:13px;color:var(--muted);">ตำแหน่ง</span>
+              <select id="np-position" class="input-field" style="max-width:220px;">
+                <option value="top-left">↖ บนซ้าย</option>
+                <option value="top-right">↗ บนขวา</option>
+                <option value="bottom-left">↙ ล่างซ้าย</option>
+                <option value="bottom-right">↘ ล่างขวา</option>
+              </select>
+            </div>
+            <div style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span>หรือใส่เป็น Browser Source แยกใน OBS:</span>
+              <code id="np-widget-url">/widget/nowplaying</code>
+              <button class="feat-btn" id="np-copy-url" style="opacity:1;" title="คัดลอก URL">📋</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
           <div class="card-header"><div class="card-title">🕘 ประวัติ</div></div>
           <div class="card-body"><div id="sr-history"><div class="empty-state"><div class="empty-icon">🕘</div>ยังไม่มีประวัติ</div></div></div>
         </div>
@@ -1868,6 +1889,20 @@
     ['sr-autoresolve', 'sr-paidpriority'].forEach(id => document.getElementById(id).onchange = saveCfg);
     document.getElementById('sr-blockwords').oninput = saveCfg;
     api('/api/songreq/state').then(renderSongreq).catch(() => {});
+
+    // Now Playing overlay widget config (lives in templateConfig)
+    const npEn = document.getElementById('np-enabled'), npPos = document.getElementById('np-position');
+    const npUrl = location.origin + '/widget/nowplaying';
+    document.getElementById('np-widget-url').textContent = npUrl;
+    document.getElementById('np-copy-url').onclick = () => copyText(npUrl, 'np-copy-url');
+    const saveNp = () => api('/api/template-config', { nowPlaying: { enabled: npEn.checked, position: npPos.value } });
+    npEn.onchange = saveNp;
+    npPos.onchange = saveNp;
+    fetch('/api/template-config').then(r => r.json()).then(cfg => {
+      const np = cfg.nowPlaying || {};
+      if (typeof np.enabled === 'boolean') npEn.checked = np.enabled;
+      if (np.position) npPos.value = np.position;
+    }).catch(() => {});
   }
 
   // ── Donations ────────────────────────────────────────────────────────────────

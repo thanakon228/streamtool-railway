@@ -291,6 +291,32 @@
     #alert-card::before { background:var(--t-alert-bg); }
     .chat-msg::before   { background:var(--t-chat-bg); }
     .goal-card::before  { background:var(--t-goal-bg); }
+
+    /* ── Now Playing (song request) ─────────────────────────────── */
+    #np-zone { position:fixed; top:24px; left:24px; pointer-events:none; z-index:40; }
+    body.np-pos-top-right    #np-zone { top:24px; right:24px; left:auto; bottom:auto; }
+    body.np-pos-bottom-left  #np-zone { bottom:24px; left:24px; top:auto; right:auto; }
+    body.np-pos-bottom-right #np-zone { bottom:24px; right:24px; top:auto; left:auto; }
+    body.np-off #np-zone { display:none !important; }
+    #np-card {
+      display:flex; align-items:center; gap:14px; max-width:420px; padding:12px 18px 12px 12px;
+      background:var(--t-goal-bg, rgba(12,14,22,.9)); border:1px solid var(--t-goal-border, rgba(124,92,252,.35));
+      border-radius:14px; backdrop-filter:blur(var(--t-goal-blur,12px)); box-shadow:0 10px 40px rgba(0,0,0,.5);
+      opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease;
+    }
+    #np-card.show { opacity:1; transform:translateY(0); }
+    .np-thumb { position:relative; width:84px; height:48px; border-radius:8px; overflow:hidden; flex-shrink:0; background:rgba(255,255,255,.06); }
+    .np-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+    .np-eq { position:absolute; left:6px; bottom:5px; display:flex; align-items:flex-end; gap:2px; height:16px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+    .np-eq span { width:3px; height:5px; background:var(--t-primary,#7c5cfc); border-radius:2px; animation:npEq .9s ease-in-out infinite; }
+    .np-eq span:nth-child(2){ animation-delay:.18s; }
+    .np-eq span:nth-child(3){ animation-delay:.36s; }
+    .np-eq span:nth-child(4){ animation-delay:.54s; }
+    @keyframes npEq { 0%,100%{height:4px} 50%{height:15px} }
+    .np-info { min-width:0; }
+    .np-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--t-goal-title,rgba(255,255,255,.6)); margin-bottom:3px; }
+    .np-title { font-size:15px; font-weight:700; color:var(--t-alert-name,#fff); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:320px; text-shadow:var(--t-chat-shadow,0 1px 3px rgba(0,0,0,.6)); }
+    .np-sub { font-size:11px; color:var(--t-goal-percent,rgba(255,255,255,.55)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:320px; margin-top:2px; }
     .goal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
     .goal-title  { font-size:12px; font-weight:700; color:var(--t-goal-title); display:flex; align-items:center; gap:6px; }
     .goal-amounts{ font-size:13px; font-weight:700; }
@@ -377,6 +403,16 @@
   </div>
 </div>
 
+<!-- Now Playing (song request) -->
+<div id="np-zone"><div id="np-card">
+  <div class="np-thumb"><img id="np-img" alt=""><div class="np-eq"><span></span><span></span><span></span><span></span></div></div>
+  <div class="np-info">
+    <div class="np-label">🎵 กำลังเล่น</div>
+    <div class="np-title" id="np-title"></div>
+    <div class="np-sub" id="np-sub"></div>
+  </div>
+</div></div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
   const overlayId = location.pathname.replace(/^\/overlay\/?/,'').split('/')[0];
@@ -399,6 +435,7 @@
     socket.on('feature',        showFeature);
     socket.on('featureClear',   hideFeature);
     socket.on('giveawayWinner', showGiveawayWinner);
+    socket.on('nowPlaying',     renderNowPlaying);
     // Self-heal: re-sync theme/goal on every (re)connect — OBS browser sources
     // often drop the socket on scene switch and would otherwise show a stale theme.
     socket.on('connect', async () => {
@@ -406,6 +443,7 @@
         const cfg = await fetch('/api/template-config').then(r => r.json());
         applyTemplate(cfg);
         updateGoal(cfg.goal || {});
+        renderNowPlaying(await fetch('/api/songreq/nowplaying').then(r => r.json()));
       } catch (e) {}
     });
   }
@@ -431,6 +469,23 @@
     body.classList.add('pos-'  + (pos  .includes(cfg.alertPosition)  ? cfg.alertPosition  : 'top-right'));
     applyChatConfig(cfg.chatConfig);
     applySpotlightConfig(cfg.spotlight);
+    applyNowPlayingConfig(cfg.nowPlaying);
+  }
+
+  /* ── Now Playing config + render ─────────────────────────────── */
+  function applyNowPlayingConfig(np) {
+    const body = document.body, posns = ['top-left','top-right','bottom-left','bottom-right'];
+    posns.forEach(p => body.classList.remove('np-pos-' + p));
+    body.classList.add('np-pos-' + (np && posns.includes(np.position) ? np.position : 'top-left'));
+    body.classList.toggle('np-off', !!(np && np.enabled === false));
+  }
+  function renderNowPlaying(n) {
+    const card = document.getElementById('np-card');
+    if (!n || !n.videoId) { card.classList.remove('show'); return; }
+    document.getElementById('np-img').src = n.thumb || '';
+    document.getElementById('np-title').textContent = n.title || '';
+    document.getElementById('np-sub').textContent = 'ขอโดย ' + (n.requester || '') + (n.channel ? ' · ' + n.channel : '');
+    card.classList.add('show');
   }
 
   /* ── Chat config apply (live updates) ────────────────────────── */

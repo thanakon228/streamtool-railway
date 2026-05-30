@@ -65,6 +65,7 @@ app.get("/overlay",       (_, res) => res.sendFile(path.join(__dirname, "public/
 app.get("/widget/chat",   (_, res) => res.sendFile(path.join(__dirname, "public/widgets/chat.html")));
 app.get("/widget/alert",  (_, res) => res.sendFile(path.join(__dirname, "public/widgets/alert.html")));
 app.get("/widget/goal",   (_, res) => res.sendFile(path.join(__dirname, "public/widgets/goal.html")));
+app.get("/widget/nowplaying", (_, res) => res.sendFile(path.join(__dirname, "public/widgets/nowplaying.html")));
 app.get("/widget/donate", (_, res) => res.sendFile(path.join(__dirname, "public/donate.html")));
 
 // ── Goal + template ──────────────────────────────────────────────────────────
@@ -85,6 +86,8 @@ const DEFAULT_CHAT_CONFIG = {
 const DEFAULT_SPOTLIGHT = { enabled: false, intervalSec: 60, durationSec: 6, position: "inplace" };
 const VALID_SPOT_POS = ["inplace", "top"];
 
+const DEFAULT_NOWPLAYING = { enabled: true, position: "top-left" };
+
 let templateConfig = {
   template:       "classic",
   alertAnimation: "slide",
@@ -93,6 +96,7 @@ let templateConfig = {
   bgOpacity:      100,   // พื้นหลังการ์ด (alert/chat/goal) ความทึบ 0–100%
   chatConfig:     { ...DEFAULT_CHAT_CONFIG },
   spotlight:      { ...DEFAULT_SPOTLIGHT },
+  nowPlaying:     { ...DEFAULT_NOWPLAYING },
 };
 
 // Rehydrate overlay theme + goal from disk (survives Railway redeploys/restarts).
@@ -106,6 +110,7 @@ if (persistence.state.overlay) {
       ...st,
       chatConfig: { ...DEFAULT_CHAT_CONFIG, ...(st.chatConfig || {}) },
       spotlight:  { ...DEFAULT_SPOTLIGHT,   ...(st.spotlight  || {}) },
+      nowPlaying: { ...DEFAULT_NOWPLAYING,  ...(st.nowPlaying || {}) },
     };
   }
 }
@@ -314,7 +319,7 @@ app.get("/api/template-config", (_, res) => res.json({
 
 // Template config — save (auth)
 app.post("/api/template-config", auth, (req, res) => {
-  const { template, alertAnimation, alertPosition, customCss, bgOpacity, chatConfig, spotlight } = req.body || {};
+  const { template, alertAnimation, alertPosition, customCss, bgOpacity, chatConfig, spotlight, nowPlaying } = req.body || {};
   const validTpl   = ["classic","neon","minimal","gaming","cute","ocean","sunset","gold","forest","vapor"];
   const validAnims = ["slide","bounce","zoom","flip","drop"];
   const validPos   = ["top-right","top-left","bottom-right","bottom-left"];
@@ -335,6 +340,12 @@ app.post("/api/template-config", auth, (req, res) => {
     const du = clamp(spotlight.durationSec, 3, 30);   if (du !== null) next.durationSec = Math.round(du);
     if (VALID_SPOT_POS.includes(spotlight.position)) next.position = spotlight.position;
     templateConfig.spotlight = next;
+  }
+  if (nowPlaying && typeof nowPlaying === "object") {
+    const np = { ...DEFAULT_NOWPLAYING, ...templateConfig.nowPlaying };
+    if (typeof nowPlaying.enabled === "boolean") np.enabled = nowPlaying.enabled;
+    if (VALID_CHAT_POSITIONS.includes(nowPlaying.position)) np.position = nowPlaying.position;
+    templateConfig.nowPlaying = np;
   }
   persistOverlay();
   const payload = { overlayId: OVERLAY_ID, ...templateConfig };
