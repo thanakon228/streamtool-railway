@@ -727,6 +727,7 @@ app.post("/api/test-alert", auth, async (req, res) => {
   const ttsText  = `${donation.displayName} โดเนท ${donation.amount} บาท${donation.message ? ` ${donation.message}` : ""}`;
   const ttsAudio = await tts.generate(ttsText, { amount: donation.amount });
   io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
+  songreq.captureDonation(donation);   // test alert w/ "!sr ..." → paid (priority) song request
   res.json({ ok: true });
 });
 
