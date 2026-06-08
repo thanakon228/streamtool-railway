@@ -26,6 +26,8 @@ const { createFacebookChat } = require("./lib/chat/facebook");
 const { createTtsRouter, DEFAULT_TIERS, STYLE_KEYS } = require("./lib/tts");
 const { createTipManager } = require("./lib/tips");
 const { createSongRequest } = require("./lib/songreq");
+const { createLiveEvents }  = require("./lib/liveEvents");
+const { createAdminAuth }   = require("./lib/adminAuth");
 
 // ── Config ────────────────────────────────────────────────────────────────────
 // This repo is public, so the old hard-coded fallbacks ("admin123" /
@@ -35,6 +37,11 @@ const { createSongRequest } = require("./lib/songreq");
 const INSECURE_PASSWORD = !process.env.DASHBOARD_PASSWORD;
 const EPHEMERAL_SECRET  = !process.env.JWT_SECRET;
 const PASSWORD   = process.env.DASHBOARD_PASSWORD || "admin123";
+const EVENTS_API_KEY    = process.env.EVENTS_API_KEY    || "";
+const EVENTS_API_URL    = process.env.EVENTS_API_URL    || "";
+const ADMIN_RESET_TOKEN = process.env.ADMIN_RESET_TOKEN || "";
+
+const adminAuth = createAdminAuth({ envPassword: PASSWORD, resetToken: ADMIN_RESET_TOKEN });
 // No JWT_SECRET in env → reuse a secret persisted to DATA_DIR (survives redeploys
 // when a volume is mounted); fall back to in-memory random if it can't be written.
 const JWT_SECRET = process.env.JWT_SECRET || persistence.getOrCreateSecret() || crypto.randomBytes(32).toString("hex");
@@ -61,6 +68,14 @@ const FB_PAGE_TOKEN    = process.env.FACEBOOK_PAGE_TOKEN || "";
 const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: "*" } });
+
+const liveEvents = createLiveEvents({
+  io,
+  overlayId:   OVERLAY_ID,
+  apiKey:      EVENTS_API_KEY || PASSWORD,
+  externalUrl: EVENTS_API_URL,
+  externalKey: EVENTS_API_KEY,
+});
 
 app.set("trust proxy", 1);   // Railway runs behind a proxy → real client IP in X-Forwarded-For
 app.use(cors());
@@ -263,7 +278,11 @@ function auth(req, res, next) {
 function emitChat(event, data) {
   io.to("dashboard").emit(event, data);
   io.to(`overlay:${OVERLAY_ID}`).emit(event, data);
-  if (event === "chat") { captureGiveawayEntry(data); songreq.captureChat(data); }
+  if (event === "chat") {
+    captureGiveawayEntry(data);
+    songreq.captureChat(data);
+    liveEvents.push(liveEvents.mapChat(data));
+  }
 }
 
 // ── Chat module instances ─────────────────────────────────────────────────────
@@ -322,6 +341,8 @@ const tts = createTtsRouter({
 // API
 // ═══════════════════════════════════════════════════════════════════════════════
 
+liveEvents.mount(app);
+
 app.get("/api/health", (_, res) => res.json({
   status:         "ok",
   persistent:     !!process.env.DATA_DIR,   // true = settings survive redeploy (Railway Volume)
@@ -340,6 +361,10 @@ app.get("/api/health", (_, res) => res.json({
   twitchEnv:      !!TWITCH_CHANNEL,
   kickEnv:        !!KICK_CHANNEL,
   facebookEnv:    !!FB_PAGE_TOKEN,
+  eventsApi:      true,
+  eventsApiKey:   !!EVENTS_API_KEY,
+  eventsForward:  !!EVENTS_API_URL,
+  adminPersisted: adminAuth.hasPersistedPassword(),
 }));
 
 // Diagnostics: who is connected (find duplicate music players causing audio clash)
@@ -359,10 +384,36 @@ app.get("/api/debug/clients", auth, (_, res) => {
 
 // Login
 app.post("/api/login", (req, res) => {
-  if (req.body.password !== PASSWORD)
+  if (!adminAuth.checkPassword(req.body.password))
     return res.status(401).json({ error: "รหัสผ่านไม่ถูกต้อง" });
   const token = jwt.sign({ role: "streamer" }, JWT_SECRET, { expiresIn: "30d" });
   res.json({ ok: true, token, overlayId: OVERLAY_ID });
+});
+
+// Reset admin password (ลืมรหัส) — ต้องตั้ง ADMIN_RESET_TOKEN ใน env ก่อน
+app.post("/api/admin/reset-password", (req, res) => {
+  try {
+    const result = adminAuth.resetPassword({
+      resetToken:   req.body?.resetToken,
+      newPassword:  req.body?.newPassword,
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(e.code || 500).json({ error: e.message });
+  }
+});
+
+// Change password (ต้อง login แล้ว)
+app.post("/api/admin/change-password", auth, (req, res) => {
+  try {
+    const result = adminAuth.changePassword({
+      currentPassword: req.body?.currentPassword,
+      newPassword:     req.body?.newPassword,
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(e.code || 500).json({ error: e.message });
+  }
 });
 
 // Session state
@@ -499,6 +550,7 @@ async function dispatchDonation(donation) {
   const ttsAudio = await tts.generate(ttsText, { amount: donation.amount });
   io.to("dashboard").emit("donation", donation);
   io.to(`overlay:${OVERLAY_ID}`).emit("alert", { ...donation, ttsAudio });
+  liveEvents.push(liveEvents.mapDonation(donation));
   songreq.captureDonation(donation);
   emitGoal();
 }
@@ -833,6 +885,7 @@ io.on("connection", (socket) => {
   if (overlayId) {
     socket.join(`overlay:${overlayId}`);
     socket.data.clientType = socket.handshake.auth.clientType || "unknown";
+    liveEvents.onSocketConnection(socket);
     socket.emit("goalUpdate",     { ...goal, current: goalCurrent() });
     socket.emit("templateUpdate", { overlayId: OVERLAY_ID, ...templateConfig });
     if (featured) socket.emit("feature", featured);
@@ -848,6 +901,7 @@ io.on("connection", (socket) => {
     try {
       jwt.verify(token, JWT_SECRET);
       socket.join("dashboard");
+      liveEvents.onSocketConnection(socket);
       console.log("Dashboard connected");
       return;
     } catch {}

@@ -53,6 +53,9 @@
 | `JWT_SECRET` | secret สำหรับ sign JWT |
 | `OVERLAY_ID` | ID ของ overlay (ใช้ใน OBS URL) |
 | `EASYSLIP_API_KEY` | verify slip donation |
+| `EVENTS_API_KEY` | API key สำหรับ `/api/events` (ไม่ตั้ง = ใช้ DASHBOARD_PASSWORD) |
+| `EVENTS_API_URL` | forward event ไป stream-events-api แยก (optional) |
+| `ADMIN_RESET_TOKEN` | รีเซ็ตรหัส admin เมื่อลืม — ดู `docs/EVENTS_API.md` |
 
 ### Chat platforms
 | Variable | หมายเหตุ |
